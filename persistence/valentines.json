@@ -1,7 +1,7 @@
 [
   {
     "birthday": "April 8",
-    "color": "0x39fe19",
+    "color": "39fe19",
     "name": "Keitaro Nagame",
     "description": "Keitaro is an energetic guy who loves to 'collect' memories through taking pictures. His playful and friendly nature makes him a natural crowdpleaser.",
     "animal": "Frog",
@@ -10,7 +10,7 @@
   },
   {
     "birthday": "September 22",
-    "color": "0xff6600",
+    "color": "ff6600",
     "name": "Hiro Akiba",
     "description": "As Keitaro's childhood friend and best friend, Hiro has growing affection for Keitaro. He tends to get jealous easily, but his cheerful personality and talent for cooking make up for it!",
     "animal": "Raccoon",
@@ -19,7 +19,7 @@
   },
   {
     "birthday": "September 22",
-    "color": "0x774328",
+    "color": "774328",
     "name": "Hiro Akiba (Mature)",
     "description": "As Keitaro's childhood friend and best friend, Hiro has growing affection for Keitaro. As they grow up and face challenges after graduating, he dyed his hair back to its original color in order to have interview.",
     "animal": "Raccoon",
@@ -28,7 +28,7 @@
   },
   {
     "birthday": "January 21",
-    "color": "0xb11aff",
+    "color": "b11aff",
     "name": "Yoichi Yukimura",
     "description": "Yoichi heeds no authority and likes to bully others, giving him the reputation of a delinquent. No one understands the true reason behind his actions. Surprisingly, he has a soft heart when it comes to animals.",
     "animal": "Wolf",
@@ -37,7 +37,7 @@
   },
   {
     "birthday": "June 20",
-    "color": "0x1ab1ff",
+    "color": "1ab1ff",
     "name": "Natsumi Hamasaki",
     "description": "Natsumi is seen as a role model among the campers due to his responsible and hardworking nature. However, he is pressured with the high expectations built around him.",
     "animal": "Stag Beetle",
@@ -46,7 +46,7 @@
   },
   {
     "birthday": "March 20",
-    "color": "0xf7f63c",
+    "color": "f7f63c",
     "name": "Hunter Springfield",
     "description": "Hunter has a shy and timid personality. He is always having a hard time socializing with others. It may look like that he prefers spending his time alone, but he just wants to have friends, just like everybody else.",
     "animal": "Bunny",
@@ -55,7 +55,7 @@
   },
   {
     "birthday": "July 13",
-    "color": "0xe81615",
+    "color": "e81615",
     "name": "Taiga Akatora",
     "description": "Taiga is a born leader, but unfortunately, he's using it to drag his friends into his schemes. He has an unreasonable hate towards Keitaro.",
     "animal": "Tiger",
@@ -64,7 +64,7 @@
   },
   {
     "birthday": "August 4",
-    "color": "0x00aa6c",
+    "color": "00aa6c",
     "name": "Lee Kurosawa",
     "description": "Lee is very smart, but he's physically fragile. He looks up to Taiga as a role model for his bravery, hoping one day he could be as strong as him.",
     "animal": "Snake",
@@ -73,7 +73,7 @@
   },
   {
     "birthday": "May 30",
-    "color": "0xd37fb7",
+    "color": "d37fb7",
     "name": "Eduard Fitzpatrick",
     "description": "Eduard is known for being extremely vain and sassy. No one's really sure how and why he's friends with Taiga.",
     "animal": "Flamingo",
@@ -82,7 +82,7 @@
   },
   {
     "birthday": "July 24",
-    "color": "0x9dd5e6",
+    "color": "9dd5e6",
     "name": "Seto (Shintaro) Aihara",
     "description": "Seto usually spends a lot of his time playing games and listening to music. He's very chill and casual, but he can be really straightforward sometimes.",
     "animal": "Cat",
@@ -91,7 +91,7 @@
   },
   {
     "birthday": "September 26",
-    "color": "0xbdd7e6",
+    "color": "bdd7e6",
     "name": "Felix Clermont",
     "description": "Felix came from a wealthy family. He is used to getting what he wants. He can be quite difficult to deal with. Hopefully, Camp Buddy changes him for the better.",
     "animal": "Arctic Fox",
@@ -100,7 +100,7 @@
   },
   {
     "birthday": "June 9",
-    "color": "0x5d8c6b",
+    "color": "5d8c6b",
     "name": "Aiden Flynn",
     "description": "Aiden is the high-spirited, all around helper of Camp Buddy. He is in charge of cooking, cleaning, gardening, repairs, healthcare and physical education.",
     "animal": "Lizard",
@@ -109,7 +109,7 @@
   },
   {
     "birthday": "July 3",
-    "color": "0x9c9b99",
+    "color": "9c9b99",
     "name": "Goro Nomoru",
     "description": "Goro is the owner and president of Camp Buddy. His grumpy and irritable attitude sometimes hinders his judgement, but he sincerely wants the best for the camp.",
     "animal": "Panda",
@@ -118,7 +118,7 @@
   },
   {
     "birthday": "March 7",
-    "color": "0xc07c35",
+    "color": "c07c35",
     "name": "Yoshinori Nagira",
     "description": "Yoshinori is the optimistic and idealistic leader of Camp Buddy. He has yet to prove his determination to redeem his shortcomings form the past.",
     "animal": "Grizzly Bear",
@@ -127,7 +127,7 @@
   },
   {
     "birthday": "May 8",
-    "color": "0xff73bb",
+    "color": "ff73bb",
     "name": "Yuri Nomoru",
     "description": "Yuri is the daughter of Goro and Yoshinori's assistant. Don't be fooled by her looks; she has a wild imagination when it comes to certain things.",
     "animal": "Butterfly",
@@ -136,7 +136,7 @@
   },
   {
     "birthday": "June 14",
-    "color": "0x227abe",
+    "color": "227abe",
     "name": "Naoto Hamasaki",
     "description": "Naoto is Natsumi's older brother. He's very charismatic and well-rounded. It seems like he has a huge influence on Natsumi's personality.",
     "animal": "Hercules Beetle",
@@ -145,7 +145,7 @@
   },
   {
     "birthday": "August 8",
-    "color": "0xe7ab0d",
+    "color": "e7ab0d",
     "name": "Kieran Moreno",
     "description": "Kieran is a camper who used to attend Camp Buddy. He seems burdened by the past, and wants to make up for it as best as he can.",
     "animal": "Lion",
@@ -154,7 +154,7 @@
   },
   {
     "birthday": "April 8",
-    "color": "0xfead3e",
+    "color": "fead3e",
     "name": "Jirou",
     "description": "Jirou is a very hyper boy who always gets himself into trouble. He's a total klutz, stumbling and hurting himself all the time, but this doesn't stop him from jumping around and having fun.",
     "animal": "Red-Eyed Tree Frog",
@@ -163,7 +163,7 @@
   },
   {
     "birthday": "June 2",
-    "color": "0x5ca0d5",
+    "color": "5ca0d5",
     "name": "Connor Bleufin",
     "description": "Connor is an energetic and fun-loving boy who lives in a fishing town. He and his best friend Jirou are always getting into trouble, but Connor is always there to look out for him.",
     "animal": "Marlin",
@@ -172,7 +172,7 @@
   },
   {
     "birthday": "January 9",
-    "color": "0x13c4d4",
+    "color": "13c4d4",
     "name": "Avan Geiserford",
     "description": "A cool headed yet sporty guy who never seems to have anything on his mind but working his way towards a professional swimming career.",
     "animal": "Penguin",
@@ -181,7 +181,7 @@
   },
   {
     "birthday": "April 4",
-    "color": "0xfdbbe4",
+    "color": "fdbbe4",
     "name": "Yuuto Mizushima",
     "description": "Yuuto is a volleyball player with a springy and impulsive personality, but that doesn't stop him from making friends! He also loves the beach, but ironically... he can't even swim!",
     "animal": "Sea Otter",
@@ -190,7 +190,7 @@
   },
   {
     "birthday": "August 19",
-    "color": "0xf0534e",
+    "color": "f0534e",
     "name": "Haruki Sakurai",
     "description": "Haruki spends most of his time preparing for his big idol debut. Beyond his charming personality lies more than meets the eye.",
     "animal": "Fox",
@@ -199,7 +199,7 @@
   },
   {
     "birthday": "June 25",
-    "color": "0xb46075",
+    "color": "b46075",
     "name": "Chiaki Yumeno",
     "description": "Chiaki isn't afraid to be a tease and poke a little fun at everyone he meets. If there's one thing he's skilled at in creative arts, it's getting caught up in colourful messes!",
     "animal": "Ocelot",
@@ -208,7 +208,7 @@
   },
   {
     "birthday": "October 10",
-    "color": "0x554ca0",
+    "color": "554ca0",
     "name": "Noah Reiner",
     "description": "Noah is a happy-go-lucky graffiti artist and gamer. He has been caught in the middle of painting a few times, but that doesn't stop him from trying again.",
     "animal": "Panther",
@@ -217,7 +217,7 @@
   },
   {
     "birthday": "September 16",
-    "color": "0xa53154",
+    "color": "a53154",
     "name": "Knox",
     "description": "Renegade, trickster, and a lewd lord all around, Knox is a boy who’s all about fun in the naughtiest ways possible. Follow him as he flips around the world of boys’ love, trying (and failing) to keep out of trouble.",
     "animal": "Jackal",
@@ -226,7 +226,7 @@
   },
   {
     "birthday": "Unknown",
-    "color": "0x276097",
+    "color": "276097",
     "name": "Rayne",
     "description": "Everything about Rayne is still a mystery. All we know is that he's a musician and it seems that he's into artistic and music stuffs. He's always got a headphone around his neck so he could listen to the music anytime.",
     "animal": "Unknown",
@@ -235,7 +235,7 @@
   },
   {
     "birthday": "Unknown",
-    "color": "0xcf2f28",
+    "color": "cf2f28",
     "name": "Toshu Kanada",
     "description": "Toshu is a teenage boy with average height and spiky red hair, tanned skin, and red and yellow eyes. He is a young man who is usually timid and vulnerable to verbal attacks, but he's also a kind boy who will do anything to protect and help his friends.",
     "animal": "Unknown",
@@ -244,7 +244,7 @@
   },
   {
     "birthday": "Unknown",
-    "color": "0xffffff",
+    "color": "ffffff",
     "name": "Ichiru Yanai",
     "description": "Ichiru is a carefree, energetic and mischievous boy who doesn't like attending classes. However, he has a reputation for being a genius, which is shown by his perfect math scores and his excellent survival and fire-starting skills.",
     "animal": "Unknown",
@@ -253,7 +253,7 @@
   },
   {
     "birthday": "July 11",
-    "color": "0xe29f0b",
+    "color": "e29f0b",
     "name": "Archer Springfield",
     "description": "Archer is Hunter's father who has high expectations of his son. He wants his son to have a stable and secure future, and cares about him greatly.",
     "animal": "Hare",
@@ -262,7 +262,7 @@
   },
   {
     "birthday": "July 11",
-    "color": "0xe2a00b",
+    "color": "e2a00b",
     "name": "Heather Springfield",
     "description": "Heather is Hunter's mother. Like her husband, she wants Hunter to succeed in life and inherit the family's business. She always opposes anything she sees as unfit for her child.",
     "animal": "Fuzzy Lop",
@@ -271,7 +271,7 @@
   },
   {
     "birthday": "October 16",
-    "color": "0xc97708",
+    "color": "c97708",
     "name": "Hina Akiba",
     "description": "Hina is Hiro's sickly and selfless mother that is very supportive of her son. She always puts Hiro's happiness ahead of her own, but she still knows when to discipline her son. Hina is the one responsible for teaching Hiro how to cook. She also has her own cookbook that she plans to hand down to Hiro.",
     "animal": "Red Panda",
@@ -280,7 +280,7 @@
   },
   {
     "birthday": "August 31",
-    "color": "0xdeb3ec",
+    "color": "deb3ec",
     "name": "William Clermont",
     "description": "William is Felix's famous and wealthy father. He's a well-known writer and publicist who has achieved multiple awards for his works. He's very generous and would be willing to support any individual or establishment that he deems worthy.",
     "animal": "Polar Bear",
@@ -289,7 +289,7 @@
   },
   {
     "birthday": "Unknown",
-    "color": "0xa4d0da",
+    "color": "a4d0da",
     "name": "Minamoto Kou",
     "description": "Kou is the offspring of the famous exorcist family of Minamoto. Although his skills in exorcism are not that strong at the moment, he's very serious about his responsibilities as a Minamoto and always looks up to his elder brother, Teru, who's a genius exorcist. His friendship with Nene and Hanako makes him rethink about the relationship between human and the mysterious again.",
     "animal": "Dog",

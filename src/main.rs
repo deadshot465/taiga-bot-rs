@@ -9,10 +9,10 @@ use serenity::framework::standard::{
         group
     }
 };
-use taiga_bot_rs::{ping::PING_COMMAND, route::ROUTE_COMMAND};
+use taiga_bot_rs::{ping::PING_COMMAND, route::ROUTE_COMMAND, valentine::VALENTINE_COMMAND};
 
 #[group]
-#[commands(ping, route)]
+#[commands(ping, route, valentine)]
 struct General;
 
 struct Handler;
