@@ -1,4 +1,5 @@
 use crate::shared::Character;
+use std::collections::HashMap;
 
 pub static mut PERSISTENCE_STORAGE: PersistenceContainer = PersistenceContainer{
     instance: None
@@ -7,7 +8,11 @@ pub static mut PERSISTENCE_STORAGE: PersistenceContainer = PersistenceContainer{
 pub struct PersistenceStorage {
     pub routes: Vec<Character>,
     pub valentines: Vec<Character>,
-    pub is_loaded: bool
+    pub is_loaded: bool,
+    pub dialog_backgrounds: Vec<String>,
+    pub dialog_characters: Vec<String>,
+    pub background_strings: String,
+    pub character_strings: String
 }
 
 pub struct PersistenceContainer {
@@ -24,7 +29,18 @@ impl PersistenceStorage {
         let valentines_str = valentines_data.as_str();
         self.routes = serde_json::from_str(routes_str)?;
         self.valentines = serde_json::from_str(valentines_str)?;
+        self.load_dialog_data()?;
         self.is_loaded = true;
+        Ok(())
+    }
+
+    fn load_dialog_data(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let response = reqwest::blocking::get("https://tetsukizone.com/api/dialog")?
+            .json::<HashMap<String, Vec<String>>>()?;
+        self.dialog_characters = response["characters"].clone();
+        self.dialog_backgrounds = response["backgrounds"].clone();
+        self.background_strings = self.dialog_backgrounds.join(", ");
+        self.character_strings = self.dialog_characters.join(", ");
         Ok(())
     }
 }
@@ -35,7 +51,11 @@ impl PersistenceContainer {
             self.instance = Some(PersistenceStorage{
                 routes: vec![],
                 valentines: vec![],
-                is_loaded: false
+                is_loaded: false,
+                dialog_backgrounds: vec![],
+                dialog_characters: vec![],
+                background_strings: String::new(),
+                character_strings: String::new()
             });
             if let Some(v) = &mut self.instance {
                 v.load().expect("Error loading routes and valentines data.");

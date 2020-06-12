@@ -12,6 +12,7 @@ pub fn enlarge(context: &mut Context, msg: &Message) -> CommandResult {
 
     lazy_static! {
         static ref EMOTE_REGEX: Regex = Regex::new(r"(<a?:\w+:\d+>)").unwrap();
+        // Looking ahead and looking back currently is not supported.
         //static ref EMOTE_ID_REGEX: Regex = Regex::new(r"[^:]+(?=>)").unwrap();
         static ref EMOTE_ID_REGEX: Regex = Regex::new(r"(:\w+:)(\d+)").unwrap();
         static ref EMOTE_IS_ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();

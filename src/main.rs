@@ -15,6 +15,7 @@ use taiga_bot_rs::{
     route::ROUTE_COMMAND,
     valentine::VALENTINE_COMMAND
 };
+use tokio::prelude::*;
 
 #[group]
 #[commands(enlarge, ping, route, valentine)]
