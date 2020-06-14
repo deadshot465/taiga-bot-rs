@@ -29,12 +29,11 @@ const KOU_GIFS: [&str; 5] = [
 ];
 
 #[command]
-pub fn route(context: &mut Context, msg: &Message) -> CommandResult {
-    let mut rng = thread_rng();
-    let route = get_route();
+pub async fn route(context: &Context, msg: &Message) -> CommandResult {
+    let route = get_route().await;
     let footer = format!("Play {}'s route next. All bois are best bois.", get_first_name(route.name.as_str()));
     let color = u32::from_str_radix(&route.color.as_str(), 16).unwrap() as i32;
-    let mut ending = ENDINGS[rng.gen_range(0, ENDINGS.len())];
+    let mut ending = ENDINGS[thread_rng().gen_range(0, ENDINGS.len())];
     if route.name == "Hiro Akiba (Mature)" || route.name == "Minamoto Kou" {
         ending = "Perfect";
     }
@@ -54,25 +53,24 @@ pub fn route(context: &mut Context, msg: &Message) -> CommandResult {
             .field("Animal Motif", &route.animal, true)
             .footer(|f| f.text(footer))
             .thumbnail(if route.name == "Hiro Akiba (Mature)" {
-                let id = MATURE_HIRO_EMOTE_IDS[rng.gen_range(0, MATURE_HIRO_EMOTE_IDS.len())];
+                let id = MATURE_HIRO_EMOTE_IDS[thread_rng().gen_range(0, MATURE_HIRO_EMOTE_IDS.len())];
                 get_emote_url(id)
             }
             else if route.name == "Minamoto Kou" {
-                KOU_GIFS[rng.gen_range(0, KOU_GIFS.len())].to_string()
+                KOU_GIFS[thread_rng().gen_range(0, KOU_GIFS.len())].to_string()
             }
             else {
                 get_emote_url(route.emote_id.as_str())
             })
-            .title(format!("Next: {}, {} Ending", &route.name, ending))))?;
+            .title(format!("Next: {}, {} Ending", &route.name, ending)))).await?;
 
     Ok(())
 }
 
-fn get_route() -> &'static Character {
-    let mut rng = thread_rng();
-    let res = rng.gen_range(0, 100);
+async fn get_route() -> &'static Character {
+    let res = thread_rng().gen_range(0, 100);
     unsafe {
-        let routes = &PERSISTENCE_STORAGE.get_instance().routes;
+        let routes = &PERSISTENCE_STORAGE.get_instance().await.routes;
         match res {
             x if x >= 0 && x <= 14 => &routes[0],
             x if x >= 15 && x <= 19 => &routes[1],

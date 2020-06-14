@@ -20,7 +20,7 @@ pub struct PersistenceContainer {
 }
 
 impl PersistenceStorage {
-    fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let raw_routes = std::fs::read("./persistence/routes.json")?;
         let raw_valentines = std::fs::read("./persistence/valentines.json")?;
         let routes_data = String::from_utf8(raw_routes)?;
@@ -29,14 +29,16 @@ impl PersistenceStorage {
         let valentines_str = valentines_data.as_str();
         self.routes = serde_json::from_str(routes_str)?;
         self.valentines = serde_json::from_str(valentines_str)?;
-        self.load_dialog_data()?;
+        self.load_dialog_data().await?;
         self.is_loaded = true;
         Ok(())
     }
 
-    fn load_dialog_data(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let response = reqwest::blocking::get("https://tetsukizone.com/api/dialog")?
-            .json::<HashMap<String, Vec<String>>>()?;
+    async fn load_dialog_data(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let response = reqwest::get("https://tetsukizone.com/api/dialog")
+            .await?
+            .json::<HashMap<String, Vec<String>>>()
+            .await?;
         self.dialog_characters = response["characters"].clone();
         self.dialog_backgrounds = response["backgrounds"].clone();
         self.background_strings = self.dialog_backgrounds.join(", ");
@@ -46,7 +48,7 @@ impl PersistenceStorage {
 }
 
 impl PersistenceContainer {
-    pub fn get_instance(&mut self) -> &PersistenceStorage {
+    pub async fn get_instance(&mut self) -> &PersistenceStorage {
         if self.instance.is_none() {
             self.instance = Some(PersistenceStorage{
                 routes: vec![],
@@ -58,7 +60,7 @@ impl PersistenceContainer {
                 character_strings: String::new()
             });
             if let Some(v) = &mut self.instance {
-                v.load().expect("Error loading routes and valentines data.");
+                v.load().await.expect("Error loading routes and valentines data.");
             }
         }
         self.instance.as_ref().unwrap()

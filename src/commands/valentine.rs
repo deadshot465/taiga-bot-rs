@@ -9,8 +9,8 @@ use crate::PERSISTENCE_STORAGE;
 use crate::shared::Character;
 
 #[command]
-pub fn valentine(context: &mut Context, msg: &Message) -> CommandResult {
-    let valentine = get_valentine();
+pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
+    let valentine = get_valentine().await;
     let is_keitaro = get_first_name(valentine.name.as_str()) == "Keitaro";
     let prefix_suffix = if is_keitaro {
         "~~"
@@ -46,16 +46,15 @@ pub fn valentine(context: &mut Context, msg: &Message) -> CommandResult {
                 .thumbnail(get_emote_url(valentine.emote_id.as_str()))
                 .title(valentine_name.as_str())
         })
-    })?;
+    }).await?;
 
     Ok(())
 }
 
-fn get_valentine() -> &'static Character {
-    let mut rng = thread_rng();
+async fn get_valentine() -> &'static Character {
     unsafe {
-        let valentines = &PERSISTENCE_STORAGE.get_instance().valentines;
-        &valentines[rng.gen_range(0, valentines.len())]
+        let valentines = &PERSISTENCE_STORAGE.get_instance().await.valentines;
+        &valentines[thread_rng().gen_range(0, valentines.len())]
     }
 }
 
