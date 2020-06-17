@@ -5,8 +5,9 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::HashMap;
-use crate::PERSISTENCE_STORAGE;
+use crate::{PERSISTENCE_STORAGE, AUTHENTICATION_SERVICE};
 use crate::shared::validate_dialog;
+use std::borrow::Borrow;
 
 const LENGTH_TOO_SHORT_MSG: &'static str = "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)";
 
@@ -18,9 +19,9 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         return Ok(());
     }
 
-    let mut first_arg = args.single::<String>().unwrap();
-    let mut background = String::new();
-    let mut character = String::new();
+    let first_arg = args.single::<String>().unwrap();
+    let background: String;
+    let character: String;
     unsafe {
         let ref characters = PERSISTENCE_STORAGE.get_instance().await.dialog_characters;
         let ref backgrounds = PERSISTENCE_STORAGE.get_instance().await.dialog_backgrounds;
@@ -47,10 +48,21 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
     request_data.insert("Text", text.as_str());
 
     let client = reqwest::Client::new();
-    let response = client.post("https://tetsukizone.com/api/dialog")
-        .json(&request_data)
-        .send()
-        .await?;
+
+    unsafe {
+        AUTHENTICATION_SERVICE.login().await.unwrap();
+        let response = client.post("https://tetsukizone.com/api/dialog")
+            .json(&request_data)
+            .header("Content-Type", "application/json")
+            .header("Authorization", format!("Bearer {}", AUTHENTICATION_SERVICE.token.as_str()))
+            .send()
+            .await
+            .unwrap();
+
+        let bytes: Vec<u8> = response.bytes().await.unwrap().to_vec();
+        let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
+        msg.channel_id.send_files(&context.http, files, |m| m.content("Here you go~")).await?;
+    }
 
     Ok(())
 }

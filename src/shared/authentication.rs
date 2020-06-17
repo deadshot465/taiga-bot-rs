@@ -1,7 +1,6 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::any::Any;
 
 pub static mut AUTHENTICATION_SERVICE: Authentication = Authentication{
     token: String::new(),
@@ -14,7 +13,7 @@ pub struct Authentication {
     pub token: String,
     #[serde(rename = "userDetails")]
     pub user_details: Option<UserDetails>,
-    pub expiry: Option<DateTime<Utc>>
+    pub expiry: Option<String>
 }
 
 #[derive(Deserialize, Serialize)]
@@ -29,6 +28,20 @@ pub struct UserDetails {
 
 impl Authentication {
     pub async fn login(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        unsafe {
+            if AUTHENTICATION_SERVICE.expiry.is_some() {
+                let expiry_date = AUTHENTICATION_SERVICE
+                    .expiry
+                    .as_ref()
+                    .unwrap()
+                    .parse::<DateTime<Utc>>()
+                    .unwrap();
+                if expiry_date > Utc::now() {
+                    return Ok(());
+                }
+            }
+        }
+
         let mut request_data: HashMap<&str, &str> = HashMap::new();
         request_data.insert("UserName", dotenv!("LOGIN_NAME"));
         request_data.insert("Password", dotenv!("LOGIN_PASS"));
@@ -41,7 +54,9 @@ impl Authentication {
 
         let resp: Authentication = response.json().await?;
 
-        println!("{:?}", resp.token);
+        unsafe {
+            AUTHENTICATION_SERVICE = resp;
+        }
 
         Ok(())
     }
