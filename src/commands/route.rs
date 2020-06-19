@@ -41,7 +41,7 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
     msg.channel_id.send_message(&context.http, |m| m
         .embed(|e| e
             .author(|author| {
-                if let Some(url) = msg.author.avatar.as_ref() {
+                if let Some(url) = msg.author.avatar_url().as_ref() {
                     author.icon_url(url);
                 }
                 author.name(&msg.author.name)

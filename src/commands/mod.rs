@@ -1,5 +1,7 @@
+pub mod about;
 pub mod dialog;
 pub mod enlarge;
+pub mod meal;
 pub mod oracle;
 pub mod pick;
 pub mod ping;

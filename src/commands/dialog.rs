@@ -5,17 +5,22 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::HashMap;
-use crate::{PERSISTENCE_STORAGE, AUTHENTICATION_SERVICE};
-use crate::shared::validate_dialog;
+use crate::{PERSISTENCE_STORAGE, AUTHENTICATION_SERVICE, INTERFACE_SERVICE};
+use crate::shared::{validate_dialog, CommandStrings};
 use std::borrow::Borrow;
-
-const LENGTH_TOO_SHORT_MSG: &'static str = "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)";
 
 #[command]
 pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let interface_string: &CommandStrings;
+    unsafe {
+        let ref interface_service = INTERFACE_SERVICE;
+        let interface = interface_service.interface_strings.as_ref().unwrap();
+        interface_string = &interface.dialog;
+    }
+
     if args.is_empty() || args.len() < 2 {
         msg.channel_id
-            .say(&context.http, LENGTH_TOO_SHORT_MSG).await?;
+            .say(&context.http, interface_string.errors["length_too_short"].as_str()).await?;
         return Ok(());
     }
 

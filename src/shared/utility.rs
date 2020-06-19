@@ -16,7 +16,6 @@ pub async fn search_user(context: &Context, guild: &Guild, query: &str) -> Resul
     }
 
     let mut member: Option<Member> = None;
-    let test = Regex::new(r"")?;
     if USER_MENTION_REGEX.is_match(query) {
         let id = USER_MENTION_REGEX
             .captures(query)
@@ -62,7 +61,7 @@ pub async fn search_user(context: &Context, guild: &Guild, query: &str) -> Resul
     let mut contains: Vec<Member> = vec![];
     let lower_query = query.to_lowercase();
 
-    for (id, user) in guild.members.iter() {
+    for (_, user) in guild.members.iter() {
         if (user.nick.is_some() && user.nick.as_ref().unwrap() == query) || user.user.name == query {
             exact_match.push(user.clone());
         }

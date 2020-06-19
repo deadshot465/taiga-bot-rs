@@ -5,11 +5,19 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::HashMap;
+use crate::shared::CommandStrings;
+use crate::INTERFACE_SERVICE;
 
 const COMMAND_LENGTH: usize = 8;
 
 #[command]
 pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
+    let interface_string: &CommandStrings;
+    unsafe {
+        let ref interface_service = INTERFACE_SERVICE;
+        let interface = interface_service.interface_strings.as_ref().unwrap();
+        interface_string = &interface.pick;
+    }
     let raw_options = &msg.content[COMMAND_LENGTH..];
     let options_unsanitized: Vec<&str> = raw_options.split('|')
         .collect();
@@ -27,7 +35,8 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         .collect();
 
     if options.len() <= 0 {
-        msg.channel_id.say(&context.http, "This command requires at least two options: `pick <option1> | <option2>...`")
+        let message = interface_string.errors["length_too_short"].as_str();
+        msg.channel_id.say(&context.http, message)
             .await?;
         return Ok(());
     }
@@ -52,16 +61,18 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         }
         let mut sorted_list: Vec<_> = options_map.into_iter().collect();
         sorted_list.sort_by(|a, b| b.1.cmp(&a.1));
-        let mut result_message = format!("<:TaigaSmug:702210822310723614> I pick **{}**!\n", &sorted_list[0].0);
+        let mut message = interface_string.result.as_str().replace("{option}", &sorted_list[0].0);
+        message += "\n";
         for pair in sorted_list.iter() {
-            result_message += format!("{} - {} times\n", (*pair).0, (*pair).1).as_str();
+            message += format!("{} - {} times\n", (*pair).0, (*pair).1).as_str();
         }
-        msg.channel_id.say(&context.http, result_message.as_str())
+        msg.channel_id.say(&context.http, message.as_str())
             .await?;
     }
     else {
         let result = options[thread_rng().gen_range(0, options.len())];
-        msg.channel_id.say(&context.http, format!("<:TaigaSmug:702210822310723614> I pick **{}**!", result))
+        let message = interface_string.result.as_str().replace("{option}", result);
+        msg.channel_id.say(&context.http, message)
             .await?;
     }
 

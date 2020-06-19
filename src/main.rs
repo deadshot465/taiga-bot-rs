@@ -10,17 +10,10 @@ use serenity::framework::standard::{
         group
     }
 };
-use taiga_bot_rs::{
-    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND,
-    oracle::ORACLE_COMMAND, pick::PICK_COMMAND,
-    ping::PING_COMMAND, route::ROUTE_COMMAND,
-    ship::SHIP_COMMAND,
-    valentine::VALENTINE_COMMAND,
-    AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE
-};
+use taiga_bot_rs::{about::ABOUT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, oracle::ORACLE_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, route::ROUTE_COMMAND, ship::SHIP_COMMAND, valentine::VALENTINE_COMMAND, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE};
 
 #[group]
-#[commands(dialog, enlarge, oracle, pick, ping, route, ship, valentine)]
+#[commands(about, dialog, enlarge, oracle, pick, ping, route, ship, valentine)]
 struct General;
 
 struct Handler;
@@ -41,6 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     unsafe {
         AUTHENTICATION_SERVICE.login().await?;
         let _ = PERSISTENCE_STORAGE.get_instance().await;
+        INTERFACE_SERVICE.load(true)?;
     }
 
     if let Err(reason) = client.start().await {

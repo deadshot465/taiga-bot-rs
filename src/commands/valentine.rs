@@ -5,11 +5,17 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::PERSISTENCE_STORAGE;
-use crate::shared::Character;
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
+use crate::shared::{Character, CommandStrings};
 
 #[command]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
+    let interface_string: &CommandStrings;
+    unsafe {
+        let ref interface_service = INTERFACE_SERVICE;
+        let interface = interface_service.interface_strings.as_ref().unwrap();
+        interface_string = &interface.valentine;
+    }
     let valentine = get_valentine().await;
     let is_keitaro = get_first_name(valentine.name.as_str()) == "Keitaro";
     let prefix_suffix = if is_keitaro {
@@ -20,19 +26,25 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     };
 
     let footer = if is_keitaro {
-        "See? Told you Keitaro is my boyfriend. Later loser.".to_string()
+        interface_string.infos["keitaro_footer"].clone()
     }
     else {
-        format!("Don't fret if {} isn't your type. Who knows, maybe it's time for a new favorite.", get_first_name(valentine.name.as_str()))
+        interface_string.infos["normal_footer"].clone()
+            .replace("{firstName}", get_first_name(valentine.name.as_str()))
     };
 
     let valentine_name = format!("{}Your valentine is {}{}", prefix_suffix, valentine.name.as_str(), prefix_suffix);
     let color = u32::from_str_radix(&valentine.color.as_str(), 16).unwrap() as i32;
 
+    if is_keitaro {
+        let message = interface_string.infos["keitaro_header"].as_str();
+        msg.channel_id.say(&context.http, message).await?;
+    }
+
     msg.channel_id.send_message(&context.http, |m| {
         m.embed(|e| {
             e.author(|a| {
-                if let Some(url) = msg.author.avatar.as_ref() {
+                if let Some(url) = msg.author.avatar_url().as_ref() {
                     a.icon_url(url);
                 }
                 a.name(&msg.author.name)

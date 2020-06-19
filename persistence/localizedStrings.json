@@ -1,0 +1,729 @@
+﻿[
+  {
+    "lang": "en",
+    "texts": {
+      "presence": [
+        "Handcrafting",
+        "Keitaro",
+        "Sculpting",
+        "Eating",
+        "Sleeping",
+        "Writing",
+        "Working out",
+        "Reading",
+        "F*p*ing",
+        "Why should I tell you, huh?",
+        "Making cookies",
+        "Tinkering",
+        "Campfiring",
+        "Bathing",
+        "Calling"
+      ],
+      "greetings": [
+        "{name} Hey dweeb, welcome to my fanclub server! <:TaigaSmug:702210822310723614>",
+        "Uh, hi, so you're Keitaro's friend, right? Cool, I'm Taiga. Nice to meet you, {name}! Pretty chill around here, so just hang out.",
+        "{name} Amateurs!",
+        "{name} Oh, so you're that new goody-two-shoes everyone's talking about?",
+        "Tch, what are you staring at, {name}? Hmph.",
+        "Hah, {name}! Welcome! Now I've got a new sidekick!",
+        "Hi, {name}! You look even dumber than Keitaro!",
+        "{name} Rule No.1: Only fast food here.",
+        "{name} As I was saying..."
+      ],
+      "random_responses": [
+        "Yeah, that's right!",
+        "Dummy...",
+        "Come on, hurry up!",
+        "What the actual fuck?",
+        "Don't sweat it.",
+        "Don't even think about it.",
+        "Later losers!",
+        "Amateurs!"
+      ],
+      "failed_messages": [
+        "What the actual fuck was that...",
+        "If you have time talking about gibberish, why not check the latest chapter of Winter's Splendor?",
+        "Ugh...What a cringe test.",
+        "GREAT, now I have something new to write on my journal.",
+        "Shit, `{command}` failed.",
+        "I know you are dumb, but not that dumb! You have inputted wrongly.",
+        "Tch! Nice try.",
+        "Can't you even type out a command correctly, idiot?",
+        "Hey dingbat, do the command right next time...What? It totally wasn't *my* fault!",
+        "I don't know which is worse, Eduard and Lee combined, or you."
+      ],
+      "cooldown": "You dumbass need {timeLeft} more second(s) before telling me to do the `{cmd}` command again.",
+      "execution_failure": "There was an error trying to execute that command!",
+      "cvt": {
+        "description": "Helps converting stuff",
+        "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
+        "errors": {
+          "length_too_short": "Temperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.\nThe syntax is `{prefix}cvt <unit-to-convert-to> <value>`",
+          "invalid_unit": "<:Spray:701105694761418774> Valid units are `{units}`.",
+          "wrong_pattern": "<:TaigaUneasy2:700006812673638500> Not sure what you mean by `{input}`",
+          "operation_not_possible": "<:TaigaAck2:700006264507465778> That's not possible, you dummy.",
+          "is_nan": "<:TaigaAck2:700006264507465778> Even Lee would be unable to calculate that.",
+          "generic": "<:TaigaAck2:700006264507465778> Guess something just went wrong."
+        },
+        "result": "<:chibitaiga:697893400891883531> According to Lee's calculations, {0} is {1:n5}{2}."
+      },
+      "dialog": {
+        "description": "Returns an image of a character in Camp Buddy saying anything you want",
+        "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
+        "errors": {
+          "length_too_short": "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "character_not_found": "Sorry, but I don't think that `{character}` is a character in Camp Buddy\nAvailable characters are: `{characters}`.",
+          "no_message": "At least give me something to send, you dumbass.",
+          "message_too_long": "Sorry, the message limit is 120 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "enlarge": {
+        "description": "Returns an enlarged emote",
+        "usage": "Run `enlarge <emote>` to get the full link to `<emote>` at a large size.",
+        "errors": {
+          "no_emote": "What do you think I could do if you don't even give me an emote?"
+        },
+        "result": ""
+      },
+      "help": {
+        "description": "Get the usage of any other command",
+        "usage": "Run `help <command>` to get usage instructions on `<command>`, if it exists. Run `help list` to list possible commands.",
+        "errors": {
+          "no_command": "There is no such command in my journal."
+        },
+        "infos": {
+          "fun": {
+            "icon": "🎮",
+            "type": "Fun"
+          },
+          "util": {
+            "icon": "🔧",
+            "type": "Utilities"
+          },
+          "info": {
+            "icon": "ℹ️",
+            "type": "Information"
+          },
+          "show_list": "Here is a list of all commands and their descriptions.",
+          "show_category": "Here is a list of all `{category}` commands and their descriptions.\n{commandLists}"
+        },
+        "result": "**Category:** `{category}`\n**Usage For Command:** `{name}`\n{usage}{aliases}"
+      },
+      "image": {
+        "description": "Get a random image based on a keyword",
+        "usage": "Run `image <keyword>` to get a random image. Only one keyword is permitted.",
+        "errors": {
+          "length_too_short": "Did you read the help? No keyword! I'd just give you a burger.",
+          "length_too_long": "I told you that only one keyword can be used. You're really dumb. <:TaigaAnnoyed:702646568146436187>",
+          "no_result": "Sorry. Not my problem. Your keyword is too weird that I can't find any image.",
+          "generic": "An error occured. I blame Rhakon again. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here is your image for {keyword}"
+      },
+      "about": {
+        "description": "Shows information about the Taiga bot",
+        "usage": "Show information about the Taiga bot.",
+        "errors": {
+        },
+        "result": ""
+      },
+      "oracle": {
+        "description": "Draw an oracle and know the future of something on your mind",
+        "usage": "Run `oracle` to draw an oracle and know your fortune.",
+        "errors": {
+        },
+        "uis": {
+          "no": "No",
+          "meaning": "Meaning"
+        },
+        "result": "Wish you good luck!"
+      },
+      "ping": {
+        "description": "Returns latency and API ping",
+        "usage": "Run `ping` to get the current latency and API ping.",
+        "errors": {
+        },
+        "infos": {
+          "pinging": "\uD83C\uDFD3 Pinging....",
+          "responding": "\uD83C\uDFD3 Pong!\nLatency is: {latency}ms. API Latency is: {apiLatency}ms."
+        },
+        "result": ""
+      },
+      "route": {
+        "description": "Tells you what route to play next",
+        "usage": "Run `route` to get which route you want to play next.",
+        "errors": {
+        },
+        "infos": {
+          "endings": [
+            "Perfect",
+            "Good",
+            "Bad",
+            "Worst"
+          ],
+          "next": "Next: {name}, {ending} Ending",
+          "age": "Age",
+          "birthday": "Birthday",
+          "animal_motif": "Animal Motif",
+          "footer": "Play {firstName}'s route next. All bois are best bois."
+        },
+        "result": ""
+      },
+      "valentine": {
+        "description": "Tells you your next valentine",
+        "usage": "Run `valentine` to get your next valentine.",
+        "errors": {
+        },
+        "infos": {
+          "keitaro_header": "**Bah, we're already dating and I'm the best. No chance for you, loser.**",
+          "keitaro_footer": "See? Told you Keitaro is my boyfriend. Later loser.",
+          "normal_footer": "Don't fret if {firstName} isn't your type. Who knows, maybe it's time for a new favorite.",
+          "age": "Age",
+          "birthday": "Birthday",
+          "animal_motif": "Animal Motif",
+          "valentine": "{prefixSuffix}Your valentine is {name}{prefixSuffix}"
+        },
+        "result": ""
+      },
+      "ship": {
+        "description": "Ship two users",
+        "usage": "Run `ship <user1> <user2>` to find out the compatibility between the two users!",
+        "errors": {
+          "length_too_short": "This command requires two arguments: `ship <user1> <user2>`",
+          "user_not_found": "No user found for input {user}",
+          "self_match": "You're a perfect match... for yourself!"
+        },
+        "infos": {
+          "title": "{user1} and {user2}",
+          "score": "Your love score is {score}"
+        },
+        "result": ""
+      },
+      "pick": {
+        "description": "Pick from several options",
+        "usage": "Run `pick <option1> | <option2> | <option3>...` to make Taiga pick one option for you. Run `pick <number>times <option1> | <option2> | <option3>...` to make Taiga pick more than once and determine the option that is picked up most times for you.",
+        "errors": {
+          "length_too_short": "This command requires at least two options: `pick <option1> | <option2>...`",
+          "times_too_big": "You can't possible make me pick *that* many times, you dummy. I won't do it."
+        },
+        "result": "<:TaigaSmug:702210822310723614> I pick **{option}**!"
+      },
+      "meal": {
+        "description": "Get a random meal recipe",
+        "usage": "Run `meal` to get a random meal recipe.",
+        "errors": {
+        },
+        "uis": {
+          "video_link": "YouTube Video",
+          "category": "Category",
+          "area": "Area",
+          "footer": "Bon Appétit! Powered by TheMealDB.com."
+        },
+        "result": "Here you go!"
+      },
+      "owoify": {
+        "description": "This command will owoify your text",
+        "usage": "Run `owoify <text>` or `owoify <intensity> <text>` to owoify any text!\nIntensities available are `easy` (default), `medium`, and `hard`.",
+        "errors": {
+          "length_too_short": "...There's nothing to owoify, you dummy.",
+          "length_too_long": "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
+        },
+        "result": "OwO-ified for {author}~!\n\n{text}"
+      },
+      "remind": {
+        "description": "This command will make Taiga remind you in a specific time.",
+        "usage": "Run `remind in <amount> <unit> <message>` to let Taiga remind you after a period of time has passed. Run `remind on <date> <message>` to let Taiga remind you on 0:00AM of a specific date.\nPossible units are: `{units}`.\nThe format for a date is: `YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD`.",
+        "errors": {
+          "length_too_short": "<:TaigaAngry:699705315519889479> You gotta give me a period of time or a date, and a message to make me do my work, you dummy.",
+          "no_such_operation": "Available operations/prepositions are `in <amount> <unit> <message>` and `on <date> <message>`. Available units are: `{units}`.",
+          "past_time": "I'm not a time machine. You can't just tell me to remind you in the past, dweeb.",
+          "no_message": "<:TaigaAngry:699705315519889479> There's no message at all. What the actual fuck?"
+        },
+        "result": "It's {time} in my place, so I will remind you on {dueTime}."
+      },
+      "stats": {
+        "description": "This command will show your records with several commands.",
+        "usage": "Run `stats <command>` to show your records with several commands. Available commands are: `route, valentine`.",
+        "errors": {
+          "length_too_short": "<:TaigaAnnoyed2:704143497921429555> At least give me a command's name.",
+          "no_such_command": "<:TaigaUneasy2:700006812673638500> There's no such command in my record books."
+        },
+        "clear_message": "Record cleared.",
+        "info": "Records for `{command}`",
+        "result": "Here's {user}'s records with `{command}`\n"
+      },
+      "hirosay": {
+        "description": "Returns an image of Hiro saying anything you want",
+        "usage": "Run `hirosay <background> <pose No.> <clothes> <face/expression> <message>` or `hirosay <pose No.> <clothes> <face/expression> <message>` to give you an image of Hiro with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `hirosay help` to get detailed descriptions via DM.",
+        "errors": {
+          "length_too_short": "This command requires four arguments: `hirosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `hirosay help` to get detailed descriptions via DM.",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "no_message": "At least give me something to send, you dumbass.",
+          "message_too_long": "Sorry, the message limit is 140 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "Hiro doesn't have a pose of this number.",
+          "clothes_not_exist": "I heard Hiro doesn't have such clothes.",
+          "face_not_exist": "Knowing Hiro, I know he would never show such face.",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "taigasay": {
+        "description": "Returns an image of Taiga saying anything you want",
+        "usage": "Run `taigasay <background> <pose No.> <clothes> <face/expression> <message>` or `taigasay <pose No.> <clothes> <face/expression> <message>` to give you an image of Taiga with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `taigasay help` to get detailed descriptions via DM.",
+        "errors": {
+          "length_too_short": "This command requires four arguments: `taigasay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `taigasay help` to get detailed descriptions via DM.",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "no_message": "What are you trying to do? Ask me to say nothing? What the actual fuck is that?",
+          "message_too_long": "Sorry, the message limit is 140 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "This pose is too amateur. I won't do it.",
+          "clothes_not_exist": "Meh. Do you really think I have such terrible cloth? I'm not my boyfriend.",
+          "face_not_exist": "Find a real clown to make such loser face for you instead.",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "comic": {
+        "description": "Make a simple and short Camp Buddy comic.",
+        "usage": "Run `comic` and upload the file at the same time to make a simple manga.",
+        "errors": {
+
+        },
+        "result": "Here you go~!"
+      },
+      "keitarosay": {
+        "description": "Returns an image of Keitaro saying anything you want",
+        "usage": "Run `keitarosay <background> <pose No.> <clothes> <face/expression> <message>` or `keitarosay <pose No.> <clothes> <face/expression> <message>` to give you an image of Keitaro with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `keitarosay help` to get detailed descriptions via DM.",
+        "errors": {
+          "length_too_short": "This command requires four arguments: `keitarosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `keitarosay help` to get detailed descriptions via DM.",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "no_message": "Obviously my boyfriend has nothing to tell you.",
+          "message_too_long": "Sorry, the message limit is 140 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "Stop making fun of my boyfriend and ask him to do such silly poses.",
+          "clothes_not_exist": "I decide to buy clothes for my boyfriend, so he won't have a stupid cloth like the one you appointed.",
+          "face_not_exist": "Stop bothering my boyfriend and find a real clown to make such face for you.",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "yoichisay": {
+        "description": "Returns an image of Keitaro saying anything you want",
+        "usage": "Run `yoichisay <background> <pose No.> <clothes> <face/expression> <message>` or `yoichisay <pose No.> <clothes> <face/expression> <message>` to give you an image of Yoichi with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `yoichisay help` to get detailed descriptions via DM.",
+        "errors": {
+          "length_too_short": "This command requires four arguments: `yoichisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yoichisay help` to get detailed descriptions via DM.",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "no_message": "Apparently Yoichi has nothing to tell you.",
+          "message_too_long": "Sorry, the message limit is 140 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "Yoichi doesn't have that kind of pose. Although I want to see it as well. Hah.",
+          "clothes_not_exist": "Yoichi hates clothes after all. He doesn't have that kind of cloth.",
+          "face_not_exist": "If you ask Yoichi to do such face, I bet the wolfboy will be angry as fuck!",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "yurisay": {
+        "description": "Returns an image of Yuri saying anything you want",
+        "usage": "Run `yurisay <background> <pose No.> <clothes> <face/expression> <message>` or `yurisay <pose No.> <clothes> <face/expression> <message>` to give you an image of Yuri with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `yurisay help` to get detailed descriptions via DM.",
+        "errors": {
+          "length_too_short": "This command requires four arguments: `yurisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yurisay help` to get detailed descriptions via DM.",
+          "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+          "no_message": "She probably has nothing but fanfic to talk about.",
+          "message_too_long": "Sorry, the message limit is 140 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+          "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "Does Yuri even have that kind of pose? Don't really care.",
+          "clothes_not_exist": "I don't know and I don't even want to know if she has that cloth.",
+          "face_not_exist": "Now I think about it, I don't really remember if I've ever seen her faces other than being a crazy.",
+          "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "Here you go~!"
+      },
+      "time": {
+        "description": "Query the time of a city",
+        "usage": "Run `time <city name>` to query the current local time of a city.",
+        "errors": {
+          "length_too_short": "This command requires a city name.",
+          "no_result": "Sorry, I couldn't find the city you're querying."
+        },
+        "result": "The current local time of **{city}** is: {time}."
+      }
+    }
+  },
+  {
+    "lang": "jp",
+    "texts": {
+      "presence": [
+        "Handcrafting",
+        "Keitaro",
+        "Sculpting",
+        "Eating",
+        "Sleeping",
+        "Writing",
+        "Working out",
+        "Reading",
+        "F*p*ing",
+        "Why should I tell you, huh?",
+        "Making cookies",
+        "Tinkering",
+        "Campfiring",
+        "Bathing",
+        "Calling"
+      ],
+      "greetings": [
+        "{name} Hey dweeb, welcome to my fanclub server! <:TaigaSmug:702210822310723614>",
+        "Uh, hi, so you're Keitaro's friend, right? Cool, I'm Taiga. Nice to meet you, {name}! Pretty chill around here, so just hang out.",
+        "{name} Amateurs!",
+        "{name} Oh, so you're that new goody-two-shoes everyone's talking about?",
+        "Tch, what are you staring at, {name}? Hmph.",
+        "Hah, {name}! Welcome! Now I've got a new sidekick!",
+        "Hi, {name}! You look even dumber than Keitaro!",
+        "{name} Rule No.1: Only fast food here.",
+        "{name} As I was saying..."
+      ],
+      "random_responses": [
+        "そう、そういうこと！ (Yeah, that's right!)",
+        "アホか… (Dummy...)",
+        "早くしろ！ (Hurry up!)",
+        "なんとバカバカしいこと… (What the actual fuck?)",
+        "黙れ！ (Shut up!)",
+        "そう簡単にできるとは思わないでよ。 (Don't even think it's easy.)",
+        "負け犬！ (Loser!)",
+        "無能だ、てめぇは！ (You're useless!)",
+        "さっさと消えてしまえ！ (Get away from my sight, now!)"
+      ],
+      "failed_messages": [
+        "馬鹿な…",
+        "くだらんことを言う時間があるなら、せめてウィンタースプレンダーを読んでくれ。",
+        "もうここから逃げ出したい…",
+        "新しい記事の素材をもらった。よかったな。",
+        "クソか。`{command}`ていうのはできるわけねぇだろ。",
+        "てめぇは確かに大馬鹿だけど、これほどまでの馬鹿とは思わなかった。",
+        "いいぜ。試してみろ。",
+        "正しい命令を出すのもできねぇの？情けないな。",
+        "おい、馬鹿野郎。今度正しい命令を出してみれば？俺とは絶対関係ないよ。",
+        "さてと、どっちがもっとやばいかな？エデュアルドと李、それともてめぇか？",
+        "やってみろ。どうせこんな命令はきっと失敗するだろう。",
+        "しねぇよ、ばーがー。"
+      ],
+      "cooldown": "馬鹿野郎！もう{timeLeft}秒ぐらい黙ってくれ。その前俺は絶対`{cmd}`をしねぇよ。",
+      "execution_failure": "あの馬鹿馬鹿しい命令を実行するときちょっとやばいことが出てきた。",
+      "cvt": {
+        "description": "測定単位を変換する",
+        "usage": "`cvt <対象単位> <値><ソース単位>`を実行し、`<値>`を`<ソース単位>`から`<対象単位>`に変換する。\n変換できる温度の単位は`{temps}`の値だ。\n変換できる高さの単位は`{heights}`の値だ。",
+        "errors": {
+          "length_too_short": "変換できる温度の単位は`{temps}`の値だ。\n変換できる高さの単位は`{heights}`の値だ。\n構文は`{prefix}cvt <対象単位> <値>`",
+          "invalid_unit": "<:Spray:701105694761418774> 可能な単位は`{units}`だ。",
+          "wrong_pattern": "<:TaigaUneasy2:700006812673638500> `{input}`の意味わからん。",
+          "operation_not_possible": "<:TaigaAck2:700006264507465778> あれはできるわけねぇだろう。クソか。",
+          "is_nan": "<:TaigaAck2:700006264507465778> 李も計算できないだろう。",
+          "generic": "<:TaigaAck2:700006264507465778> なんかやばいことが出てきたらしい。"
+        },
+        "result": "<:chibitaiga:697893400891883531> 李の計算により、{0}は{1:n5}{2}だ。"
+      },
+      "dialog": {
+        "description": "好きなキャップバディ同士に自分が言いたいことを言わせる",
+        "usage": "`dialog <背景> <キャラクター> <メッセージ>`もしくは`dialog <キャラクター> <メッセージ>`を実行し、好きなキャップバディのキャラクターに自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n可能のキャラクターは：`{characters}`",
+        "errors": {
+          "length_too_short": "この命令を使う際は二つの引数が必要だ：`dialog [背景] <キャラクター> <テキスト>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "character_not_found": "ごめん、キャンプバディには`{character}`というキャラクターはいないよ。\n可能のキャラクターは：`{characters}`。",
+          "no_message": "せめて何が言いたいのか教えてくれ、馬鹿野郎。",
+          "message_too_long": "わるい、メッセージの制限は英数字120文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "enlarge": {
+        "description": "拡大された絵文字を取得する",
+        "usage": "`enlarge <絵文字>`を実行し、オリジナルサイズの`<絵文字>`のリンクを取得する。",
+        "errors": {
+          "no_emote": "絵文字でもくれないくせに俺に何を期待するのか？もうちょっと頭使え！"
+        },
+        "result": ""
+      },
+      "help": {
+        "description": "他の命令の説明を取得する",
+        "usage": "`help <命令>`を実行し、`<命令>`の使い方を取得する（もしその命令が存在するなら）。`help list`を実行すると、可能の命令リストを取得できる",
+        "errors": {
+          "no_command": "俺の辞書にはそういう命令が書いてないぞ"
+        },
+        "infos": {
+          "fun": {
+            "icon": "🎮",
+            "type": "面白い"
+          },
+          "util": {
+            "icon": "🔧",
+            "type": "ユーティリティ"
+          },
+          "info": {
+            "icon": "ℹ️",
+            "type": "インフォメーション"
+          },
+          "show_list": "以下はすべての命令のリストとそれぞれの説明。",
+          "show_category": "以下は`{category}`の命令リストとそれぞれの説明：\n{commandLists}"
+        },
+        "result": "**種類：** `{category}`\n**使い方：** `{name}`\n{usage}{aliases}"
+      },
+      "image": {
+        "description": "キーワード検索で乱数の画像を取得する",
+        "usage": "`image <キーワード>`を実行して乱数の画像を取得する。キーワードは一つのみ。",
+        "errors": {
+          "length_too_short": "おい、ちゃんと説明を読んだ？キーワードがねぇぞ！いいだろう、バーガーあげるわ。",
+          "length_too_long": "キーワードは一つのみって言っただろう！本当に脳みそが大丈夫か？ <:TaigaAnnoyed:702646568146436187>",
+          "no_result": "俺の問題じゃない。てめぇのキーワードはおかしいすぎた。何も見つからなかった。",
+          "generic": "おっと、エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "これはお前が探している{keyword}の画像だ。"
+      },
+      "about": {
+        "description": "赤虎たいがの情報を表示する",
+        "usage": "俺様の情報を表示する。",
+        "errors": {
+        },
+        "result": ""
+      },
+      "oracle": {
+        "description": "浅草寺のおみくじを引いて占いをする",
+        "usage": "`oracle`を実行し、自分の運命を占う。",
+        "errors": {
+        },
+        "uis": {
+          "no": "番号",
+          "meaning": "意味"
+        },
+        "result": "グッドラック！"
+      },
+      "ping": {
+        "description": "反応時間とAPIのピング値を取得する",
+        "usage": "`ping`を実行し、今の反応時間とピング値を取得する。",
+        "errors": {
+        },
+        "infos": {
+          "pinging": "\uD83C\uDFD3 ピン…",
+          "responding": "\uD83C\uDFD3 ポン！\n反応時間は：{latency}ミリ秒。API反応時間は：{apiLatency}ミリ秒。"
+        },
+        "result": ""
+      },
+      "route": {
+        "description": "次は誰のルートをプレイするべきか、教えてやろう",
+        "usage": "`route`を実行し、次は誰のルートをプレイするべきかを教える。",
+        "errors": {
+        },
+        "infos": {
+          "endings": [
+            "パーフェクト",
+            "グッド",
+            "バッド",
+            "最悪な"
+          ],
+          "next": "次：{name}、{ending}エンディング",
+          "age": "年齢",
+          "birthday": "誕生日",
+          "animal_motif": "動物モチーフ",
+          "footer": "次は{firstName}のルートをプレイしろ。すべての男の子は立派な男の子だ。"
+        },
+        "result": ""
+      },
+      "valentine": {
+        "description": "次のバレンタインを教える",
+        "usage": "`valentine`を実行し、次のバレンタインを取得する",
+        "errors": {
+        },
+        "infos": {
+          "keitaro_header": "**ちぇ、慶太郎は俺の彼氏だ。君はチャンスがないだ。**",
+          "keitaro_footer": "だろう？慶太郎は俺の彼氏って言っただろう。じゃね、負け犬。",
+          "normal_footer": "{firstName}は君のタイプじゃなくても悩まないで。新しい恋人やタイプを試しても別に悪くないだろう。",
+          "age": "年齢",
+          "birthday": "誕生日",
+          "animal_motif": "動物モチーフ",
+          "valentine": "{prefixSuffix}君のバレンタインは{name}{prefixSuffix}"
+        },
+        "result": ""
+      },
+      "ship": {
+        "description": "二人のユーザーに恋人をさせてみる",
+        "usage": "`ship <ユーザー１> <ユーザー２>`を実行し、もしこの二人が恋人になったら成功確率は一体どれくらいのかを調べる。",
+        "errors": {
+          "length_too_short": "この命令は二つの引数は必要だ：`ship <ユーザー１> <ユーザー２>`",
+          "user_not_found": "{user}というユーザーがいない",
+          "self_match": "自分と自分なら完璧な関係しかないだろう。ばーかー"
+        },
+        "infos": {
+          "title": "{user1}と{user2}",
+          "score": "お前らの恋愛スコアは{score}だ"
+        },
+        "result": ""
+      },
+      "pick": {
+        "description": "複数の選択肢から一つだけを選ぶ",
+        "usage": "`pick <選択肢１> | <選択肢２> | <選択肢３>...`を実行し、難しい選択をたいがに任せる。`pick <回数>times <選択肢１> | <選択肢２> | <選択肢３>...`を実行したら、一回以上選べます。",
+        "errors": {
+          "length_too_short": "この命令は少なくとも二つの引数は必要だ：`pick <option1> | <option2>...`",
+          "times_too_big": "あんなにバカデカい回数は無理だ。俺はしねぇよ。"
+        },
+        "result": "<:TaigaSmug:702210822310723614> 俺が選んだのは**{option}**だ！"
+      },
+      "meal": {
+        "description": "乱数のレシピを取得する",
+        "usage": "`meal`を実行し、乱数のレシピを取得する。",
+        "errors": {
+        },
+        "uis": {
+          "video_link": "YouTubeビデオ",
+          "category": "種類",
+          "area": "エリア",
+          "footer": "どうぞお召し上がりくださいませ！"
+        },
+        "result": "ほらー"
+      },
+      "owoify": {
+        "description": "メッセージをOwO化する",
+        "usage": "`owoify <メッセージ>`もしくは`owoify <レベル> <メッセージ>`を実行し、メッセージをOwO化する！\n可能のレベルは`easy`（デフォルト）、`medium`と`hard`。",
+        "errors": {
+          "length_too_short": "メッセージがないだろう！OwO化したくてもちゃんとメッセージを入力しろ！",
+          "length_too_long": "<:TaigaUneasy2:700006812673638500> 馬鹿馬鹿しいことにもほどがあるだろう。OwO化もそうだ。1,000文字数制限を超えたメッセージはOwO化しねぇ。"
+        },
+        "result": "ほらー{author}のOwO化したメッセージ～！\n\n{text}"
+      },
+      "remind": {
+        "description": "特定の日付もしくは時間にたいがに通知させる",
+        "usage": "`remind in <長さ> <単位> <メッセージ>`を実行し、時間が経ったらたいがに君を通知させる。`remind on <日付> <メッセージ>`を実行し、指定の日付にたいがに通知させる。\n可能の単位は`{units}`。\n日付のフォーマットは`YYYY-MM-DD, YYYY/MM/DD`もしくは`YYYY.MM.DD`だ。",
+        "errors": {
+          "length_too_short": "<:TaigaAngry:699705315519889479> 時間もしくは日付とメッセージがなかったらどうするつもり？アホか。",
+          "no_such_operation": "可能の操作は`in <長さ> <単位> <メッセージ>`と`on <日付> <メッセージ>`。可能の単位は`{units}`だ。",
+          "past_time": "タイムマシンじゃねぇよ。過去の時間に通知することができるわけねぇだろう、馬鹿野郎！",
+          "no_message": "<:TaigaAngry:699705315519889479> メッセージがないだろう！"
+        },
+        "result": "俺のところ現在は{time}だから、{dueTime}にお前を通知するんだ。"
+      },
+      "stats": {
+        "description": "この命令は一部の命令の使用記録を表します。",
+        "usage": "`stats <command>`を実行し、一部の命令の記録を表示する。可能の命令は：`route、valentine`。",
+        "errors": {
+          "length_too_short": "<:TaigaAnnoyed2:704143497921429555> 命令がないならいくら有能でも何もできねんだよ。",
+          "no_such_command": "<:TaigaUneasy2:700006812673638500> 俺の記録の中にこの命令がない。"
+        },
+        "clear_message": "記録が削除されました。",
+        "info": "`{command}`の使用記録",
+        "result": "{user}の`{command}`使用記録は\n"
+      },
+      "hirosay": {
+        "description": "広に自分が言いたいことを言わせる",
+        "usage": "`hirosay <背景> <ポーズ番号> <服> <表情> <メッセージ>`もしくは`hirosay <ポーズ番号> <服> <表情> <メッセージ>`を実行し、秋葉広に自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n`hirosay help`を実行し、詳しい説明をDMで取得する。",
+        "errors": {
+          "length_too_short": "この命令を使う際は四つの引数が必要だ：`hirosay [背景] <ポーズ番号> <服> <表情> <メッセージ>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "no_message": "せめて何が言いたいのか教えてくれ、馬鹿野郎。",
+          "message_too_long": "わるい、メッセージの制限は英数字140文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "広はこの番号のポーズがないんだ！",
+          "clothes_not_exist": "広はこの服を持っていないはずだ。",
+          "face_not_exist": "広は絶対こんな表情をしねぇよ。",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "taigasay": {
+        "description": "たいがに自分が言いたいことを言わせる",
+        "usage": "`taigasay <背景> <ポーズ番号> <服> <表情> <メッセージ>`もしくは`taigasay <ポーズ番号> <服> <表情> <メッセージ>`を実行し、赤虎たいがに自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n`taigasay help`を実行し、詳しい説明をDMで取得する。",
+        "errors": {
+          "length_too_short": "この命令を使う際は四つの引数が必要だ：`taigasay [背景] <ポーズ番号> <服> <表情> <メッセージ>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "no_message": "存在していない言葉を俺に言わせたいのか？馬鹿じゃねぇの。",
+          "message_too_long": "わるい、メッセージの制限は英数字140文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "このポーズがダサすぎた。俺は絶対しねぇ。",
+          "clothes_not_exist": "俺は俺の彼氏じゃない。こんなダサい服は俺が持っていない。",
+          "face_not_exist": "あんな馬鹿馬鹿しい顔は本格的なピエロに任せろ。俺はしねぇよ。",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "comic": {
+        "description": "簡単なキャンプバディ漫画を作る",
+        "usage": "`comic`を実行し、そして同時にファイルをアップロードして、簡単なキャンプバディ漫画を作る。",
+        "errors": {
+
+        },
+        "result": "ほらー"
+      },
+      "keitarosay": {
+        "description": "慶太郎に自分が言いたいことを言わせる",
+        "usage": "`keitarosay <背景> <ポーズ番号> <服> <表情> <メッセージ>`もしくは`keitarosay <ポーズ番号> <服> <表情> <メッセージ>`を実行し、赤虎たいがに自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n`keitarosay help`を実行し、詳しい説明をDMで取得する。",
+        "errors": {
+          "length_too_short": "この命令を使う際は四つの引数が必要だ：`keitarosay [背景] <ポーズ番号> <服> <表情> <メッセージ>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "no_message": "俺の慶太郎はお前と話すことはない。",
+          "message_too_long": "わるい、メッセージの制限は英数字140文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "俺の彼氏を揶揄わないでくれ。慶太郎にそういう馬鹿馬鹿しいポーズをさせないでくれ。",
+          "clothes_not_exist": "今後慶太郎の代わりに彼の服を買おうと決めたから、そういうダサい服はもう全部捨てた。",
+          "face_not_exist": "俺の慶太郎を邪魔しないでくれ。本格的なピエロに任せろ、そういう顔は。",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "yoichisay": {
+        "description": "陽一に自分が言いたいことを言わせる",
+        "usage": "`yoichisay <背景> <ポーズ番号> <服> <表情> <メッセージ>`もしくは`yoichisay <ポーズ番号> <服> <表情> <メッセージ>`を実行し、雪村陽一に自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n`yoichisay help`を実行し、詳しい説明をDMで取得する。",
+        "errors": {
+          "length_too_short": "この命令を使う際は四つの引数が必要だ：`yoichisay [背景] <ポーズ番号> <服> <表情> <メッセージ>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "no_message": "陽一は多分お前と話すことはないだろう。",
+          "message_too_long": "わるい、メッセージの制限は英数字140文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "陽一はそういうポーズがないらしい。俺も見たいんだけど。",
+          "clothes_not_exist": "そもそも陽一は服が嫌いだろう。そういう服を持っていないよ、あいつは。",
+          "face_not_exist": "もし陽一にそういう顔をさせたら絶対怒るわ、あいつは。ははは！",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "yurisay": {
+        "description": "ユリに自分が言いたいことを言わせる",
+        "usage": "`yurisay <背景> <ポーズ番号> <服> <表情> <メッセージ>`もしくは`yurisay <ポーズ番号> <服> <表情> <メッセージ>`を実行し、のもるユリに自分が言いたいことを言わせる！\n可能の背景は：`{backgrounds}`\n`yurisay help`を実行し、詳しい説明をDMで取得する。",
+        "errors": {
+          "length_too_short": "この命令を使う際は四つの引数が必要だ：`yurisay [背景] <ポーズ番号> <服> <表情> <メッセージ>` ([]は選択可能)",
+          "background_not_found": "ごめん、`{background}`という場所は見つからなかった。\n可能の背景は：`{backgrounds}`。",
+          "no_message": "多分腐女子の話しか言えないだろう、彼女は。",
+          "message_too_long": "わるい、メッセージの制限は英数字140文字数、日本語78文字数だ <:TaigaAck2:700006264507465778>",
+          "wrong_character_set": "絵文字、メンションとラテン・日本語文字以外の言語や文字はしねぇよ。",
+          "cooldown": "俺は両手しかないだろう。タコでもないし。少し黙ってくれ <:TaigaAngry:699705315519889479>",
+          "pose_not_exist": "ユリはそういうポーズがあるかな？知りたくないけど。",
+          "clothes_not_exist": "彼女はあういう服があるのかどうかは俺にはわからない。わかりたくもない。",
+          "face_not_exist": "彼女には狂気ような顔しか一度見たこともないな。コワイ。",
+          "generic": "エラーが出てきた。絶対Rhakonのせいだ。 <:TaigaLOL:700004692079542333> - {json}"
+        },
+        "result": "ほらー"
+      },
+      "time": {
+        "description": "あらゆる都市の時間を取得する",
+        "usage": "`time <都市の名前>`を実行し、あらゆる都市の時間を取得する。",
+        "errors": {
+          "length_too_short": "この命令は都市の名前が必要だ。",
+          "no_result": "わるい、入力された名前は見当たらなかった。"
+        },
+        "result": "**{city}**今の時間は：{time}。"
+      }
+    }
+  }
+]

@@ -1,0 +1,120 @@
+{
+  "presence": [
+    "Exorcising",
+    "Practicing Exorcism",
+    "Cleaning Toilet",
+    "Eating",
+    "Sleeping",
+    "Taking Photos",
+    "Cooking",
+    "Doing Chores",
+    "Preparing Dinners",
+    "Preparing Desserts"
+  ],
+  "about": {
+    "description": "Shows information about the Kou bot",
+    "usage": "Show information about the Kou bot.",
+    "errors": {
+    },
+    "infos": {
+    },
+    "result": ""
+  },
+  "dialog": {
+    "description": "Returns an image of a character in Camp Buddy saying anything you want",
+    "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
+    "errors": {
+      "length_too_short": "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)",
+      "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+      "character_not_found": "Sorry, but I don't think that `{character}` is a character in Camp Buddy\nAvailable characters are: `{characters}`.",
+      "no_message": "Uh...I don't know what to send if you don't tell me anything...",
+      "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:KouCrack:705797095742767150>",
+      "wrong_character_set": "I can't do emotes, mentions, non-latin and non-Japanese characters",
+      "cooldown": "Sorry, I still have chores to do. Maybe later? <:KouWorryBlush:705037055096389683>",
+      "generic": "An error just happened. Must be Hanako up to something no good! <:KouAngry:705054323050020896> - {json}"
+    },
+    "infos": {
+    },
+    "result": "Here you go~!"
+  },
+  "enlarge": {
+    "description": "Returns an enlarged emote",
+    "usage": "Run `enlarge <emote>` to get the full link to `<emote>` at a large size.",
+    "errors": {
+      "no_emote": "I don't know which emote to send because there are no emotes..."
+    },
+    "infos": {
+    },
+    "result": ""
+  },
+  "meal": {
+    "description": "Get a random meal recipe",
+    "usage": "Run `meal` to get a random meal recipe.",
+    "errors": {
+    },
+    "infos": {
+    },
+    "result": "Here you go!"
+  },
+  "oracle": {
+    "description": "Draw an oracle and know the future of something on your mind",
+    "usage": "Run `oracle` to draw an oracle and know your fortune.",
+    "errors": {
+    },
+    "infos": {
+    },
+    "result": "Wish you good luck!"
+  },
+  "pick": {
+    "description": "Pick from several options",
+    "usage": "Run `pick <option1> | <option2> | <option3>...` to let Kou pick one option for you. Run `pick <number>times <option1> | <option2> | <option3>...` to let Kou pick more than once and determine the option that is picked up most times for you.",
+    "errors": {
+      "length_too_short": "This command requires at least two options: `pick <option1> | <option2>...`",
+      "times_too_big": "Sorry I'm generally bad at math...I'd lose count if I had to count that many times."
+    },
+    "infos": {
+    },
+    "result": "<:KouPoint:717505202651136051> | I pick **{option}**!"
+  },
+  "ping": {
+    "description": "Returns latency",
+    "usage": "Run `ping` to get the current latency.",
+    "errors": {
+    },
+    "infos": {
+      "pinging": "\uD83C\uDFD3 Pinging....",
+      "responding": "\uD83C\uDFD3 Pong!\nLatency is: {latency}ms."
+    },
+    "result": ""
+  },
+  "route": {
+    "description": "Tells you what route to play next",
+    "usage": "Run `route` to get which route you want to play next.",
+    "errors": {
+    },
+    "infos": {
+    },
+    "result": ""
+  },
+  "ship": {
+    "description": "Ship two users",
+    "usage": "Run `ship <user1> <user2>` to find out the compatibility between the two users!",
+    "errors": {
+    },
+    "infos": {
+    },
+    "result": ""
+  },
+  "valentine": {
+    "description": "Tells you your next valentine",
+    "usage": "Run `valentine` to get your next valentine.",
+    "errors": {
+    },
+    "infos": {
+      "keitaro_header": "I heard someone is super jealous about this guy, but you bet I will protect Nene senpai!",
+      "keitaro_footer": "Don't fret if {firstName} isn't your type. Who knows, maybe it's time for a new favorite.",
+      "normal_footer": "Don't fret if {firstName} isn't your type. Who knows, maybe it's time for a new favorite."
+    },
+    "result": ""
+  }
+}
