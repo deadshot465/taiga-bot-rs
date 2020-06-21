@@ -10,10 +10,15 @@ use serenity::framework::standard::{
         group
     }
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, oracle::ORACLE_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, route::ROUTE_COMMAND, ship::SHIP_COMMAND, valentine::VALENTINE_COMMAND, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE};
+use taiga_bot_rs::{
+    about::ABOUT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND,
+    oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND,
+    ping::PING_COMMAND, route::ROUTE_COMMAND, ship::SHIP_COMMAND,
+    valentine::VALENTINE_COMMAND, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
+};
 
 #[group]
-#[commands(about, dialog, enlarge, oracle, pick, ping, route, ship, valentine)]
+#[commands(about, dialog, enlarge, owoify, oracle, pick, ping, route, ship, valentine)]
 struct General;
 
 struct Handler;

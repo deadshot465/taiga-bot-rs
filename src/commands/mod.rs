@@ -3,6 +3,7 @@ pub mod dialog;
 pub mod enlarge;
 pub mod meal;
 pub mod oracle;
+pub mod owoify;
 pub mod pick;
 pub mod ping;
 pub mod ship;

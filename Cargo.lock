@@ -817,6 +817,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "owoify_rs"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b739481a8b9ee04d7558ba55952447ced6ea9ba8e91253de43b40d526334cdeb"
+dependencies = [
+ "lazy_static",
+ "rand",
+ "regex",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1247,6 +1258,7 @@ dependencies = [
  "dotenv",
  "dotenv_codegen",
  "lazy_static",
+ "owoify_rs",
  "rand",
  "regex",
  "reqwest",

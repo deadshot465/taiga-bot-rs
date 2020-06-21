@@ -8,6 +8,7 @@ pub struct InterfaceStrings {
     pub dialog: CommandStrings,
     pub enlarge: CommandStrings,
     pub meal: CommandStrings,
+    pub owoify: CommandStrings,
     pub oracle: CommandStrings,
     pub pick: CommandStrings,
     pub ping: CommandStrings,

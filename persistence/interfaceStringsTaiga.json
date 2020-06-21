@@ -70,6 +70,17 @@
     },
     "result": "Wish you good luck!"
   },
+  "owoify": {
+    "description": "This command will owoify your text",
+    "usage": "Run `owoify <text>` or `owoify <intensity> <text>` to owoify any text!\nIntensities available are `easy` (default), `medium`, and `hard`.",
+    "errors": {
+      "length_too_short": "...There's nothing to owoify, you dummy.",
+      "length_too_long": "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
+    },
+    "infos": {
+    },
+    "result": "OwO-ified for {author}~!\n\n{text}"
+  },
   "pick": {
     "description": "Pick from several options",
     "usage": "Run `pick <option1> | <option2> | <option3>...` to make Taiga pick one option for you. Run `pick <number>times <option1> | <option2> | <option3>...` to make Taiga pick more than once and determine the option that is picked up most times for you.",

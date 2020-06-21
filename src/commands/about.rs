@@ -15,7 +15,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
 
     if !is_kou {
         let color_code = u32::from_str_radix("e81615", 16).unwrap();
-        let mut description = "Taiga was inspired and loosely based on the amazing Yuuto, which was made and developed by the community, for the community. \n"
+        let description = "Taiga was inspired and loosely based on the amazing Yuuto, which was made and developed by the community, for the community. \n"
             .to_string();
         msg.channel_id.send_message(&context.http, |m| m.embed(|e| e
             .author(|a| a
@@ -41,7 +41,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
     }
     else {
         let color_code = u32::from_str_radix("a4d0da", 16).unwrap();
-        let mut description = "Kou was inspired by the anime/manga Jibaku Shōnen Hanako-kun (a.k.a. Toilet-Bound Hanako-kun). \n"
+        let description = "Kou was inspired by the anime/manga Jibaku Shōnen Hanako-kun (a.k.a. Toilet-Bound Hanako-kun). \n"
             .to_string();
         msg.channel_id.send_message(&context.http, |m| m.embed(|e| e
             .author(|a| a
