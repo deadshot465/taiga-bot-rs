@@ -20,6 +20,21 @@
     },
     "result": ""
   },
+  "cvt": {
+    "description": "Helps converting stuff",
+    "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
+    "errors": {
+      "length_too_short": "Temperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.\nThe syntax is `{prefix}cvt <unit-to-convert-to> <value>`",
+      "invalid_unit": "<:KouWTF:705807205366104126> Valid units are `{units}`.",
+      "wrong_pattern": "<:KouLookup:705054323473645659> I'm not sure what you mean by `{input}`...",
+      "operation_not_possible": "<:KouWorryBlush:705037055096389683> I don't think that's possible...Well maybe apparitions can do that.",
+      "is_nan": "<:KouWorryBlush:705037055096389683> I'd have to ask Hanako if that's possible...",
+      "generic": "<:KouSmilingSpeechlessHead:705037054454792214> Guess something just went wrong."
+    },
+    "infos": {
+    },
+    "result": "<:KouBang:705054435667214367> Alright, that's the best calculation I got! {source} is {amount}{target}."
+  },
   "dialog": {
     "description": "Returns an image of a character in Camp Buddy saying anything you want",
     "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
@@ -46,6 +61,19 @@
     "infos": {
     },
     "result": ""
+  },
+  "image": {
+    "description": "Get a random image based on a keyword",
+    "usage": "Run `image <keyword>` to get a random image. Only one keyword is permitted.",
+    "errors": {
+      "length_too_short": "I can try to ask Mokke to find anything for you, but you need to tell me what you want first! <:KouHehe:705054435352641587>",
+      "length_too_long": "Uhh...Can you be more specific? Like only one keyword at a time, please? <:KouCry:705054435826597928>",
+      "no_result": "Sorry...I don't understand the keyword and cannot find anything... <:KouCry:705054435826597928>",
+      "generic": "An error occured. Must be because of Hanako. <:KouBrave:705182851397845193> - {json}"
+    },
+    "infos": {
+    },
+    "result": "Here is your image for {keyword}"
   },
   "meal": {
     "description": "Get a random meal recipe",
@@ -115,6 +143,18 @@
     "infos": {
     },
     "result": ""
+  },
+  "time": {
+    "description": "Query the time of a city",
+    "usage": "Run `time <city name>` to query the current local time of a city.",
+    "errors": {
+      "length_too_short": "This command requires a city name.",
+      "no_result": "Sorry, I couldn't find the city you're querying."
+    },
+    "infos": {
+
+    },
+    "result": "The current local time of **{city}** is: {time}."
   },
   "valentine": {
     "description": "Tells you your next valentine",

@@ -5,8 +5,10 @@ use std::collections::HashMap;
 pub struct InterfaceStrings {
     pub presence: Vec<String>,
     pub about: CommandStrings,
+    pub cvt: CommandStrings,
     pub dialog: CommandStrings,
     pub enlarge: CommandStrings,
+    pub image: CommandStrings,
     pub meal: CommandStrings,
     pub owoify: CommandStrings,
     pub oracle: CommandStrings,
@@ -14,6 +16,7 @@ pub struct InterfaceStrings {
     pub ping: CommandStrings,
     pub route: CommandStrings,
     pub ship: CommandStrings,
+    pub time: CommandStrings,
     pub valentine: CommandStrings
 }
 

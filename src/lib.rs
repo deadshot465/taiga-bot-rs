@@ -5,9 +5,12 @@ extern crate lazy_static;
 mod commands;
 mod shared;
 pub use commands::{
-    about, dialog, enlarge, owoify, oracle,
-    pick, ping, route, ship, valentine
+    about, convert, dialog, enlarge, image, meal, owoify, oracle,
+    pick, ping, route, ship, time, valentine
 };
-pub use shared::AUTHENTICATION_SERVICE;
-pub use shared::INTERFACE_SERVICE;
-pub use shared::PERSISTENCE_STORAGE;
+pub use shared::{
+    AUTHENTICATION_SERVICE,
+    get_image,
+    INTERFACE_SERVICE,
+    PERSISTENCE_STORAGE
+};

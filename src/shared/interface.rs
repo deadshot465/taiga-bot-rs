@@ -3,7 +3,8 @@ use std::borrow::Borrow;
 
 pub static mut INTERFACE_SERVICE: InterfaceStorage = InterfaceStorage {
     interface_strings: None,
-    is_kou: false
+    is_kou: false,
+    prefix: String::new()
 };
 
 const TAIGA_STRING_PATH: &'static str = "./persistence/interfaceStringsTaiga.json";
@@ -11,7 +12,8 @@ const KOU_STRING_PATH: &'static str = "./persistence/interfaceStringsKou.json";
 
 pub struct InterfaceStorage {
     pub interface_strings: Option<InterfaceStrings>,
-    pub is_kou: bool
+    pub is_kou: bool,
+    pub prefix: String
 }
 
 impl InterfaceStorage {
@@ -32,6 +34,11 @@ impl InterfaceStorage {
         let deserialized: InterfaceStrings = serde_json::from_slice(raw_strings.borrow())?;
         self.interface_strings = Some(deserialized);
         self.is_kou = kou;
+        self.prefix = if kou {
+            "ah!".into()
+        } else {
+            "ah!".into()
+        };
 
         Ok(())
     }

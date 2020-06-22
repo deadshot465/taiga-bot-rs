@@ -28,8 +28,8 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
     let background: String;
     let character: String;
     unsafe {
-        let ref characters = PERSISTENCE_STORAGE.get_instance().await.dialog_characters;
-        let ref backgrounds = PERSISTENCE_STORAGE.get_instance().await.dialog_backgrounds;
+        let characters = PERSISTENCE_STORAGE.dialog_characters.as_ref().unwrap();
+        let backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
         if characters.contains(&first_arg) {
             let mut rng = thread_rng();
             background = backgrounds[rng.gen_range(0, backgrounds.len())].clone();
@@ -40,8 +40,14 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
             character = args.single::<String>().unwrap();
         }
     }
-    let text = args.single::<String>().unwrap();
-    let validation_result = validate_dialog(context, msg, &background, &character, &text);
+    let text = args.remains();
+    if text.is_none() {
+        let error_msg = interface_string.errors["no_message"].as_str();
+        msg.channel_id.say(&context.http, error_msg).await?;
+        return Ok(());
+    }
+    let text_content = String::from(text.unwrap());
+    let validation_result = validate_dialog(context, msg, &background, &character, &text_content);
     if let Err(e) = validation_result.await {
         eprintln!("An error occurred when validating the dialog: {}", e);
         return Ok(());
@@ -50,7 +56,7 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
     let mut request_data = HashMap::new();
     request_data.insert("Background", background.as_str());
     request_data.insert("Character", character.as_str());
-    request_data.insert("Text", text.as_str());
+    request_data.insert("Text", text_content.as_str());
 
     let client = reqwest::Client::new();
 

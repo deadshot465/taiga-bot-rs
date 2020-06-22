@@ -7,6 +7,8 @@ use crate::INTERFACE_SERVICE;
 use std::borrow::Borrow;
 
 #[command]
+#[description = "Shows information about the Taiga bot"]
+#[usage = ""]
 pub async fn about(context: &Context, msg: &Message) -> CommandResult {
     let is_kou: bool;
     unsafe {

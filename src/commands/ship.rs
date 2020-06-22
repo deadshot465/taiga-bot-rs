@@ -152,7 +152,7 @@ async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) ->
 
 async fn find_message(score: u8) -> &'static String {
     unsafe {
-        let ref ship_messages = PERSISTENCE_STORAGE.get_instance().await.ship_messages;
+        let ship_messages = PERSISTENCE_STORAGE.ship_messages.as_ref().unwrap();
         let ref msg = ship_messages
             .iter()
             .filter(|m| score <= m.max_score)

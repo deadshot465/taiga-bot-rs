@@ -9,6 +9,7 @@ use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
 use crate::shared::{Character, CommandStrings};
 
 #[command]
+#[bucket = "lottery"]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {
@@ -65,7 +66,7 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
 
 async fn get_valentine() -> &'static Character {
     unsafe {
-        let valentines = &PERSISTENCE_STORAGE.get_instance().await.valentines;
+        let valentines = PERSISTENCE_STORAGE.valentines.as_ref().unwrap();
         &valentines[thread_rng().gen_range(0, valentines.len())]
     }
 }

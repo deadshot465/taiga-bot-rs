@@ -19,10 +19,10 @@ pub async fn validate_dialog(context: &Context, msg: &Message, background: &Stri
         let interface = interface_service.interface_strings.as_ref().unwrap();
         interface_string = &interface.dialog;
 
-        let ref backgrounds = PERSISTENCE_STORAGE.get_instance().await.dialog_backgrounds;
-        let ref characters = PERSISTENCE_STORAGE.get_instance().await.dialog_characters;
-        let ref background_strings = PERSISTENCE_STORAGE.get_instance().await.background_strings;
-        let ref character_strings = PERSISTENCE_STORAGE.get_instance().await.character_strings;
+        let backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
+        let characters = PERSISTENCE_STORAGE.dialog_characters.as_ref().unwrap();
+        let ref background_strings = PERSISTENCE_STORAGE.background_strings;
+        let ref character_strings = PERSISTENCE_STORAGE.character_strings;
 
         if !backgrounds.contains(background) {
             let message = interface_string.errors["background_not_found"]

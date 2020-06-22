@@ -29,6 +29,7 @@ const KOU_GIFS: [&str; 5] = [
 ];
 
 #[command]
+#[bucket = "lottery"]
 pub async fn route(context: &Context, msg: &Message) -> CommandResult {
     let route = get_route().await;
     let footer = format!("Play {}'s route next. All bois are best bois.", get_first_name(route.name.as_str()));
@@ -70,7 +71,7 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
 async fn get_route() -> &'static Character {
     let res = thread_rng().gen_range(0, 100);
     unsafe {
-        let routes = &PERSISTENCE_STORAGE.get_instance().await.routes;
+        let routes = PERSISTENCE_STORAGE.routes.as_ref().unwrap();
         match res {
             x if x >= 0 && x <= 14 => &routes[0],
             x if x >= 15 && x <= 19 => &routes[1],

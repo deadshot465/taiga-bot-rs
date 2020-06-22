@@ -25,6 +25,21 @@
     },
     "result": ""
   },
+  "cvt": {
+    "description": "Helps converting stuff",
+    "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
+    "errors": {
+      "length_too_short": "Temperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.\nThe syntax is `{prefix}cvt <unit-to-convert-to> <value>`",
+      "invalid_unit": "<:Spray:701105694761418774> Valid units are `{units}`.",
+      "wrong_pattern": "<:TaigaUneasy2:700006812673638500> Not sure what you mean by `{input}`",
+      "operation_not_possible": "<:TaigaAck2:700006264507465778> That's not possible, you dummy.",
+      "is_nan": "<:TaigaAck2:700006264507465778> Even Lee would be unable to calculate that.",
+      "generic": "<:TaigaAck2:700006264507465778> Guess something just went wrong."
+    },
+    "infos": {
+    },
+    "result": "<:chibitaiga:697893400891883531> According to Lee's calculations, {source} is {amount}{target}."
+  },
   "dialog": {
     "description": "Returns an image of a character in Camp Buddy saying anything you want",
     "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
@@ -51,6 +66,19 @@
     "infos": {
     },
     "result": ""
+  },
+  "image": {
+    "description": "Get a random image based on a keyword",
+    "usage": "Run `image <keyword>` to get a random image. Only one keyword is permitted.",
+    "errors": {
+      "length_too_short": "Did you read the help? No keyword! I'd just give you a burger.",
+      "length_too_long": "I told you that only one keyword can be used. You're really dumb. <:TaigaAnnoyed:702646568146436187>",
+      "no_result": "Sorry. Not my problem. Your keyword is too weird that I can't find any image.",
+      "generic": "An error occured. I blame Rhakon again. <:TaigaLOL:700004692079542333> - {json}"
+    },
+    "infos": {
+    },
+    "result": "Here is your image for {keyword}"
   },
   "meal": {
     "description": "Get a random meal recipe",
@@ -120,6 +148,18 @@
     "infos": {
     },
     "result": ""
+  },
+  "time": {
+    "description": "Query the time of a city",
+    "usage": "Run `time <city name>` to query the current local time of a city.",
+    "errors": {
+      "length_too_short": "This command requires a city name.",
+      "no_result": "Sorry, I couldn't find the city you're querying."
+    },
+    "infos": {
+
+    },
+    "result": "The current local time of **{city}** is: {time}."
   },
   "valentine": {
     "description": "Tells you your next valentine",

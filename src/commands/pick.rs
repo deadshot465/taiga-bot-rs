@@ -18,6 +18,13 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         let interface = interface_service.interface_strings.as_ref().unwrap();
         interface_string = &interface.pick;
     }
+
+    if msg.content.len() <= 8 {
+        let error_msg = interface_string.errors["length_too_short"].as_str();
+        msg.channel_id.say(&context.http, error_msg).await?;
+        return Ok(());
+    }
+
     let raw_options = &msg.content[COMMAND_LENGTH..];
     let options_unsanitized: Vec<&str> = raw_options.split('|')
         .collect();
@@ -47,16 +54,23 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         let index = arg.find('t').unwrap();
         let start = arg.find('s').unwrap();
         options[0] = &options[0][(start + 2)..];
-        let times = arg[..index].parse::<i64>()?;
+        let times = arg[..index].parse::<u32>();
         let mut options_map = HashMap::new();
         for option in options.iter() {
-            options_map.insert(*option, 0 as i64);
+            options_map.insert(*option, 0 as u32);
         }
         {
-            let mut rng = thread_rng();
-            for _ in 0..times {
-                *options_map.entry(options[rng.gen_range(0, options.len())])
-                    .or_insert(0) += 1;
+            if let Err(e) = times {
+                let error_msg = interface_string.errors["times_too_big"].as_str();
+                msg.channel_id.say(&context.http, error_msg).await?;
+                return Ok(());
+            }
+            else {
+                let mut rng = thread_rng();
+                for _ in 0..times.unwrap() {
+                    *options_map.entry(options[rng.gen_range(0, options.len())])
+                        .or_insert(0) += 1_u32;
+                }
             }
         }
         let mut sorted_list: Vec<_> = options_map.into_iter().collect();

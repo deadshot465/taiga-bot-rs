@@ -10,9 +10,10 @@ use crate::PERSISTENCE_STORAGE;
 const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026164994049.png?v=1";
 
 #[command]
+#[bucket = "lottery"]
 pub async fn oracle(context: &Context, msg: &Message) -> CommandResult {
     unsafe {
-        let ref oracles = PERSISTENCE_STORAGE.get_instance().await.oracles;
+        let oracles = PERSISTENCE_STORAGE.oracles.as_ref().unwrap();
         let ref oracle = oracles[thread_rng().gen_range(0, oracles.len())];
         let color = u32::from_str_radix("ff0000", 16)?;
 
