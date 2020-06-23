@@ -10,6 +10,7 @@ pub mod owoify;
 pub mod pick;
 pub mod ping;
 pub mod ship;
+pub mod stats;
 pub mod route;
 pub mod time;
 pub mod valentine;

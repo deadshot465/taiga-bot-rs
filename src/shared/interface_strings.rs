@@ -16,6 +16,7 @@ pub struct InterfaceStrings {
     pub ping: CommandStrings,
     pub route: CommandStrings,
     pub ship: CommandStrings,
+    pub stats: CommandStrings,
     pub time: CommandStrings,
     pub valentine: CommandStrings
 }

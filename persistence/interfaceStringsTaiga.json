@@ -149,6 +149,18 @@
     },
     "result": ""
   },
+  "stats": {
+    "description": "This command will show your records with several commands.",
+    "usage": "Run `stats <command>` to show your records with several commands. Available commands are: `route, valentine`.",
+    "errors": {
+      "length_too_short": "<:TaigaAnnoyed2:704143497921429555> At least give me a command's name.",
+      "no_such_command": "<:TaigaUneasy2:700006812673638500> There's no such command in my record books."
+    },
+    "infos": {
+
+    },
+    "result": "Here's {user}'s records with `{command}`\n"
+  },
   "time": {
     "description": "Query the time of a city",
     "usage": "Run `time <city name>` to query the current local time of a city.",

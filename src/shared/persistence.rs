@@ -1,4 +1,4 @@
-use crate::shared::{Character, Oracle, ShipMessage, ConversionTable};
+use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords};
 use std::collections::HashMap;
 use std::borrow::Borrow;
 
@@ -12,7 +12,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     character_strings: String::new(),
     oracles: None,
     ship_messages: None,
-    conversion_table: None
+    conversion_table: None,
+    user_records: None
 };
 
 pub struct PersistenceStorage {
@@ -25,7 +26,8 @@ pub struct PersistenceStorage {
     pub character_strings: String,
     pub oracles: Option<Vec<Oracle>>,
     pub ship_messages: Option<Vec<ShipMessage>>,
-    pub conversion_table: Option<ConversionTable>
+    pub conversion_table: Option<ConversionTable>,
+    pub user_records: Option<HashMap<String, UserRecords>>
 }
 
 impl PersistenceStorage {
@@ -38,17 +40,20 @@ impl PersistenceStorage {
         let raw_oracles = std::fs::read("./persistence/oracles.json")?;
         let raw_ship_messages = std::fs::read("./persistence/shipMessages.json")?;
         let raw_conversion_table = std::fs::read("./persistence/convert.json")?;
+        let raw_user_records = std::fs::read("./persistence/userRecords.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
         let oracles: Vec<Oracle> = serde_json::from_slice(raw_oracles.borrow())?;
         let ship_messages: Vec<ShipMessage> = serde_json::from_slice(raw_ship_messages.borrow())?;
         let conversion_table: ConversionTable = serde_json::from_slice(raw_conversion_table.borrow())?;
+        let user_records: HashMap<String, UserRecords> = serde_json::from_slice(raw_user_records.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
         self.ship_messages = Some(ship_messages);
         self.conversion_table = Some(conversion_table);
+        self.user_records = Some(user_records);
 
         self.load_dialog_data().await?;
         self.is_loaded = true;
