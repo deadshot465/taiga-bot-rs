@@ -8,6 +8,12 @@ use crate::{INTERFACE_SERVICE, get_image};
 use std::borrow::Borrow;
 
 #[command]
+#[aliases("img")]
+#[description = "Get a random image based on a keyword."]
+#[usage = "<keyword>"]
+#[only_in("guilds")]
+#[example = "dog"]
+#[bucket = "utilities"]
 pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {

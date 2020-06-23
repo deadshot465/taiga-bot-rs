@@ -11,6 +11,12 @@ use crate::INTERFACE_SERVICE;
 const COMMAND_LENGTH: usize = 8;
 
 #[command]
+#[aliases("choose")]
+#[description = "Pick from several options."]
+#[usage = "<option1> | <option2> | <option3>..."]
+#[only_in("guilds")]
+#[example = "A | B | C"]
+#[bucket = "utilities"]
 pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {
@@ -60,7 +66,7 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
             options_map.insert(*option, 0 as u32);
         }
         {
-            if let Err(e) = times {
+            if let Err(_) = times {
                 let error_msg = interface_string.errors["times_too_big"].as_str();
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());

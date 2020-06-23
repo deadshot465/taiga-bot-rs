@@ -9,7 +9,12 @@ use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
 use crate::shared::{Character, CommandStrings};
 
 #[command]
-#[bucket = "lottery"]
+#[aliases("v")]
+#[description = "Tells you your next valentine."]
+#[usage = ""]
+#[only_in("guilds")]
+#[example = ""]
+#[bucket = "information"]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {

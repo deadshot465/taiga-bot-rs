@@ -6,7 +6,6 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::shared::CommandStrings;
 use crate::INTERFACE_SERVICE;
-use std::collections::HashMap;
 use chrono::prelude::*;
 
 #[derive(Deserialize, Serialize)]
@@ -17,6 +16,12 @@ struct TimeData {
 }
 
 #[command]
+#[aliases("clock")]
+#[description = "Query the time of a city."]
+#[usage = "<city name>"]
+#[only_in("guilds")]
+#[example = "Hong Kong"]
+#[bucket = "information"]
 pub async fn time(context: &Context, msg: &Message, args: Args) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {

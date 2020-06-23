@@ -6,6 +6,11 @@ use serenity::model::channel::Message;
 use std::time::Instant;
 
 #[command]
+#[description = "Returns latency and API ping."]
+#[usage = ""]
+#[only_in("guilds")]
+#[example = ""]
+#[bucket = "information"]
 pub async fn ping(context: &Context, msg: &Message) -> CommandResult {
     let original_time = Instant::now();
     let ping_msg = msg.channel_id.say(&context.http, "🏓 Pinging...").await;

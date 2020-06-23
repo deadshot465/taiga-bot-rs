@@ -3,40 +3,31 @@ extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
 use serenity::async_trait;
 use serenity::client::Client;
-use serenity::prelude::{EventHandler, Context};
+use serenity::prelude::EventHandler;
 use serenity::framework::standard::{StandardFramework, macros::{
-    group, help
-}, Args, HelpOptions, help_commands, CommandGroup, CommandResult};
+    group
+}};
 use taiga_bot_rs::{
     about::ABOUT_COMMAND, convert::CVT_COMMAND,
-    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND,
+    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP,
     image::IMAGE_COMMAND, meal::MEAL_COMMAND,
     oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND,
     ping::PING_COMMAND, route::ROUTE_COMMAND, ship::SHIP_COMMAND,
     time::TIME_COMMAND, valentine::VALENTINE_COMMAND,
     AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
 };
-use serenity::model::channel::Message;
-use std::collections::HashSet;
-use serenity::model::id::UserId;
-
-#[help]
-#[individual_command_tip = "Hello there."]
-#[command_not_found_text = "Cannot find: `{}`."]
-#[max_levenshtein_distance(3)]
-async fn test_help(context: &Context, msg: &Message, args: Args,
-                   help_options: &'static HelpOptions, groups: &[&'static CommandGroup],
-                   owners: HashSet<UserId>) -> CommandResult {
-    help_commands::with_embeds(context, msg, args, help_options, groups, owners).await
-}
 
 #[group]
-#[commands(oracle, route, valentine)]
-struct Lottery;
+#[commands(dialog, owoify, ship)]
+struct Fun;
 
 #[group]
-#[commands(about, cvt, dialog, enlarge, image, meal, owoify, oracle, pick, ping, route, ship, time, valentine)]
-struct General;
+#[commands(about, meal, oracle, ping, route, time, valentine)]
+struct Information;
+
+#[group]
+#[commands(cvt, enlarge, image, pick)]
+struct Utilities;
 
 struct Handler;
 
@@ -46,14 +37,16 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
     let mut client = Client::new(dotenv!("TOKEN"))
         .event_handler(Handler)
         .framework(StandardFramework::new().configure(|c| c
             .prefix(dotenv!("PREFIX")))
-            .bucket("lottery", |l| l.delay(5)).await
-            .help(&TEST_HELP)
-            .group(&GENERAL_GROUP)
-            .group(&LOTTERY_GROUP)
+            .bucket("information", |l| l.delay(2)).await
+            .help(&CUSTOM_HELP)
+            .group(&FUN_GROUP)
+            .group(&INFORMATION_GROUP)
+            .group(&UTILITIES_GROUP)
             )
         .await
         .expect("Error creating client");

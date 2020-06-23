@@ -14,6 +14,11 @@ const KOU_NAME: &'static str = "Minamoto Kou";
 const HIRO_NAME: &'static str = "Akiba Hiro";
 
 #[command]
+#[description = "Ship two users."]
+#[usage = "<user1> <user2>"]
+#[only_in("guilds")]
+#[example = "Taiga Keitaro"]
+#[bucket = "fun"]
 pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let arg1 = args.single::<String>()?;
     let arg2 = args.single::<String>()?;

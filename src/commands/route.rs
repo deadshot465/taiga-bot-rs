@@ -29,7 +29,12 @@ const KOU_GIFS: [&str; 5] = [
 ];
 
 #[command]
-#[bucket = "lottery"]
+#[aliases("r")]
+#[description = "Tells you what route to play next."]
+#[usage = ""]
+#[only_in("guilds")]
+#[example = ""]
+#[bucket = "information"]
 pub async fn route(context: &Context, msg: &Message) -> CommandResult {
     let route = get_route().await;
     let footer = format!("Play {}'s route next. All bois are best bois.", get_first_name(route.name.as_str()));

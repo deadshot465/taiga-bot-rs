@@ -10,7 +10,12 @@ use crate::PERSISTENCE_STORAGE;
 const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026164994049.png?v=1";
 
 #[command]
-#[bucket = "lottery"]
+#[aliases("fortune")]
+#[description = "Draw an oracle and know the future of something on your mind."]
+#[usage = ""]
+#[only_in("guilds")]
+#[example = ""]
+#[bucket = "information"]
 pub async fn oracle(context: &Context, msg: &Message) -> CommandResult {
     unsafe {
         let oracles = PERSISTENCE_STORAGE.oracles.as_ref().unwrap();
