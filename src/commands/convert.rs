@@ -42,8 +42,8 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
 
     let raw_target_unit = args.single::<String>();
     let raw_source_string = args.single::<String>();
-    let mut target_unit = String::new();
-    let mut source_string = String::new();
+    let target_unit: String;
+    let source_string: String;
 
     if raw_target_unit.is_err() || raw_source_string.is_err() {
         let temps: String = VALID_TEMPERATURES.iter().map(|f| {
@@ -106,7 +106,7 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
         conversion_table = &PERSISTENCE_STORAGE.conversion_table.as_ref().unwrap();
     }
 
-    let mut result = 0_f64;
+    let mut result;
     match target_unit.as_str() {
         "c" => {
             if source_unit == "f" {

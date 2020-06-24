@@ -140,6 +140,136 @@
     },
     "result": ""
   },
+  "say": {
+    "hiro": {
+      "description": "Returns an image of Hiro saying anything you want.",
+      "usage": "Run `hirosay <background> <pose No.> <clothes> <face/expression> <message>` or `hirosay <pose No.> <clothes> <face/expression> <message>` to give you an image of Hiro with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `hirosay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `hirosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `hirosay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "At least give me something to send, you dumbass.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "Hiro doesn't have a pose of this number.",
+        "clothes_not_exist": "I heard Hiro doesn't have such clothes.",
+        "face_not_exist": "Knowing Hiro, I know he would never show such face.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {
+
+      },
+      "result": "Here you go~!"
+    },
+    "taiga": {
+      "description": "Returns an image of Taiga saying anything you want",
+      "usage": "Run `taigasay <background> <pose No.> <clothes> <face/expression> <message>` or `taigasay <pose No.> <clothes> <face/expression> <message>` to give you an image of Taiga with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `taigasay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `taigasay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `taigasay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "What are you trying to do? Ask me to say nothing? What the actual fuck is that?",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "This pose is too amateur. I won't do it.",
+        "clothes_not_exist": "Meh. Do you really think I have such terrible cloth? I'm not my boyfriend.",
+        "face_not_exist": "Find a real clown to make such loser face for you instead.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "keitaro": {
+      "description": "Returns an image of Keitaro saying anything you want",
+      "usage": "Run `keitarosay <background> <pose No.> <clothes> <face/expression> <message>` or `keitarosay <pose No.> <clothes> <face/expression> <message>` to give you an image of Keitaro with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `keitarosay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `keitarosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `keitarosay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "Obviously my boyfriend has nothing to tell you.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "Stop making fun of my boyfriend and ask him to do such silly poses.",
+        "clothes_not_exist": "I decide to buy clothes for my boyfriend, so he won't have a stupid cloth like the one you appointed.",
+        "face_not_exist": "Stop bothering my boyfriend and find a real clown to make such face for you.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "yoichi": {
+      "description": "Returns an image of Keitaro saying anything you want",
+      "usage": "Run `yoichisay <background> <pose No.> <clothes> <face/expression> <message>` or `yoichisay <pose No.> <clothes> <face/expression> <message>` to give you an image of Yoichi with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `yoichisay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `yoichisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yoichisay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "Apparently Yoichi has nothing to tell you.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "Yoichi doesn't have that kind of pose. Although I want to see it as well. Hah.",
+        "clothes_not_exist": "Yoichi hates clothes after all. He doesn't have that kind of cloth.",
+        "face_not_exist": "If you ask Yoichi to do such face, I bet the wolfboy will be angry as fuck!",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "yuri": {
+      "description": "Returns an image of Yuri saying anything you want",
+      "usage": "Run `yurisay <background> <pose No.> <clothes> <face/expression> <message>` or `yurisay <pose No.> <clothes> <face/expression> <message>` to give you an image of Yuri with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `yurisay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `yurisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yurisay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "She probably has nothing but fanfic to talk about.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "Does Yuri even have that kind of pose? Don't really care.",
+        "clothes_not_exist": "I don't know and I don't even want to know if she has that cloth.",
+        "face_not_exist": "Now I think about it, I don't really remember if I've ever seen her faces other than being a crazy.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "kieran": {
+      "description": "Returns an image of Kieran saying anything you want",
+      "usage": "Run `kieransay <background> <pose No.> <clothes> <face/expression> <message>` or `kieransay <pose No.> <clothes> <face/expression> <message>` to give you an image of Kieran with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `kieransay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `kieransay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `kieransay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "Hmph, you should try to say something with Kieran.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "I've never seen Kieran doing such pose.",
+        "clothes_not_exist": "Well, yeah, he likes accessories and some fashionable stuffs, but not that cloth.",
+        "face_not_exist": "Even he's sorta more emotional than me, I don't think he would make such face.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "natsumi": {
+      "description": "Returns an image of Natsumi saying anything you want",
+      "usage": "Run `natsumisay <background> <pose No.> <clothes> <face/expression> <message>` or `natsumisay <pose No.> <clothes> <face/expression> <message>` to give you an image of Natsumi with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `natsumisay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `natsumisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `natsumisay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "Natsumi doesn't seem to like such dirty talks.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "Telling Natsumi to do such humiliating pose will kill him.",
+        "clothes_not_exist": "That kind of cloth won't match his sash.",
+        "face_not_exist": "Natsumi is always chill. He would never make such face.",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    }
+  },
   "ship": {
     "description": "Ship two users",
     "usage": "Run `ship <user1> <user2>` to find out the compatibility between the two users!",

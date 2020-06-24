@@ -1,6 +1,10 @@
-use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords};
+use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use std::collections::HashMap;
 use std::borrow::Borrow;
+
+const VALID_SPECIALIZED_CHARACTERS: [&'static str; 7] = [
+    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi"
+];
 
 pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     routes: None,
@@ -13,7 +17,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     oracles: None,
     ship_messages: None,
     conversion_table: None,
-    user_records: None
+    user_records: None,
+    specialized_info: None
 };
 
 pub struct PersistenceStorage {
@@ -27,7 +32,8 @@ pub struct PersistenceStorage {
     pub oracles: Option<Vec<Oracle>>,
     pub ship_messages: Option<Vec<ShipMessage>>,
     pub conversion_table: Option<ConversionTable>,
-    pub user_records: Option<HashMap<String, UserRecords>>
+    pub user_records: Option<HashMap<String, UserRecords>>,
+    pub specialized_info: Option<HashMap<String, SpecializedInfo>>
 }
 
 impl PersistenceStorage {
@@ -56,6 +62,7 @@ impl PersistenceStorage {
         self.user_records = Some(user_records);
 
         self.load_dialog_data().await?;
+        self.load_specialized_info().await?;
         self.is_loaded = true;
         Ok(())
     }
@@ -71,6 +78,20 @@ impl PersistenceStorage {
         self.dialog_backgrounds = Some(dialog_backgrounds);
         self.background_strings = self.dialog_backgrounds.as_ref().unwrap().join(", ");
         self.character_strings = self.dialog_characters.as_ref().unwrap().join(", ");
+        Ok(())
+    }
+
+    async fn load_specialized_info(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let client = reqwest::Client::new();
+        self.specialized_info = Some(HashMap::new());
+        let specialized_info = self.specialized_info.as_mut().unwrap();
+        for character in VALID_SPECIALIZED_CHARACTERS.iter() {
+            let response = client.get(format!("https://tetsukizone.com/api/dialog/{}", *character).as_str())
+                .send()
+                .await?;
+            let data: SpecializedInfo = response.json().await?;
+            specialized_info.insert(String::from(*character), data);
+        }
         Ok(())
     }
 }

@@ -9,6 +9,7 @@ pub mod oracle;
 pub mod owoify;
 pub mod pick;
 pub mod ping;
+pub mod say;
 pub mod ship;
 pub mod stats;
 pub mod route;

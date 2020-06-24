@@ -18,7 +18,8 @@ pub struct InterfaceStrings {
     pub ship: CommandStrings,
     pub stats: CommandStrings,
     pub time: CommandStrings,
-    pub valentine: CommandStrings
+    pub valentine: CommandStrings,
+    pub say: HashMap<String, CommandStrings>
 }
 
 #[derive(Deserialize, Serialize)]

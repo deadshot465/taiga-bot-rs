@@ -45,7 +45,7 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, Box<dyn std::error::Err
         .await?;
     let data: SearchResult = response.json().await?;
     let modulo = data.total % (ITEM_PER_PAGE as u32);
-    let mut item_no = 0_usize;
+    let item_no: usize;
     {
         let mut rng = thread_rng();
         item_no = if random_page_number == total_pages {

@@ -12,7 +12,8 @@ use taiga_bot_rs::{
     dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP,
     image::IMAGE_COMMAND, meal::MEAL_COMMAND,
     oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND,
-    ping::PING_COMMAND, route::ROUTE_COMMAND, ship::SHIP_COMMAND,
+    ping::PING_COMMAND, route::ROUTE_COMMAND, say::*,
+    ship::SHIP_COMMAND, stats::STATS_COMMAND,
     time::TIME_COMMAND, valentine::VALENTINE_COMMAND,
     AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
 };
@@ -22,8 +23,14 @@ use taiga_bot_rs::{
 struct Fun;
 
 #[group]
-#[commands(about, meal, oracle, ping, route, time, valentine)]
+#[commands(about, meal, oracle, ping, route, stats, time, valentine)]
 struct Information;
+
+#[group]
+#[description = "Returns an image of various characters saying anything you want."]
+#[prefixes("say")]
+#[commands(hirosay, mhirosay, taigasay, keitarosay, yoichisay, yurisay, kieransay, natsumisay)]
+struct Say;
 
 #[group]
 #[commands(cvt, enlarge, image, pick)]
@@ -43,9 +50,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .framework(StandardFramework::new().configure(|c| c
             .prefix(dotenv!("PREFIX")))
             .bucket("information", |l| l.delay(2)).await
+            .bucket("say", |l| l.delay(10).time_span(30).limit(2)).await
             .help(&CUSTOM_HELP)
             .group(&FUN_GROUP)
             .group(&INFORMATION_GROUP)
+            .group(&SAY_GROUP)
             .group(&UTILITIES_GROUP)
             )
         .await

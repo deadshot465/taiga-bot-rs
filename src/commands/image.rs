@@ -23,7 +23,7 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
     }
 
     let keyword = args.single::<String>();
-    let mut result: Vec<u8> = vec![];
+    let result: Vec<u8>;
     if let Ok(s) = &keyword {
         result = get_image(&s).await?;
     }

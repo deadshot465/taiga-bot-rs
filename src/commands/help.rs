@@ -57,7 +57,7 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
                     })
                     .description("Here is a list of all commands and their descriptions.");
 
-                let mut column_no = 0;
+                let column_no = 0;
                 for group in group_names.iter() {
                     let mut cmds = group_commands[*group].iter()
                         .map(|c| c.options.names[0])
