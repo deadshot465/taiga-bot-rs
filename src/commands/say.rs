@@ -4,11 +4,12 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::shared::{CommandStrings, SpecializedInfo};
-use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE, TextError, validate_text, AUTHENTICATION_SERVICE, SpecializedDialog};
+use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE, TextError, validate_text, AUTHENTICATION_SERVICE, SpecializedDialog, AvailableSpecializedOptions};
 use std::collections::HashMap;
 use std::time::Duration;
 use rand::{thread_rng, Rng};
 use std::borrow::Borrow;
+use serenity::utils::Color;
 
 #[command]
 #[aliases("hiro")]
@@ -17,7 +18,14 @@ use std::borrow::Borrow;
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn hirosay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn hirosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "hiro").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "hiro", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -34,7 +42,14 @@ pub async fn hirosay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn mhirosay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn mhirosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "hiro").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "hiro", true).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -51,7 +66,14 @@ pub async fn mhirosay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn taigasay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn taigasay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "taiga").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "taiga", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -68,7 +90,14 @@ pub async fn taigasay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn keitarosay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn keitarosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "keitaro").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "keitaro", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -85,7 +114,14 @@ pub async fn keitarosay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn yoichisay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn yoichisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "yoichi").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "yoichi", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -102,7 +138,14 @@ pub async fn yoichisay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn yurisay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn yurisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "yuri").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "yuri", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -119,7 +162,14 @@ pub async fn yurisay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn kieransay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn kieransay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "kieran").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "kieran", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -136,7 +186,14 @@ pub async fn kieransay(context: &Context, msg: &Message) -> CommandResult {
 #[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
-pub async fn natsumisay(context: &Context, msg: &Message) -> CommandResult {
+pub async fn natsumisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "natsumi").await?;
+            return Ok(());
+        }
+    }
     let result = say(context, msg, "natsumi", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
@@ -286,4 +343,100 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         return Ok(vec![]);
     }
     Ok(vec![])
+}
+
+async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandResult {
+    let character_available_options: &SpecializedInfo;
+    let available_backgrounds: &Vec<String>;
+    unsafe {
+        let options = PERSISTENCE_STORAGE.specialized_info.as_ref().unwrap();
+        character_available_options = &options[character];
+        available_backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
+    }
+
+    let member = msg.member(&context.cache).await.unwrap();
+    let color = u32::from_str_radix("ff6600", 16).unwrap();
+
+    unsafe {
+        if INTERFACE_SERVICE.is_kou {
+            msg.channel_id.say(&context.http, "Check your DM <:KouConfident:705182851754360912>")
+                .await?;
+        }
+        else {
+            msg.channel_id.say(&context.http, "Check your DM <:chibitaiga:697893400891883531>")
+                .await?;
+        }
+    }
+
+    msg.author.direct_message(&context.http, |m| m
+        .embed(|e| {
+            e.author(|a| {
+               if let Some(nick) = member.nick.as_ref() {
+                   a.name(&nick);
+               }
+                else {
+                    a.name(&msg.author.name);
+                }
+                if let Some(url) = msg.author.avatar_url() {
+                    a.icon_url(&url);
+                }
+                a
+            });
+            e.color(Color::from(color));
+            e.description(format!("Details usage for `{}`", character));
+            let mut background_strings: String = available_backgrounds.iter()
+                .map(|s| format!("`{}`, ", s))
+                .collect();
+            e.field("**Backgrounds**", &background_strings[..background_strings.len() - 2], false);
+            e.field("**Total Available Poses (0-indexed)**", character_available_options.poses.len(), false);
+
+            let mut available_options = character_available_options.poses.iter()
+                .map(|p| (p.0, p.1))
+                .collect::<Vec<(&String, &AvailableSpecializedOptions)>>();
+            available_options
+                .sort_by(|a, b| a.0.parse::<u8>().unwrap().cmp(&b.0.parse::<u8>().unwrap()));
+
+            for pair in available_options.iter() {
+                let cloth_title = format!("**Available Clothes for Pose {}**", pair.0);
+                let clothes: String = pair.1.clothes.iter()
+                    .map(|s| format!("`{}`, ", s))
+                    .collect();
+                let face_title = format!("**Available Faces for Pose {}**", pair.0);
+                let faces: String = pair.1.faces.iter()
+                    .map(|s| format!("`{}`, ", s))
+                    .collect();
+
+                e.field(&cloth_title, &clothes[..clothes.len() - 2], false);
+
+                if faces.len() > 1024 {
+                    let mut face_msg_list: Vec<&str> = vec![];
+                    let mut last_start = 0;
+                    let stride = 1000;
+                    let mut last_period_index = 0;
+
+                    loop {
+                        if last_start + stride > faces.len() {
+                            face_msg_list.push(&faces[last_start..]);
+                            break;
+                        }
+                        last_period_index = faces[last_start..last_start + stride]
+                            .rfind(',')
+                            .unwrap();
+                        let string = &faces[last_start..last_period_index];
+                        face_msg_list.push(string);
+                        last_start = last_period_index + 1;
+                    }
+
+                    for s in face_msg_list.iter() {
+                        e.field(&face_title, *s, false);
+                    }
+                }
+                else {
+                    e.field(&face_title, &faces[..faces.len() - 2], false);
+                }
+            }
+            e
+        })).await?;
+
+    Ok(())
 }
