@@ -3,7 +3,7 @@ extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
 use serenity::async_trait;
 use serenity::client::Client;
-use serenity::prelude::EventHandler;
+use serenity::prelude::{EventHandler, Context};
 use serenity::framework::standard::{StandardFramework, macros::{
     group
 }};
@@ -17,6 +17,10 @@ use taiga_bot_rs::{
     time::TIME_COMMAND, valentine::VALENTINE_COMMAND,
     AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
 };
+use serenity::model::gateway::{Ready, Activity};
+use std::borrow::Borrow;
+use rand::{thread_rng, Rng};
+use serenity::model::user::OnlineStatus;
 
 #[group]
 #[commands(dialog, owoify, ship)]
@@ -40,10 +44,27 @@ struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn ready(&self, context: Context, ready: Ready) {
+        unsafe {
+            let presences = INTERFACE_SERVICE
+                .interface_strings
+                .as_ref()
+                .unwrap().presence.borrow();
+            let activity = Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
+            let status = OnlineStatus::Online;
+            context.set_presence(Some(activity), status);
+        }
+    }
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    unsafe {
+        AUTHENTICATION_SERVICE.login().await?;
+        let _ = PERSISTENCE_STORAGE.load().await?;
+        INTERFACE_SERVICE.load(true)?;
+    }
 
     let mut client = Client::new(dotenv!("TOKEN"))
         .event_handler(Handler)
@@ -59,12 +80,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         .await
         .expect("Error creating client");
-
-    unsafe {
-        AUTHENTICATION_SERVICE.login().await?;
-        let _ = PERSISTENCE_STORAGE.load().await?;
-        INTERFACE_SERVICE.load(true)?;
-    }
 
     if let Err(reason) = client.start().await {
         eprintln!("An error occurred while running the client: {:?}", reason);
