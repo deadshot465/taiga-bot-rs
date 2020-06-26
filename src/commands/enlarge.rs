@@ -20,7 +20,6 @@ lazy_static! {
 #[command]
 #[description = "Returns an enlarged emote."]
 #[usage = "<emote>"]
-#[only_in("guilds")]
 #[example = "<emote>"]
 #[bucket = "utilities"]
 pub async fn enlarge(context: &Context, msg: &Message) -> CommandResult {

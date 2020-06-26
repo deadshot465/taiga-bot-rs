@@ -1,3 +1,5 @@
+pub mod services;
+pub mod structures;
 pub mod authentication;
 pub mod character;
 pub mod convert_table;

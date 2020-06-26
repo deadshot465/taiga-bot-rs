@@ -16,7 +16,6 @@ const HIRO_NAME: &'static str = "Akiba Hiro";
 #[command]
 #[description = "Ship two users."]
 #[usage = "<user1> <user2>"]
-#[only_in("guilds")]
 #[example = "Taiga Keitaro"]
 #[bucket = "fun"]
 pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandResult {

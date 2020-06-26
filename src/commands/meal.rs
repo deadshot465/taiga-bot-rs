@@ -32,7 +32,6 @@ struct Meal {
 #[aliases("food")]
 #[description = "Get a random meal recipe."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn meal(context: &Context, msg: &Message) -> CommandResult {

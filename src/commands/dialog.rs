@@ -12,7 +12,6 @@ use std::borrow::Borrow;
 #[command]
 #[description = "Returns an image of a character in Camp Buddy saying anything you want."]
 #[usage = "<background> <character> <message> or dialog <character> <message>"]
-#[only_in("guilds")]
 #[example = "hiro Welcome to Camp Buddy!"]
 #[bucket = "fun"]
 pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> CommandResult {

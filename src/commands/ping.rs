@@ -8,7 +8,6 @@ use std::time::Instant;
 #[command]
 #[description = "Returns latency and API ping."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn ping(context: &Context, msg: &Message) -> CommandResult {

@@ -19,7 +19,6 @@ struct TimeData {
 #[aliases("clock")]
 #[description = "Query the time of a city."]
 #[usage = "<city name>"]
-#[only_in("guilds")]
 #[example = "Hong Kong"]
 #[bucket = "information"]
 pub async fn time(context: &Context, msg: &Message, args: Args) -> CommandResult {

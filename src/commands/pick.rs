@@ -14,7 +14,6 @@ const COMMAND_LENGTH: usize = 8;
 #[aliases("choose")]
 #[description = "Pick from several options."]
 #[usage = "<option1> | <option2> | <option3>..."]
-#[only_in("guilds")]
 #[example = "A | B | C"]
 #[bucket = "utilities"]
 pub async fn pick(context: &Context, msg: &Message) -> CommandResult {

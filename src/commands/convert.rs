@@ -27,7 +27,6 @@ lazy_static! {
 #[aliases("convert")]
 #[description = "Helps converting stuff."]
 #[usage = "<target unit> <value><origin unit>"]
-#[only_in("guilds")]
 #[example = "km 1024m"]
 #[bucket = "utilities"]
 pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandResult {

@@ -10,7 +10,6 @@ use crate::INTERFACE_SERVICE;
 #[command]
 #[description = "This command will owoify your text."]
 #[usage = "<text> or owoify <soft|medium|hard> <text>"]
-#[only_in("guilds")]
 #[example = "hard This is the message to owo! The cutest one!"]
 #[bucket = "fun"]
 pub async fn owoify(context: &Context, msg: &Message, mut args: Args) -> CommandResult {

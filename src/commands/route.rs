@@ -32,7 +32,6 @@ const KOU_GIFS: [&str; 5] = [
 #[aliases("r")]
 #[description = "Tells you what route to play next."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn route(context: &Context, msg: &Message) -> CommandResult {

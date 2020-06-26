@@ -1,4 +1,5 @@
 pub mod about;
+pub mod admin;
 pub mod convert;
 pub mod dialog;
 pub mod enlarge;

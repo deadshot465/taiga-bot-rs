@@ -15,7 +15,6 @@ use serenity::utils::Color;
 #[aliases("hiro")]
 #[description = "Returns an image of Hiro saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn hirosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -39,7 +38,6 @@ pub async fn hirosay(context: &Context, msg: &Message, mut args: Args) -> Comman
 #[aliases("mhiro", "maturehiro", "maturehirosay")]
 #[description = "Returns an image of mature Hiro saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn mhirosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -63,7 +61,6 @@ pub async fn mhirosay(context: &Context, msg: &Message, mut args: Args) -> Comma
 #[aliases("taiga")]
 #[description = "Returns an image of Taiga saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn taigasay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -87,7 +84,6 @@ pub async fn taigasay(context: &Context, msg: &Message, mut args: Args) -> Comma
 #[aliases("keitaro")]
 #[description = "Returns an image of Keitaro saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn keitarosay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -111,7 +107,6 @@ pub async fn keitarosay(context: &Context, msg: &Message, mut args: Args) -> Com
 #[aliases("yoichi")]
 #[description = "Returns an image of Yoichi saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn yoichisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -135,7 +130,6 @@ pub async fn yoichisay(context: &Context, msg: &Message, mut args: Args) -> Comm
 #[aliases("yuri")]
 #[description = "Returns an image of Yuri saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn yurisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -159,7 +153,6 @@ pub async fn yurisay(context: &Context, msg: &Message, mut args: Args) -> Comman
 #[aliases("kieran")]
 #[description = "Returns an image of Kieran saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn kieransay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
@@ -183,7 +176,6 @@ pub async fn kieransay(context: &Context, msg: &Message, mut args: Args) -> Comm
 #[aliases("natsumi")]
 #[description = "Returns an image of Natsumi saying anything you want."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "say"]
 pub async fn natsumisay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {

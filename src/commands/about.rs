@@ -10,7 +10,6 @@ use std::borrow::Borrow;
 #[aliases("credits", "bot")]
 #[description = "Shows information about the bot."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn about(context: &Context, msg: &Message) -> CommandResult {

@@ -13,7 +13,6 @@ const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026
 #[aliases("fortune")]
 #[description = "Draw an oracle and know the future of something on your mind."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn oracle(context: &Context, msg: &Message) -> CommandResult {

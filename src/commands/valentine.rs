@@ -12,7 +12,6 @@ use crate::shared::{Character, CommandStrings};
 #[aliases("v")]
 #[description = "Tells you your next valentine."]
 #[usage = ""]
-#[only_in("guilds")]
 #[example = ""]
 #[bucket = "information"]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {

@@ -11,7 +11,6 @@ use serenity::utils::Color;
 #[description = "This command will show your records with several commands."]
 #[usage = "or stats <command>"]
 #[example = "valentine"]
-#[only_in("guilds")]
 #[bucket = "information"]
 pub async fn stats(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let interface_string: &CommandStrings;

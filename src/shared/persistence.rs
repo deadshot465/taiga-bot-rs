@@ -1,6 +1,7 @@
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use std::collections::HashMap;
 use std::borrow::Borrow;
+use crate::shared::structures::ChannelSettings;
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 7] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi"
@@ -18,7 +19,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     ship_messages: None,
     conversion_table: None,
     user_records: None,
-    specialized_info: None
+    specialized_info: None,
+    channel_settings: None
 };
 
 pub struct PersistenceStorage {
@@ -33,7 +35,8 @@ pub struct PersistenceStorage {
     pub ship_messages: Option<Vec<ShipMessage>>,
     pub conversion_table: Option<ConversionTable>,
     pub user_records: Option<HashMap<String, UserRecords>>,
-    pub specialized_info: Option<HashMap<String, SpecializedInfo>>
+    pub specialized_info: Option<HashMap<String, SpecializedInfo>>,
+    pub channel_settings: Option<ChannelSettings>
 }
 
 impl PersistenceStorage {
@@ -47,6 +50,7 @@ impl PersistenceStorage {
         let raw_ship_messages = std::fs::read("./persistence/shipMessages.json")?;
         let raw_conversion_table = std::fs::read("./persistence/convert.json")?;
         let raw_user_records = std::fs::read("./persistence/userRecords.json")?;
+        let raw_channel_settings = std::fs::read("./persistence/channelSettings.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -60,6 +64,14 @@ impl PersistenceStorage {
         self.ship_messages = Some(ship_messages);
         self.conversion_table = Some(conversion_table);
         self.user_records = Some(user_records);
+
+        if !raw_channel_settings.is_empty() {
+            let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
+            self.channel_settings = Some(channel_settings);
+        }
+        else {
+            self.channel_settings = Some(ChannelSettings::new());
+        }
 
         self.load_dialog_data().await?;
         self.load_specialized_info().await?;
