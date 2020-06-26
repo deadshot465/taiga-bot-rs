@@ -3,6 +3,7 @@ extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
 use log::{debug, error, info};
 use rand::{thread_rng, Rng};
+use regex::Regex;
 use std::borrow::Borrow;
 use std::collections::HashSet;
 use serenity::{
@@ -18,7 +19,8 @@ use serenity::{
     model::{
         channel::Message,
         gateway::{Ready, Activity},
-        user::OnlineStatus
+        user::OnlineStatus,
+        prelude::*
     },
     prelude::{EventHandler, Context}
 };
@@ -34,10 +36,16 @@ use taiga_bot_rs::{
     admin::channel_control::*,
     AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
 };
+use serenity::model::channel::ReactionType;
 
 const ADMIN_COMMANDS: [&'static str; 5] = [
     "allow", "disable", "enable", "ignore", "purge"
 ];
+
+lazy_static::lazy_static! {
+    static ref ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();
+    static ref EMOTE_REGEX: Regex = Regex::new(r"<:(\w+):(\d+)>").unwrap();
+}
 
 #[group]
 #[only_in("guilds")]
@@ -68,8 +76,71 @@ struct Utilities;
 
 struct Handler;
 
+fn hit_or_miss(chance: u8) -> bool {
+    thread_rng().gen_range(0_u8, 100_u8) < chance
+}
+
 #[async_trait]
 impl EventHandler for Handler {
+    async fn message(&self, context: Context, msg: Message) {
+        let bot_id: &str = dotenv!("BOT_ID");
+        let mention_reaction_chance: u8 = dotenv!("MENTION_REACTION_CHANCE").parse::<u8>().unwrap();
+        let reaction_chance: u8 = dotenv!("REACTION_CHANCE").parse::<u8>().unwrap();
+        unsafe {
+            let random_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
+            let messages = random_messages.iter()
+                .find(|m| {
+                    if INTERFACE_SERVICE.is_kou {
+                        m.keyword.as_str() == "kou"
+                    }
+                    else {
+                        m.keyword.as_str() == "taiga"
+                    }
+                }).unwrap();
+
+            // Randomly replies to messages that mention the bot.
+            if msg.content.contains(bot_id) && hit_or_miss(mention_reaction_chance) {
+                let english_msgs = &messages.messages["en"];
+                let index = thread_rng().gen_range(0, english_msgs.len());
+                msg.channel_id.say(&context.http, english_msgs[index].as_str())
+                    .await;
+            }
+
+            // Randomly reacts to messages that contains certain keywords.
+            if !msg.author.bot && hit_or_miss(reaction_chance) {
+                for m in PERSISTENCE_STORAGE.random_messages.as_ref().unwrap().iter() {
+                    let lower_case = msg.content.to_lowercase();
+                    if !lower_case.contains(m.keyword.as_str()) {
+                        continue;
+                    }
+                    if m.keyword.as_str() == "lee" && lower_case.contains("sleep") {
+                        continue;
+                    }
+                    let index = thread_rng().gen_range(0, m.reactions.len());
+                    let reaction = m.reactions[index].as_str();
+                    let emote_regex = &*EMOTE_REGEX;
+                    let animated_regex = &*ANIMATED_REGEX;
+                    if emote_regex.is_match(reaction) {
+                        let animated = animated_regex.is_match(reaction);
+                        let captures = emote_regex.captures(reaction).unwrap();
+                        let emote_name = captures.get(1).unwrap().as_str();
+                        let emote_id = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+                        let reaction_type = ReactionType::Custom {
+                            animated,
+                            id: EmojiId(emote_id),
+                            name: Some(emote_name.to_string())
+                        };
+                        msg.react(&context.http, reaction_type).await;
+                    }
+                    else {
+                        let reaction_type = ReactionType::Unicode(reaction.to_string());
+                        msg.react(&context.http, reaction_type).await;
+                    }
+                }
+            }
+        }
+    }
+
     async fn ready(&self, context: Context, ready: Ready) {
         unsafe {
             let presences: &[String] = INTERFACE_SERVICE
@@ -112,8 +183,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     unsafe {
         AUTHENTICATION_SERVICE.login().await?;
-        let _ = PERSISTENCE_STORAGE.load().await?;
         INTERFACE_SERVICE.load(true)?;
+        let _ = PERSISTENCE_STORAGE.load().await?;
     }
 
     let mut client = Client::new(token)

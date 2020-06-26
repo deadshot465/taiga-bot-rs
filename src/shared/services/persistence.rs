@@ -2,6 +2,7 @@ use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords
 use std::collections::HashMap;
 use std::borrow::Borrow;
 use crate::shared::structures::ChannelSettings;
+use crate::{RandomMessage, INTERFACE_SERVICE};
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 7] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi"
@@ -20,7 +21,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     conversion_table: None,
     user_records: None,
     specialized_info: None,
-    channel_settings: None
+    channel_settings: None,
+    random_messages: None
 };
 
 pub struct PersistenceStorage {
@@ -36,7 +38,8 @@ pub struct PersistenceStorage {
     pub conversion_table: Option<ConversionTable>,
     pub user_records: Option<HashMap<String, UserRecords>>,
     pub specialized_info: Option<HashMap<String, SpecializedInfo>>,
-    pub channel_settings: Option<ChannelSettings>
+    pub channel_settings: Option<ChannelSettings>,
+    pub random_messages: Option<Vec<RandomMessage>>
 }
 
 impl PersistenceStorage {
@@ -51,6 +54,7 @@ impl PersistenceStorage {
         let raw_conversion_table = std::fs::read("./persistence/convert.json")?;
         let raw_user_records = std::fs::read("./persistence/userRecords.json")?;
         let raw_channel_settings = std::fs::read("./persistence/channelSettings.json")?;
+        let raw_random_messages = std::fs::read("./persistence/messages.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -58,12 +62,14 @@ impl PersistenceStorage {
         let ship_messages: Vec<ShipMessage> = serde_json::from_slice(raw_ship_messages.borrow())?;
         let conversion_table: ConversionTable = serde_json::from_slice(raw_conversion_table.borrow())?;
         let user_records: HashMap<String, UserRecords> = serde_json::from_slice(raw_user_records.borrow())?;
+        let random_messages: Vec<RandomMessage> = serde_json::from_slice(raw_random_messages.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
         self.ship_messages = Some(ship_messages);
         self.conversion_table = Some(conversion_table);
         self.user_records = Some(user_records);
+        self.random_messages = Some(random_messages);
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
@@ -88,6 +94,14 @@ impl PersistenceStorage {
         let dialog_backgrounds: Vec<String> = response["backgrounds"].clone();
         self.dialog_characters = Some(dialog_characters);
         self.dialog_backgrounds = Some(dialog_backgrounds);
+
+        unsafe {
+            if INTERFACE_SERVICE.is_kou {
+                let characters = self.dialog_characters.as_mut().unwrap();
+                characters.push("kou".to_string());
+                characters.push("kou2".to_string());
+            }
+        }
         self.background_strings = self.dialog_backgrounds.as_ref().unwrap().join(", ");
         self.character_strings = self.dialog_characters.as_ref().unwrap().join(", ");
         Ok(())

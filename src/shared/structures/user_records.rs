@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct UserRecords {
     pub route: HashMap<String, HashMap<String, u16>>,
     pub valentine: HashMap<String, u16>
