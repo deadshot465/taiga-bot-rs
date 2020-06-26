@@ -1,12 +1,27 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
-use serenity::async_trait;
-use serenity::client::Client;
-use serenity::prelude::{EventHandler, Context};
-use serenity::framework::standard::{StandardFramework, macros::{
-    group, check, hook
-}};
+use log::{debug, error, info};
+use rand::{thread_rng, Rng};
+use std::borrow::Borrow;
+use std::collections::HashSet;
+use serenity::{
+    async_trait,
+    client::{
+        bridge::gateway::GatewayIntents,
+        Client,
+    },
+    framework::standard::{StandardFramework, macros::{
+        group, check, hook
+    }},
+    http::Http,
+    model::{
+        channel::Message,
+        gateway::{Ready, Activity},
+        user::OnlineStatus
+    },
+    prelude::{EventHandler, Context}
+};
 use taiga_bot_rs::{
     about::ABOUT_COMMAND, convert::CVT_COMMAND,
     dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP,
@@ -19,14 +34,6 @@ use taiga_bot_rs::{
     admin::channel_control::*,
     AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
 };
-use serenity::model::gateway::{Ready, Activity};
-use std::borrow::Borrow;
-use rand::{thread_rng, Rng};
-use serenity::model::user::OnlineStatus;
-use serenity::model::channel::Message;
-use serenity::client::bridge::gateway::GatewayIntents;
-use serenity::http::Http;
-use std::collections::HashSet;
 
 const ADMIN_COMMANDS: [&'static str; 5] = [
     "allow", "disable", "enable", "ignore", "purge"
@@ -73,6 +80,7 @@ impl EventHandler for Handler {
             let status = OnlineStatus::Online;
             context.set_presence(Some(activity), status).await;
         }
+        info!("{} is now online!", ready.user.name.as_str());
     }
 }
 
@@ -95,7 +103,7 @@ async fn before(context: &Context, msg: &Message, command_name: &str) -> bool {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
+    env_logger::init();
     let token: &str = dotenv!("TOKEN");
     let http = Http::new_with_token(token);
     let app_info = http.get_current_application_info().await?;
@@ -136,7 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Error creating client");
 
     if let Err(reason) = client.start().await {
-        eprintln!("An error occurred while running the client: {:?}", reason);
+        error!("An error occurred while running the client: {:?}", reason);
     }
 
     Ok(())

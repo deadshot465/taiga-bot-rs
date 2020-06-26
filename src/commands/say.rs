@@ -5,7 +5,6 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::shared::{CommandStrings, SpecializedInfo};
 use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE, TextError, validate_text, AUTHENTICATION_SERVICE, SpecializedDialog, AvailableSpecializedOptions};
-use std::collections::HashMap;
 use std::time::Duration;
 use rand::{thread_rng, Rng};
 use std::borrow::Borrow;
@@ -376,7 +375,7 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
             });
             e.color(Color::from(color));
             e.description(format!("Details usage for `{}`", character));
-            let mut background_strings: String = available_backgrounds.iter()
+            let background_strings: String = available_backgrounds.iter()
                 .map(|s| format!("`{}`, ", s))
                 .collect();
             e.field("**Backgrounds**", &background_strings[..background_strings.len() - 2], false);
