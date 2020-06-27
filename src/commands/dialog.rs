@@ -4,8 +4,7 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use std::collections::HashMap;
-use crate::{PERSISTENCE_STORAGE, AUTHENTICATION_SERVICE, INTERFACE_SERVICE};
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog};
 use crate::shared::{validate_dialog, CommandStrings};
 use std::borrow::Borrow;
 
@@ -57,27 +56,11 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         return Ok(());
     }
 
-    let mut request_data = HashMap::new();
-    request_data.insert("Background", background.as_str());
-    request_data.insert("Character", character.as_str());
-    request_data.insert("Text", text_content.as_str());
-
-    let client = reqwest::Client::new();
-
-    unsafe {
-        AUTHENTICATION_SERVICE.login().await.unwrap();
-        let response = client.post("https://tetsukizone.com/api/dialog")
-            .json(&request_data)
-            .header("Content-Type", "application/json")
-            .header("Authorization", format!("Bearer {}", AUTHENTICATION_SERVICE.token.as_str()))
-            .send()
-            .await
-            .unwrap();
-
-        let bytes: Vec<u8> = response.bytes().await.unwrap().to_vec();
-        let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
-        msg.channel_id.send_files(&context.http, files, |m| m.content("Here you go~")).await?;
-    }
+    let bytes = get_dialog(background.as_str(), character.as_str(), text_content.as_str())
+        .await
+        .unwrap();
+    let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
+    msg.channel_id.send_files(&context.http, files, |m| m.content("Here you go~")).await?;
 
     Ok(())
 }

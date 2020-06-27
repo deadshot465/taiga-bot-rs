@@ -5,7 +5,7 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, UserRecords};
 use crate::shared::{Character, CommandStrings};
 
 #[command]
@@ -64,6 +64,14 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
                 .title(valentine_name.as_str())
         })
     }).await?;
+
+    unsafe {
+        let user_records = PERSISTENCE_STORAGE.user_records.as_mut().unwrap();
+        let user_record = user_records.entry(msg.author.id.0.to_string())
+            .or_insert(UserRecords::new());
+        *user_record.valentine.entry(valentine.name.clone())
+            .or_insert(0) += 1;
+    }
 
     Ok(())
 }

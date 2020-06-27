@@ -1,12 +1,16 @@
-use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
-use std::collections::HashMap;
-use std::borrow::Borrow;
-use crate::shared::structures::ChannelSettings;
+use chrono::{DateTime, Utc};
 use crate::{RandomMessage, INTERFACE_SERVICE};
+use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
+use crate::shared::structures::ChannelSettings;
+use std::borrow::Borrow;
+use std::collections::HashMap;
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 7] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi"
 ];
+
+const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
+const CHANNEL_SETTINGS_PATH: &'static str = "./persistence/channelSettings.json";
 
 pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     routes: None,
@@ -22,7 +26,9 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     user_records: None,
     specialized_info: None,
     channel_settings: None,
-    random_messages: None
+    random_messages: None,
+    last_modified_time: None,
+    presence_timer: None
 };
 
 pub struct PersistenceStorage {
@@ -39,7 +45,9 @@ pub struct PersistenceStorage {
     pub user_records: Option<HashMap<String, UserRecords>>,
     pub specialized_info: Option<HashMap<String, SpecializedInfo>>,
     pub channel_settings: Option<ChannelSettings>,
-    pub random_messages: Option<Vec<RandomMessage>>
+    pub random_messages: Option<Vec<RandomMessage>>,
+    pub last_modified_time: Option<DateTime<Utc>>,
+    pub presence_timer: Option<DateTime<Utc>>
 }
 
 impl PersistenceStorage {
@@ -52,8 +60,8 @@ impl PersistenceStorage {
         let raw_oracles = std::fs::read("./persistence/oracles.json")?;
         let raw_ship_messages = std::fs::read("./persistence/shipMessages.json")?;
         let raw_conversion_table = std::fs::read("./persistence/convert.json")?;
-        let raw_user_records = std::fs::read("./persistence/userRecords.json")?;
-        let raw_channel_settings = std::fs::read("./persistence/channelSettings.json")?;
+        let raw_user_records = std::fs::read(USER_RECORDS_PATH)?;
+        let raw_channel_settings = std::fs::read(CHANNEL_SETTINGS_PATH)?;
         let raw_random_messages = std::fs::read("./persistence/messages.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
@@ -82,6 +90,8 @@ impl PersistenceStorage {
         self.load_dialog_data().await?;
         self.load_specialized_info().await?;
         self.is_loaded = true;
+        self.last_modified_time = Some(Utc::now());
+        self.presence_timer = Some(Utc::now());
         Ok(())
     }
 
@@ -119,5 +129,22 @@ impl PersistenceStorage {
             specialized_info.insert(String::from(*character), data);
         }
         Ok(())
+    }
+
+    pub fn write(&self) {
+        log::info!("Writing persistence data...");
+        let serialized_user_records: Vec<u8> = serde_json::to_vec_pretty(self.user_records.as_ref().unwrap()).unwrap();
+        let serialized_user_records_data: &[u8] = serialized_user_records.borrow();
+        let io_res = std::fs::write(USER_RECORDS_PATH, serialized_user_records_data);
+        if let Err(e) = io_res {
+            log::error!("Error when writing user records: {:?}", e);
+        }
+
+        let serialized_channel_settings: Vec<u8> = serde_json::to_vec_pretty(self.channel_settings.as_ref().unwrap()).unwrap();
+        let serialized_channel_settings_data: &[u8] = serialized_channel_settings.borrow();
+        let io_res = std::fs::write(CHANNEL_SETTINGS_PATH, serialized_channel_settings_data);
+        if let Err(e) = io_res {
+            log::error!("Error when writing channel settings: {:?}", e);
+        }
     }
 }

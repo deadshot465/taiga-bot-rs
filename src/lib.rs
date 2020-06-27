@@ -1,3 +1,4 @@
+#![allow(unused_assignments)]
 #[macro_use]
 extern crate dotenv_codegen;
 #[macro_use]

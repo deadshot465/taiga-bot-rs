@@ -1,11 +1,16 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
+use chrono::{Utc, Duration};
 use log::{debug, error, info};
-use rand::{thread_rng, Rng};
+use rand::{
+    thread_rng, Rng,
+    prelude::*
+};
 use regex::Regex;
 use std::borrow::Borrow;
 use std::collections::HashSet;
+use std::env;
 use serenity::{
     async_trait,
     client::{
@@ -24,18 +29,7 @@ use serenity::{
     },
     prelude::{EventHandler, Context}
 };
-use taiga_bot_rs::{
-    about::ABOUT_COMMAND, convert::CVT_COMMAND,
-    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP,
-    image::IMAGE_COMMAND, meal::MEAL_COMMAND,
-    oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND,
-    ping::PING_COMMAND, route::ROUTE_COMMAND, say::*,
-    ship::SHIP_COMMAND, stats::STATS_COMMAND,
-    time::TIME_COMMAND, valentine::VALENTINE_COMMAND,
-
-    admin::channel_control::*,
-    AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE
-};
+use taiga_bot_rs::{about::ABOUT_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
 use serenity::model::channel::ReactionType;
 
 const ADMIN_COMMANDS: [&'static str; 5] = [
@@ -80,63 +74,189 @@ fn hit_or_miss(chance: u8) -> bool {
     thread_rng().gen_range(0_u8, 100_u8) < chance
 }
 
-#[async_trait]
-impl EventHandler for Handler {
-    async fn message(&self, context: Context, msg: Message) {
-        let bot_id: &str = dotenv!("BOT_ID");
-        let mention_reaction_chance: u8 = dotenv!("MENTION_REACTION_CHANCE").parse::<u8>().unwrap();
-        let reaction_chance: u8 = dotenv!("REACTION_CHANCE").parse::<u8>().unwrap();
-        unsafe {
-            let random_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
-            let messages = random_messages.iter()
-                .find(|m| {
-                    if INTERFACE_SERVICE.is_kou {
-                        m.keyword.as_str() == "kou"
-                    }
-                    else {
-                        m.keyword.as_str() == "taiga"
-                    }
-                }).unwrap();
+async fn handle_self_mentions(context: &Context, msg: &Message) {
+    let bot_id: &str = dotenv!("BOT_ID");
+    let mention_reaction_chance: u8 = dotenv!("MENTION_REACTION_CHANCE").parse::<u8>().unwrap();
+    unsafe {
+        let random_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
+        let messages = random_messages.iter()
+            .find(|m| {
+                if INTERFACE_SERVICE.is_kou {
+                    m.keyword.as_str() == "kou"
+                }
+                else {
+                    m.keyword.as_str() == "taiga"
+                }
+            }).unwrap();
 
-            // Randomly replies to messages that mention the bot.
-            if msg.content.contains(bot_id) && hit_or_miss(mention_reaction_chance) {
+        // Randomly replies to messages that mention the bot.
+        if msg.content.contains(bot_id) && hit_or_miss(mention_reaction_chance) {
+            let english_msgs = &messages.messages["en"];
+            let index = thread_rng().gen_range(0, english_msgs.len());
+            msg.channel_id.say(&context.http, english_msgs[index].as_str())
+                .await
+                .expect("Failed to reply to mention.");
+        }
+    }
+}
+
+async fn handle_reactions(context: &Context, msg: &Message) {
+    if msg.author.bot {
+        return;
+    }
+    let reaction_chance: u8 = dotenv!("REACTION_CHANCE").parse::<u8>().unwrap();
+    unsafe {
+        // Randomly reacts to messages that contains certain keywords.
+        if hit_or_miss(reaction_chance) {
+            for m in PERSISTENCE_STORAGE.random_messages.as_ref().unwrap().iter() {
+                let lower_case = msg.content.to_lowercase();
+                if !lower_case.contains(m.keyword.as_str()) {
+                    continue;
+                }
+                if m.keyword.as_str() == "lee" && lower_case.contains("sleep") {
+                    continue;
+                }
+                let index = thread_rng().gen_range(0, m.reactions.len());
+                let reaction = m.reactions[index].as_str();
+                let emote_regex = &*EMOTE_REGEX;
+                let animated_regex = &*ANIMATED_REGEX;
+                if emote_regex.is_match(reaction) {
+                    let animated = animated_regex.is_match(reaction);
+                    let captures = emote_regex.captures(reaction).unwrap();
+                    let emote_name = captures.get(1).unwrap().as_str();
+                    let emote_id = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+                    let reaction_type = ReactionType::Custom {
+                        animated,
+                        id: EmojiId(emote_id),
+                        name: Some(emote_name.to_string())
+                    };
+                    msg.react(&context.http, reaction_type).await.expect("Failed to react.");
+                }
+                else {
+                    let reaction_type = ReactionType::Unicode(reaction.to_string());
+                    msg.react(&context.http, reaction_type).await.expect("Failed to react.");
+                }
+            }
+        }
+    }
+}
+
+async fn handle_replies(context: &Context, msg: &Message) {
+    if msg.author.bot {
+        return;
+    }
+    let lower_case = msg.content.to_lowercase();
+    unsafe {
+        let all_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
+
+        let should_reply = all_messages.iter()
+            .any(|m| lower_case.contains(m.keyword.as_str()));
+        if !should_reply {
+            return;
+        }
+
+        let random_reply_chance: u8 = dotenv!("RDM_REPLY_CHANCE").parse::<u8>().unwrap();
+        let should_reply = hit_or_miss(random_reply_chance);
+        if !should_reply {
+            return;
+        }
+
+        if INTERFACE_SERVICE.is_kou {
+            if lower_case.contains("kou") {
+                let messages = all_messages
+                    .iter()
+                    .find(|m| m.keyword.as_str() == "kou")
+                    .unwrap();
                 let english_msgs = &messages.messages["en"];
                 let index = thread_rng().gen_range(0, english_msgs.len());
                 msg.channel_id.say(&context.http, english_msgs[index].as_str())
-                    .await;
+                    .await
+                    .expect("Failed to perform random reply.");
+                return;
+            }
+        }
+        else {
+            let specialized_reply_chance: u8 = dotenv!("SPECIALIZED_CHANCE").parse::<u8>().unwrap();
+            if hit_or_miss(specialized_reply_chance) {
+                let backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds
+                    .as_ref()
+                    .unwrap();
+                let index = thread_rng().gen_range(0, backgrounds.len());
+                let background = backgrounds[index].as_str();
+                if lower_case.contains("hiro") {
+                    let character = "taiga";
+                    let text = "Hiro will be terribly wrong if he thinks he can steal Keitaro from me!";
+                    let bytes = get_dialog(background, character, text).await.unwrap();
+                    let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
+                    msg.channel_id.send_files(&context.http, files, |m| m.content(""))
+                        .await
+                        .expect("Failed to send specialized reply for Hiro.");
+
+                    return;
+                }
+                else if lower_case.contains("aiden")
+                {
+                    let bytes = get_image("hamburger").await.unwrap();
+                    let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
+                    msg.channel_id
+                        .say(&context.http, "Three orders of double-quarter-pounder cheeseburgers! Two large fries and one large soda!\nBurger patties well-done, three slices of pickles for each! No mayonnaise! Just ketchup and mustard!")
+                        .await
+                        .expect("Failed to send specialized reply for Aiden.");
+                    msg.channel_id.send_files(&context.http, files, |m| m.content(""))
+                        .await
+                        .expect("Failed to send specialized photo for Aiden.");
+                    return;
+                }
+            }
+            else {
+                let mut shuffled_messages = (*all_messages).to_vec();
+                {
+                    let mut rng = thread_rng();
+                    shuffled_messages.shuffle(&mut rng);
+                }
+                for message in shuffled_messages.iter() {
+                    if !lower_case.contains(&message.keyword) {
+                        continue;
+                    }
+                    let m = message.messages.get("en").unwrap();
+                    let index = thread_rng().gen_range(0, m.len());
+                    msg.channel_id.say(&context.http, m[index].as_str())
+                        .await.expect("Failed to perform random reply.");
+                    break;
+                }
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl EventHandler for Handler {
+    async fn message(&self, context: Context, msg: Message) {
+        unsafe {
+            handle_self_mentions(&context, &msg).await;
+            handle_reactions(&context, &msg).await;
+            handle_replies(&context, &msg).await;
+
+            // Update last modified time of persistence storage and write data every 5 minutes.
+            let last_modified_time = PERSISTENCE_STORAGE.last_modified_time.as_ref().unwrap();
+            if last_modified_time < &Utc::now() {
+                let persistence = &mut PERSISTENCE_STORAGE;
+                persistence.write();
+                persistence.last_modified_time = Some(Utc::now() + Duration::minutes(5));
             }
 
-            // Randomly reacts to messages that contains certain keywords.
-            if !msg.author.bot && hit_or_miss(reaction_chance) {
-                for m in PERSISTENCE_STORAGE.random_messages.as_ref().unwrap().iter() {
-                    let lower_case = msg.content.to_lowercase();
-                    if !lower_case.contains(m.keyword.as_str()) {
-                        continue;
-                    }
-                    if m.keyword.as_str() == "lee" && lower_case.contains("sleep") {
-                        continue;
-                    }
-                    let index = thread_rng().gen_range(0, m.reactions.len());
-                    let reaction = m.reactions[index].as_str();
-                    let emote_regex = &*EMOTE_REGEX;
-                    let animated_regex = &*ANIMATED_REGEX;
-                    if emote_regex.is_match(reaction) {
-                        let animated = animated_regex.is_match(reaction);
-                        let captures = emote_regex.captures(reaction).unwrap();
-                        let emote_name = captures.get(1).unwrap().as_str();
-                        let emote_id = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
-                        let reaction_type = ReactionType::Custom {
-                            animated,
-                            id: EmojiId(emote_id),
-                            name: Some(emote_name.to_string())
-                        };
-                        msg.react(&context.http, reaction_type).await;
-                    }
-                    else {
-                        let reaction_type = ReactionType::Unicode(reaction.to_string());
-                        msg.react(&context.http, reaction_type).await;
-                    }
-                }
+            // Update presence every 60 minutes.
+            let presence_timer = PERSISTENCE_STORAGE.presence_timer.as_ref().unwrap();
+            if presence_timer < &Utc::now() {
+                let presences: &[String] = INTERFACE_SERVICE
+                    .interface_strings
+                    .as_ref()
+                    .unwrap().presence.borrow();
+                let activity = Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
+                let status = OnlineStatus::Online;
+                context.set_presence(Some(activity), status).await;
+                let persistence = &mut PERSISTENCE_STORAGE;
+                persistence.presence_timer = Some(Utc::now() + Duration::hours(1));
             }
         }
     }
@@ -175,6 +295,10 @@ async fn before(context: &Context, msg: &Message, command_name: &str) -> bool {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
+    let args = env::args().collect::<Vec<String>>();
+    let args = args.iter()
+        .map(|s| s.to_lowercase())
+        .collect::<Vec<String>>();
     let token: &str = dotenv!("TOKEN");
     let http = Http::new_with_token(token);
     let app_info = http.get_current_application_info().await?;
@@ -183,7 +307,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     unsafe {
         AUTHENTICATION_SERVICE.login().await?;
-        INTERFACE_SERVICE.load(true)?;
+        INTERFACE_SERVICE.load(if args.contains(&"kou".to_string()) {
+            true
+        } else {
+            false
+        })?;
         let _ = PERSISTENCE_STORAGE.load().await?;
     }
 

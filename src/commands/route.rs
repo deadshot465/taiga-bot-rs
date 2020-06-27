@@ -5,8 +5,9 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::PERSISTENCE_STORAGE;
+use crate::{PERSISTENCE_STORAGE, UserRecords};
 use crate::shared::Character;
+use std::collections::HashMap;
 
 const MATURE_HIRO_EMOTE_IDS: [&str; 5] = [
     "703591584305774662",
@@ -68,6 +69,15 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
                 get_emote_url(route.emote_id.as_str())
             })
             .title(format!("Next: {}, {} Ending", &route.name, ending)))).await?;
+    unsafe {
+        let user_records = PERSISTENCE_STORAGE.user_records.as_mut().unwrap();
+        let user_record = user_records.entry(msg.author.id.0.to_string())
+            .or_insert(UserRecords::new());
+        let r = user_record.route.entry(route.name.clone())
+            .or_insert(HashMap::new());
+        *r.entry(format!("{} Ending", ending))
+            .or_insert(0) += 1;
+    }
 
     Ok(())
 }
