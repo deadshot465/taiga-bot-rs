@@ -400,26 +400,26 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
                 e.field(&cloth_title, &clothes[..clothes.len() - 2], false);
 
                 if faces.len() > 1024 {
-                    let mut face_msg_list: Vec<&str> = vec![];
+                    let mut face_msg_list: Vec<String> = vec![];
                     let mut last_start = 0;
                     let stride = 1000;
                     let mut last_period_index = 0;
-
                     loop {
                         if last_start + stride > faces.len() {
-                            face_msg_list.push(&faces[last_start..]);
+                            face_msg_list.push((&faces[last_start..]).to_string());
                             break;
                         }
-                        last_period_index = faces[last_start..last_start + stride]
-                            .rfind(',')
-                            .unwrap();
-                        let string = &faces[last_start..last_period_index];
-                        face_msg_list.push(string);
+                        let slice = &faces[last_start..last_start + stride];
+                        last_period_index = slice
+                            .rfind(",")
+                            .unwrap() + last_start;
+                        let slice = &faces[last_start..last_period_index];
+                        face_msg_list.push(slice.to_string());
                         last_start = last_period_index + 1;
                     }
 
                     for s in face_msg_list.iter() {
-                        e.field(&face_title, *s, false);
+                        e.field(&face_title, s.as_str(), false);
                     }
                 }
                 else {

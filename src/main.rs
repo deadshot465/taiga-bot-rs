@@ -32,8 +32,8 @@ use serenity::{
 use taiga_bot_rs::{about::ABOUT_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
 use serenity::model::channel::ReactionType;
 
-const ADMIN_COMMANDS: [&'static str; 5] = [
-    "allow", "disable", "enable", "ignore", "purge"
+const ADMIN_COMMANDS: [&'static str; 7] = [
+    "allow", "cvt", "convert", "disable", "enable", "ignore", "purge"
 ];
 
 lazy_static::lazy_static! {
@@ -114,6 +114,9 @@ async fn handle_reactions(context: &Context, msg: &Message) {
                     continue;
                 }
                 if m.keyword.as_str() == "lee" && lower_case.contains("sleep") {
+                    continue;
+                }
+                if m.keyword.as_str() != "kou" && INTERFACE_SERVICE.is_kou {
                     continue;
                 }
                 let index = thread_rng().gen_range(0, m.reactions.len());
@@ -293,7 +296,7 @@ async fn before(context: &Context, msg: &Message, command_name: &str) -> bool {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let args = env::args().collect::<Vec<String>>();
     let args = args.iter()
