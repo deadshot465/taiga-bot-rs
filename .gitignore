@@ -1,2 +1,4 @@
 /target
 .env
+/persistence/channelSettings.json
+/persistence/userRecords.json
