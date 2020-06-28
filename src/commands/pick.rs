@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use serenity::framework::standard::{macros::{
     command
-}, CommandResult};
+}, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::HashMap;
@@ -16,7 +16,7 @@ const COMMAND_LENGTH: usize = 8;
 #[usage = "<option1> | <option2> | <option3>..."]
 #[example = "A | B | C"]
 #[bucket = "utilities"]
-pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
+pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {
         let ref interface_service = INTERFACE_SERVICE;
@@ -24,13 +24,26 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         interface_string = &interface.pick;
     }
 
-    if msg.content.len() <= 8 {
+    if args.is_empty() || args.len() == 0 {
         let error_msg = interface_string.errors["length_too_short"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
         return Ok(());
     }
 
-    let raw_options = &msg.content[COMMAND_LENGTH..];
+    let first_arg = args.single::<String>().unwrap();
+    let mut is_multiple = false;
+    if first_arg.to_lowercase().ends_with("times") {
+        if args.is_empty() || args.len() == 0 {
+            let error_msg = interface_string.errors["length_too_short"].as_str();
+            msg.channel_id.say(&context.http, error_msg).await?;
+            return Ok(());
+        }
+        else {
+            is_multiple = true;
+        }
+    }
+
+    let raw_options = args.remains().unwrap();
     let options_unsanitized: Vec<&str> = raw_options.split('|')
         .collect();
     let mut options: Vec<&str> = options_unsanitized
@@ -45,6 +58,9 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
             }
         })
         .collect();
+    if !is_multiple {
+        options.push(first_arg.as_str());
+    }
 
     if options.len() <= 0 {
         let message = interface_string.errors["length_too_short"].as_str();
@@ -53,13 +69,9 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         return Ok(());
     }
 
-    let raw_times: Vec<&str> = options[0].split(' ').collect();
-    let arg = raw_times[0].trim().to_lowercase();
-    if arg.ends_with("times") {
-        let index = arg.find('t').unwrap();
-        let start = arg.find('s').unwrap();
-        options[0] = &options[0][(start + 2)..];
-        let times = arg[..index].parse::<u32>();
+    if is_multiple {
+        let index = first_arg.find('t').unwrap();
+        let times = &first_arg[..index].parse::<u32>();
         let mut options_map = HashMap::new();
         for option in options.iter() {
             options_map.insert(*option, 0 as u32);
@@ -72,7 +84,7 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
             }
             else {
                 let mut rng = thread_rng();
-                for _ in 0..times.unwrap() {
+                for _ in 0..*times.as_ref().unwrap() {
                     *options_map.entry(options[rng.gen_range(0, options.len())])
                         .or_insert(0) += 1_u32;
                 }
@@ -93,10 +105,6 @@ pub async fn pick(context: &Context, msg: &Message) -> CommandResult {
         let message = interface_string.result.as_str().replace("{option}", result);
         msg.channel_id.say(&context.http, message)
             .await?;
-    }
-
-    for x in options.iter() {
-        println!("{}", x);
     }
 
     Ok(())
