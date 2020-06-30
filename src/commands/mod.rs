@@ -13,6 +13,7 @@ pub mod ping;
 pub mod say;
 pub mod ship;
 pub mod stats;
+pub mod remind;
 pub mod route;
 pub mod time;
 pub mod valentine;

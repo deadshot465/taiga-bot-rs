@@ -159,6 +159,18 @@
     },
     "result": ""
   },
+  "remind": {
+    "description": "This command will make Kou remind you in a specific time.",
+    "usage": "Run `remind in <amount> <unit> <message>` to let Kou remind you after a period of time has passed. Run `remind on <date> <message>` to let Kou remind you on 0:00AM of a specific date.\nPossible units are: `{units}`.\nThe format for a date is: `YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD`.",
+    "errors": {
+      "length_too_short": "<:KouAngry:705054323050020896> I need a specific date and time to do this...",
+      "no_such_operation": "Available operations/prepositions are `in <amount> <unit> <message>` and `on <date> <message>`. Available units are: `{units}`.",
+      "past_time": "The past is past. Even I can't go back... <:KouCry:705054435826597928>",
+      "no_message": "<:KouSmilingSpeechless:705037054836473936> So I should just...call you? Because you didn't tell me what to say..."
+    },
+    "infos": {},
+    "result": "It's {time} in my place, so I will remind you on {dueTime}."
+  },
   "route": {
     "description": "Tells you what route to play next",
     "usage": "Run `route` to get which route you want to play next.",

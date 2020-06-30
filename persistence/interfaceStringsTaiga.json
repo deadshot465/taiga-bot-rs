@@ -169,6 +169,18 @@
     },
     "result": ""
   },
+  "remind": {
+    "description": "This command will make Taiga remind you in a specific time.",
+    "usage": "Run `remind in <amount> <unit> <message>` to let Taiga remind you after a period of time has passed. Run `remind on <date> <message>` to let Taiga remind you on 0:00AM of a specific date.\nPossible units are: `{units}`.\nThe format for a date is: `YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD`.",
+    "errors": {
+      "length_too_short": "<:TaigaAngry:699705315519889479> You gotta give me a period of time or a date, and a message to make me do my work, you dummy.",
+      "no_such_operation": "Available operations/prepositions are `in <amount> <unit> <message>` and `on <date> <message>`. Available units are: `{units}`.",
+      "past_time": "I'm not a time machine. You can't just tell me to remind you in the past, dweeb.",
+      "no_message": "<:TaigaAngry:699705315519889479> There's no message at all. What the actual fuck?"
+    },
+    "infos": {},
+    "result": "It's {time} in my place, so I will remind you on {dueTime}."
+  },
   "route": {
     "description": "Tells you what route to play next",
     "usage": "Run `route` to get which route you want to play next.",
