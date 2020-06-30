@@ -9,7 +9,7 @@ use rand::{
 };
 use regex::Regex;
 use std::borrow::Borrow;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use serenity::{
     async_trait,
@@ -38,7 +38,7 @@ const ADMIN_COMMANDS: [&'static str; 7] = [
 
 lazy_static::lazy_static! {
     static ref ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();
-    static ref EMOTE_REGEX: Regex = Regex::new(r"<:(\w+):(\d+)>").unwrap();
+    static ref EMOTE_REGEX: Regex = Regex::new(r"<a?:(\w+):(\d+)>").unwrap();
 }
 
 #[group]
@@ -145,12 +145,19 @@ async fn handle_reactions(context: &Context, msg: &Message) {
 }
 
 async fn handle_replies(context: &Context, msg: &Message) {
+    unsafe {
+        if PERSISTENCE_STORAGE.channel_settings.as_ref().unwrap()
+            .ignored_channels.contains(&msg.channel_id.0) {
+            return;
+        }
+    }
     if msg.author.bot {
         return;
     }
     let lower_case = msg.content.to_lowercase();
     unsafe {
         let all_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
+        let random_reply_chance: u8 = dotenv!("RDM_REPLY_CHANCE").parse::<u8>().unwrap();
 
         let should_reply = all_messages.iter()
             .any(|m| lower_case.contains(m.keyword.as_str()));
@@ -158,14 +165,13 @@ async fn handle_replies(context: &Context, msg: &Message) {
             return;
         }
 
-        let random_reply_chance: u8 = dotenv!("RDM_REPLY_CHANCE").parse::<u8>().unwrap();
         let should_reply = hit_or_miss(random_reply_chance);
         if !should_reply {
             return;
         }
 
         if INTERFACE_SERVICE.is_kou {
-            if lower_case.contains("kou") {
+            if lower_case.contains("kou") && !lower_case.contains("mikkou") {
                 let messages = all_messages
                     .iter()
                     .find(|m| m.keyword.as_str() == "kou")
@@ -221,6 +227,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
                     if !lower_case.contains(&message.keyword) {
                         continue;
                     }
+                    if message.keyword.as_str() == "lee" && lower_case.contains("sleep") {
+                        continue;
+                    }
                     let m = message.messages.get("en").unwrap();
                     let index = thread_rng().gen_range(0, m.len());
                     msg.channel_id.say(&context.http, m[index].as_str())
@@ -232,34 +241,81 @@ async fn handle_replies(context: &Context, msg: &Message) {
     }
 }
 
+#[hook]
+async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
+    let failed_messages: &Vec<String>;
+    unsafe {
+        failed_messages = &INTERFACE_SERVICE.interface_strings.as_ref().unwrap()
+            .failed_messages;
+    }
+    let index = thread_rng().gen_range(0, failed_messages.len());
+    let response = failed_messages[index].replace("{command}", cmd);
+    msg.channel_id.say(&context.http, &response).await
+        .expect("Failed to show failed messages.");
+}
+
+#[hook]
+async fn message_received(context: &Context, msg: &Message) {
+    unsafe {
+        handle_self_mentions(context, msg).await;
+        handle_reactions(context, msg).await;
+        handle_replies(context, msg).await;
+
+        // Update last modified time of persistence storage and write data every 5 minutes.
+        let last_modified_time = PERSISTENCE_STORAGE.last_modified_time.as_ref().unwrap();
+        if last_modified_time < &Utc::now() {
+            let persistence = &mut PERSISTENCE_STORAGE;
+            persistence.write();
+            persistence.last_modified_time = Some(Utc::now() + Duration::minutes(5));
+        }
+
+        // Update presence every 60 minutes.
+        let presence_timer = PERSISTENCE_STORAGE.presence_timer.as_ref().unwrap();
+        if presence_timer < &Utc::now() {
+            let presences: &[String] = INTERFACE_SERVICE
+                .interface_strings
+                .as_ref()
+                .unwrap().presence.borrow();
+            let activity = Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
+            let status = OnlineStatus::Online;
+            context.set_presence(Some(activity), status).await;
+            let persistence = &mut PERSISTENCE_STORAGE;
+            persistence.presence_timer = Some(Utc::now() + Duration::hours(1));
+        }
+    }
+}
+
 #[async_trait]
 impl EventHandler for Handler {
-    async fn message(&self, context: Context, msg: Message) {
+    async fn guild_member_addition(&self, context: Context, guild_id: GuildId, member: Member) {
+        let greetings: &Vec<String>;
         unsafe {
-            handle_self_mentions(&context, &msg).await;
-            handle_reactions(&context, &msg).await;
-            handle_replies(&context, &msg).await;
+            greetings = &INTERFACE_SERVICE.interface_strings
+                .as_ref()
+                .unwrap()
+                .greetings;
+        }
+        let greeting: String;
+        {
+            let mut rng = thread_rng();
+            greeting = greetings[rng.gen_range(0, greetings.len())]
+                .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
+        }
+        let mut general_channels: Vec<&str> = vec![];
+        general_channels.push(dotenv!("GENCHN"));
+        general_channels.push(dotenv!("TESTGENCHN"));
+        general_channels.push(dotenv!("KOUGENCHN"));
+        general_channels.push(dotenv!("ECC_GENCHAN"));
 
-            // Update last modified time of persistence storage and write data every 5 minutes.
-            let last_modified_time = PERSISTENCE_STORAGE.last_modified_time.as_ref().unwrap();
-            if last_modified_time < &Utc::now() {
-                let persistence = &mut PERSISTENCE_STORAGE;
-                persistence.write();
-                persistence.last_modified_time = Some(Utc::now() + Duration::minutes(5));
-            }
-
-            // Update presence every 60 minutes.
-            let presence_timer = PERSISTENCE_STORAGE.presence_timer.as_ref().unwrap();
-            if presence_timer < &Utc::now() {
-                let presences: &[String] = INTERFACE_SERVICE
-                    .interface_strings
-                    .as_ref()
-                    .unwrap().presence.borrow();
-                let activity = Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
-                let status = OnlineStatus::Online;
-                context.set_presence(Some(activity), status).await;
-                let persistence = &mut PERSISTENCE_STORAGE;
-                persistence.presence_timer = Some(Utc::now() + Duration::hours(1));
+        let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id.channels(&context.http)
+            .await.unwrap();
+        for channel in general_channels.iter() {
+            let guild = guild_channels
+                .get(&ChannelId::from(channel.parse::<u64>().unwrap()));
+            if let Some(c) = guild {
+                c.say(&context.http, &greeting).await
+                    .expect("Failed to greet the newly added member.");
+                return;
             }
         }
     }
@@ -333,6 +389,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             .owners(owners)
             .prefix(dotenv!("PREFIX")))
             .before(before)
+            .normal_message(message_received)
+            .unrecognised_command(unknown_command)
             .bucket("information", |l| l.delay(2)).await
             .bucket("say", |l| l.delay(10).time_span(30).limit(2)).await
             .help(&CUSTOM_HELP)

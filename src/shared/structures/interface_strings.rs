@@ -4,6 +4,9 @@ use std::collections::HashMap;
 #[derive(Deserialize, Serialize)]
 pub struct InterfaceStrings {
     pub presence: Vec<String>,
+    pub greetings: Vec<String>,
+    pub random_responses: Vec<String>,
+    pub failed_messages: Vec<String>,
     pub about: CommandStrings,
     pub cvt: CommandStrings,
     pub dialog: CommandStrings,

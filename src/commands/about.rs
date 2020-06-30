@@ -63,7 +63,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
                 "Taiga reactions and feedback shared by: \n" +
                 "**Kirito#9286**, **Kachiryoku#0387**, and countless Camp Buddy fans. \n" +
                 "Kou Bot is licensed under GNU GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html \n")
-            .footer(|f| f.text("Kou Bot: Release 1.5 | 2020-06-19"))
+            .footer(|f| f.text("Kou Bot: Release 1.5 | 2020-06-30"))
             .thumbnail("https://cdn.discordapp.com/emojis/448579316171669545.png")))
             .await?;
     }
