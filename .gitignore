@@ -2,3 +2,4 @@
 .env
 /persistence/channelSettings.json
 /persistence/userRecords.json
+/persistence/reminders.json
