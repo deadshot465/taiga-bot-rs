@@ -29,7 +29,7 @@ use serenity::{
     },
     prelude::{EventHandler, Context}
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
+use taiga_bot_rs::{about::ABOUT_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
 use serenity::model::channel::ReactionType;
 
 const ADMIN_COMMANDS: [&'static str; 7] = [
@@ -65,7 +65,7 @@ struct Information;
 struct Say;
 
 #[group]
-#[commands(cvt, enlarge, image, pick)]
+#[commands(cvt, enlarge, image, pick, remind)]
 struct Utilities;
 
 struct Handler;

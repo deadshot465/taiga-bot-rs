@@ -7,6 +7,6 @@ mod commands;
 mod shared;
 pub use commands::{
     about, admin, convert, dialog, enlarge, help, image, meal, oracle,
-    owoify, pick, ping, route, say, ship, stats, time, valentine
+    owoify, pick, ping, route, remind, say, ship, stats, time, valentine
 };
 pub use shared::*;

@@ -1,8 +1,13 @@
 use serenity::prelude::*;
 use serenity::model::channel::Message;
-use serenity::framework::standard::{Args, CommandResult};
+use serenity::framework::standard::{
+    Args, CommandResult,
+    macros::{
+        command
+    }
+};
 use crate::{CommandStrings, INTERFACE_SERVICE, PERSISTENCE_STORAGE, Reminder};
-use chrono::{DateTime, Duration, Local};
+use chrono::{DateTime, Duration, Local, TimeZone, ParseResult};
 
 const PREPOSITIONS: [&'static str; 2] = [
     "in", "on"
@@ -97,14 +102,57 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                 }
                 (*entry).message = message.unwrap().to_string();
                 let result_msg = interface_string.result
-                    .replace("{time}", &Local::now().to_string())
-                    .replace("{dueTime}", &(*entry).datetime.to_string());
+                    .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                    .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
                 msg.channel_id.say(&context.http, &result_msg).await?;
+                PERSISTENCE_STORAGE.write();
                 return Ok(());
             }
         },
         "on" => {
+            let datetime = args.single::<String>();
+            if let Err(_) = datetime {
+                msg.channel_id.say(&context.http, "The inputted date and time is either incorrect or missing.")
+                    .await?;
+                return Ok(());
+            }
+            let sanitized = datetime.unwrap() + "00:00:00";
+            let formats: [&str; 3] = [
+                "%Y-%m-%d %H:%M:%S",
+                "%Y/%m/%d %H:%M:%S",
+                "%Y.%m.%d %H:%M:%S"
+            ];
+            let mut datetime: ParseResult<DateTime<Local>> = Ok(Local::now());
+            for f in formats.iter() {
+                datetime = Local.datetime_from_str(sanitized.as_str(), *f);
+                if datetime.is_ok() {
+                    break;
+                }
+            }
+            if let Err(_) = datetime {
+                msg.channel_id.say(&context.http, "The inputted format of the date and time is incorrect.")
+                    .await?;
+                return Ok(());
+            }
 
+            let message = args.remains();
+            if message.is_none() {
+                let error_msg = interface_string.errors["no_message"].as_str();
+                msg.channel_id.say(&context.http, error_msg).await?;
+                return Ok(());
+            }
+            unsafe {
+                let reminders = PERSISTENCE_STORAGE.reminders.as_mut().unwrap();
+                let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
+                (*entry).datetime = datetime.unwrap();
+                (*entry).message = message.unwrap().to_string();
+                let result_msg = interface_string.result
+                    .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                    .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
+                msg.channel_id.say(&context.http, &result_msg).await?;
+                PERSISTENCE_STORAGE.write();
+                return Ok(());
+            }
         }
         _ => ()
     }
