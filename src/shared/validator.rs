@@ -60,20 +60,16 @@ pub async fn validate_dialog(context: &Context, msg: &Message, background: &Stri
                 return Err("Message not found.".to_string());
             },
             TextError::LengthTooLong => {
-                if JAPANESE_REGEX.is_match(text) && text.len() > 78 || text.len() > 180 {
-                    let message = interface_string.errors["message_too_long"].as_str();
-                    msg.channel_id
-                        .say(&context.http, message).await.unwrap();
-                    return Err("Message too long.".to_string());
-                }
+                let message = interface_string.errors["message_too_long"].as_str();
+                msg.channel_id
+                    .say(&context.http, message).await.unwrap();
+                return Err("Message too long.".to_string());
             },
             TextError::WrongCharacterSet => {
-                if EMOTE_MENTIONS_REGEX.is_match(text) || NON_ASCII_AND_JAPANESE_REGEX.is_match(text) {
-                    let message = interface_string.errors["wrong_character_set"].as_str();
-                    msg.channel_id
-                        .say(&context.http, message).await.unwrap();
-                    return Err("Wrong character set.".to_string());
-                }
+                let message = interface_string.errors["wrong_character_set"].as_str();
+                msg.channel_id
+                    .say(&context.http, message).await.unwrap();
+                return Err("Wrong character set.".to_string());
             },
             _ => ()
         }

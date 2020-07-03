@@ -8,6 +8,7 @@ pub struct InterfaceStrings {
     pub random_responses: Vec<String>,
     pub failed_messages: Vec<String>,
     pub about: CommandStrings,
+    pub comic: CommandStrings,
     pub cvt: CommandStrings,
     pub dialog: CommandStrings,
     pub enlarge: CommandStrings,

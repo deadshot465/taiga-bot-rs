@@ -308,6 +308,7 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
                 AUTHENTICATION_SERVICE.login().await.unwrap();
                 let request_data = SpecializedDialog {
                     background,
+                    character: None,
                     clothes: cloth,
                     face,
                     is_hidden_character: is_hidden,

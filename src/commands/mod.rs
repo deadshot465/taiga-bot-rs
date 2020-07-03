@@ -1,5 +1,6 @@
 pub mod about;
 pub mod admin;
+pub mod comic;
 pub mod convert;
 pub mod dialog;
 pub mod enlarge;

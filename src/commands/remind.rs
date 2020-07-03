@@ -134,6 +134,14 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                     .await?;
                 return Ok(());
             }
+            else if let Ok(dt) = datetime.as_ref() {
+                if dt < &Local::now() {
+                    let error_msg = interface_string.errors["past_time"].as_str();
+                    msg.channel_id.say(&context.http, error_msg)
+                        .await?;
+                    return Ok(());
+                }
+            }
 
             let message = args.remains();
             if message.is_none() {

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
-use chrono::{Utc, Duration};
+use chrono::{Utc, Duration, Local};
 use log::{debug, error, info};
 use rand::{
     thread_rng, Rng,
@@ -29,7 +29,7 @@ use serenity::{
     },
     prelude::{EventHandler, Context}
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
+use taiga_bot_rs::{about::ABOUT_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_dialog, get_image};
 use serenity::model::channel::ReactionType;
 
 const ADMIN_COMMANDS: [&'static str; 7] = [
@@ -49,7 +49,7 @@ struct Admin;
 
 #[group]
 #[only_in("guilds")]
-#[commands(dialog, owoify, ship)]
+#[commands(comic, dialog, owoify, ship)]
 struct Fun;
 
 #[group]
@@ -281,6 +281,24 @@ async fn message_received(context: &Context, msg: &Message) {
             context.set_presence(Some(activity), status).await;
             let persistence = &mut PERSISTENCE_STORAGE;
             persistence.presence_timer = Some(Utc::now() + Duration::hours(1));
+        }
+
+        // Remind users
+        for (user_id, reminder) in PERSISTENCE_STORAGE.reminders.as_ref().unwrap().iter() {
+            if !(Local::now() > reminder.datetime) {
+                continue;
+            }
+            let user = context.cache.user(UserId(*user_id)).await;
+            if let Some(u) = user {
+                let msg = reminder.message.clone();
+                let reminders = PERSISTENCE_STORAGE.reminders.as_mut().unwrap();
+                reminders.remove(user_id);
+                PERSISTENCE_STORAGE.write();
+                u.direct_message(&context.http, |m| m
+                    .content(msg.as_str()))
+                    .await;
+                break;
+            }
         }
     }
 }

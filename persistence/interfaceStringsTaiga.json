@@ -63,6 +63,14 @@
     },
     "result": ""
   },
+  "comic": {
+    "description": "Make a simple and short Camp Buddy comic.",
+    "usage": "Run `comic` and upload the file at the same time to make a simple manga.",
+    "errors": {
+    },
+    "infos": {},
+    "result": "Here you go~!"
+  },
   "cvt": {
     "description": "Helps converting stuff",
     "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
