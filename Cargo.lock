@@ -851,9 +851,9 @@ dependencies = [
 
 [[package]]
 name = "owoify_rs"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b739481a8b9ee04d7558ba55952447ced6ea9ba8e91253de43b40d526334cdeb"
+checksum = "94090c8a53a4a4f040180d292c2d867e8996f634dea90a7cf5c35548a48f825d"
 dependencies = [
  "lazy_static",
  "rand",

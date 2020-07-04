@@ -1,12 +1,12 @@
 use chrono::{DateTime, Utc};
-use crate::{RandomMessage, INTERFACE_SERVICE, Reminder};
+use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
-const VALID_SPECIALIZED_CHARACTERS: [&'static str; 7] = [
-    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi"
+const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
+    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"
 ];
 
 const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
@@ -30,7 +30,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     random_messages: None,
     last_modified_time: None,
     presence_timer: None,
-    reminders: None
+    reminders: None,
+    user_replies: None
 };
 
 pub struct PersistenceStorage {
@@ -50,7 +51,8 @@ pub struct PersistenceStorage {
     pub random_messages: Option<Vec<RandomMessage>>,
     pub last_modified_time: Option<DateTime<Utc>>,
     pub presence_timer: Option<DateTime<Utc>>,
-    pub reminders: Option<HashMap<u64, Reminder>>
+    pub reminders: Option<HashMap<u64, Reminder>>,
+    pub user_replies: Option<Vec<UserReply>>
 }
 
 impl PersistenceStorage {
@@ -67,6 +69,7 @@ impl PersistenceStorage {
         let raw_channel_settings = std::fs::read(CHANNEL_SETTINGS_PATH)?;
         let raw_random_messages = std::fs::read("./persistence/messages.json")?;
         let raw_reminders = std::fs::read(REMINDER_PATH)?;
+        let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -75,6 +78,7 @@ impl PersistenceStorage {
         let conversion_table: ConversionTable = serde_json::from_slice(raw_conversion_table.borrow())?;
         let user_records: HashMap<String, UserRecords> = serde_json::from_slice(raw_user_records.borrow())?;
         let random_messages: Vec<RandomMessage> = serde_json::from_slice(raw_random_messages.borrow())?;
+        let user_replies: Vec<UserReply> = serde_json::from_slice(raw_user_replies.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
@@ -82,6 +86,7 @@ impl PersistenceStorage {
         self.conversion_table = Some(conversion_table);
         self.user_records = Some(user_records);
         self.random_messages = Some(random_messages);
+        self.user_replies = Some(user_replies);
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;

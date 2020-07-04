@@ -194,6 +194,29 @@ pub async fn natsumisay(context: &Context, msg: &Message, mut args: Args) -> Com
     Ok(())
 }
 
+#[command]
+#[aliases("hunter")]
+#[description = "Returns an image of Hunter saying anything you want."]
+#[usage = ""]
+#[example = ""]
+#[bucket = "say"]
+pub async fn huntersay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "hunter").await?;
+            return Ok(());
+        }
+    }
+    let result = say(context, msg, "hunter", false).await?;
+    if result.len() > 0 {
+        let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
+        msg.channel_id.send_files(&context.http, file, |f| f.content("Here you go~"))
+            .await?;
+    }
+    Ok(())
+}
+
 async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let interface_string: &CommandStrings;
     unsafe {

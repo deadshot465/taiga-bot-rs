@@ -326,6 +326,24 @@
       },
       "infos": {},
       "result": "Here you go~!"
+    },
+    "hunter": {
+      "description": "Returns an image of Hunter saying anything you want",
+      "usage": "Run `huntersay <background> <pose No.> <clothes> <face/expression> <message>` or `huntersay <pose No.> <clothes> <face/expression> <message>` to give you an image of Hunter with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `huntersay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `huntersay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `huntersay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "We are know Hunter is not really a talkative person, but not *that* taciturn.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
+        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
+        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
+        "pose_not_exist": "He actually fought back when Yoichi was bullying him, so of course Hunter will not do such silly pose.",
+        "clothes_not_exist": "Now if his parents saw him wearing such cloth, this time they would definitely take him back...",
+        "face_not_exist": "Hunter is chill, so why do you think he would make such face?",
+        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
     }
   },
   "ship": {

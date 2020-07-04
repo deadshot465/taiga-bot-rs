@@ -45,9 +45,6 @@ pub async fn get_comic(comic_data: Vec<Comic>) -> Result<Vec<u8>, Box<dyn std::e
             .await
             .unwrap();
 
-        println!("{:?}", &response);
-        println!("{:?}", serde_json::to_string_pretty(&comic_data));
-
         let bytes = response.bytes().await;
         if let Ok(res) = bytes {
             Ok(res.to_vec())

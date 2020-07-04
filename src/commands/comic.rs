@@ -17,9 +17,9 @@ lazy_static! {
 }
 
 #[command]
-#[description = "Returns an image of a character in Camp Buddy saying anything you want."]
-#[usage = "<background> <character> <message> or dialog <character> <message>"]
-#[example = "hiro Welcome to Camp Buddy!"]
+#[description = "Make a simple and short Camp Buddy comic. Use the same command as dialog or any say, except that all arguments are required. All commands must be written in a plain text file."]
+#[usage = ""]
+#[example = ""]
 #[bucket = "fun"]
 pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
     /*let interface_string: &CommandStrings;
@@ -39,6 +39,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
     available_specializations.insert("yurisay", "yuri");
     available_specializations.insert("kieransay", "kieran");
     available_specializations.insert("natsumisay", "natsumi");
+    available_specializations.insert("huntersay", "hunter");
 
     if msg.attachments.is_empty() || msg.attachments.len() == 0 {
         msg.channel_id.say(http, "The command has to be called with an attachment.")
@@ -217,8 +218,6 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
             return Ok(());
         }
     }
-
-    println!("{:?}", &images);
 
     let bytes = get_comic(images).await.unwrap();
     let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];

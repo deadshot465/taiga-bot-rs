@@ -196,8 +196,8 @@
         "length_too_short": "This command requires four arguments: `hirosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `hirosay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
         "no_message": "Uhh...I'm not really familiar with Hiro, so I can't talk to him if I have nothing to say...",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
         "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
         "pose_not_exist": "Telling Hiro to do such pose will be embarrassing...",
         "clothes_not_exist": "Uhh...Do they have uniforms like we do? Because I don't think he has such cloth...",
@@ -214,14 +214,14 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `taigasay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `taigasay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "What are you trying to do? Ask me to say nothing? What the actual fuck is that?",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "This pose is too amateur. I won't do it.",
-        "clothes_not_exist": "Meh. Do you really think I have such terrible cloth? I'm not my boyfriend.",
-        "face_not_exist": "Find a real clown to make such loser face for you instead.",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "Hmm...Taiga will get angry if you tell him to say nothing.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
@@ -232,14 +232,14 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `keitarosay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `keitarosay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "Obviously my boyfriend has nothing to tell you.",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "Stop making fun of my boyfriend and ask him to do such silly poses.",
-        "clothes_not_exist": "I decide to buy clothes for my boyfriend, so he won't have a stupid cloth like the one you appointed.",
-        "face_not_exist": "Stop bothering my boyfriend and find a real clown to make such face for you.",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "Now I think this guy isn't talking because he's having some lewd imaginations like Hanako does... <:KouBakaNii:712631334937296946>",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
@@ -250,14 +250,14 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `yoichisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yoichisay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "Apparently Yoichi has nothing to tell you.",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "Yoichi doesn't have that kind of pose. Although I want to see it as well. Hah.",
-        "clothes_not_exist": "Yoichi hates clothes after all. He doesn't have that kind of cloth.",
-        "face_not_exist": "If you ask Yoichi to do such face, I bet the wolfboy will be angry as fuck!",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "This guy is scary when he doesn't talk, but I won't surrender as a Minamoto! <:KouTension:727347066619035730>",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
@@ -268,14 +268,14 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `yurisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `yurisay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "She probably has nothing but fanfic to talk about.",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "Does Yuri even have that kind of pose? Don't really care.",
-        "clothes_not_exist": "I don't know and I don't even want to know if she has that cloth.",
-        "face_not_exist": "Now I think about it, I don't really remember if I've ever seen her faces other than being a crazy.",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "Ack...This woman is even scarier than the No.2 when she doesn't talk. I mean who knows what she is thinking...",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think she has such pose...",
+        "clothes_not_exist": "If she has such cloth, I think she will get along with No.2.",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
@@ -286,14 +286,14 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `kieransay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `kieransay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "Hmph, you should try to say something with Kieran.",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "I've never seen Kieran doing such pose.",
-        "clothes_not_exist": "Well, yeah, he likes accessories and some fashionable stuffs, but not that cloth.",
-        "face_not_exist": "Even he's sorta more emotional than me, I don't think he would make such face.",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "Hmmm...I don't really have any comment on whether he will say something like this or nothing at all.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
@@ -304,14 +304,32 @@
       "errors": {
         "length_too_short": "This command requires four arguments: `natsumisay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `natsumisay help` to get detailed descriptions via DM.",
         "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-        "no_message": "Natsumi doesn't seem to like such dirty talks.",
-        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-        "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-        "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-        "pose_not_exist": "Telling Natsumi to do such humiliating pose will kill him.",
-        "clothes_not_exist": "That kind of cloth won't match his sash.",
-        "face_not_exist": "Natsumi is always chill. He would never make such face.",
-        "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
+        "no_message": "This Natsumi is not like that lewd Hanako. I don't think he will talk something like that.",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "hunter": {
+      "description": "Returns an image of Hunter saying anything you want",
+      "usage": "Run `huntersay <background> <pose No.> <clothes> <face/expression> <message>` or `huntersay <pose No.> <clothes> <face/expression> <message>` to give you an image of Hunter with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `huntersay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `huntersay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `huntersay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "I heard that this boy called Hunter is at least mildly talkative...",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
       },
       "infos": {},
       "result": "Here you go~!"
