@@ -67,6 +67,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let _ = PERSISTENCE_STORAGE.load().await?;
     }
 
+    let prefix = env::var("PREFIX").unwrap();
+
     let mut client = Client::new(token)
         .add_intent(GatewayIntents::GUILDS)
         .add_intent(GatewayIntents::GUILD_MEMBERS)
@@ -80,7 +82,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .event_handler(Handler)
         .framework(StandardFramework::new().configure(|c| c
             .owners(owners)
-            .prefix(dotenv!("PREFIX")))
+            .prefix(&prefix))
             .before(before)
             .normal_message(message_received)
             .unrecognised_command(unknown_command)
