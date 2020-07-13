@@ -13,9 +13,10 @@ use serenity::{
     model::prelude::*,
     prelude::*
 };
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_image, get_dialog};
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_image, get_dialog, UserRecords};
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::env;
 use chrono::{Utc, Local, Duration};
 
 const ADMIN_COMMANDS: [&'static str; 7] = [
@@ -34,8 +35,10 @@ fn hit_or_miss(chance: u8) -> bool {
 }
 
 async fn handle_self_mentions(context: &Context, msg: &Message) {
-    let bot_id: &str = dotenv!("BOT_ID");
-    let mention_reaction_chance: u8 = dotenv!("MENTION_REACTION_CHANCE").parse::<u8>().unwrap();
+    let bot_id = env::var("BOT_ID").unwrap();
+    let mention_reaction_chance: u8 = env::var("MENTION_REACTION_CHANCE")
+        .unwrap()
+        .parse::<u8>().unwrap();
     unsafe {
         let random_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
         let messages = random_messages.iter()
@@ -49,7 +52,7 @@ async fn handle_self_mentions(context: &Context, msg: &Message) {
             }).unwrap();
 
         // Randomly replies to messages that mention the bot.
-        if msg.content.contains(bot_id) && hit_or_miss(mention_reaction_chance) {
+        if msg.content.contains(&bot_id) && hit_or_miss(mention_reaction_chance) {
             let english_msgs = &messages.messages["en"];
             let index = thread_rng().gen_range(0, english_msgs.len());
             msg.channel_id.say(&context.http, english_msgs[index].as_str())
@@ -63,7 +66,9 @@ async fn handle_reactions(context: &Context, msg: &Message) {
     if msg.author.bot {
         return;
     }
-    let reaction_chance: u8 = dotenv!("REACTION_CHANCE").parse::<u8>().unwrap();
+    let reaction_chance: u8 = env::var("REACTION_CHANCE")
+        .unwrap()
+        .parse::<u8>().unwrap();
     unsafe {
         // Randomly reacts to messages that contains certain keywords.
         if hit_or_miss(reaction_chance) {
@@ -123,7 +128,9 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
             return;
         }
 
-        let reply_user_chance: u8 = dotenv!("RDM_REPLY_USER_CHANCE").parse::<u8>().unwrap();
+        let reply_user_chance: u8 = env::var("RDM_REPLY_USER_CHANCE")
+            .unwrap()
+            .parse::<u8>().unwrap();
         if hit_or_miss(reply_user_chance) {
             let messages = user_replies.iter()
                 .find_map(|r| {
@@ -138,6 +145,14 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
             msg.reply(&context.http, messages[index].as_str())
                 .await
                 .expect("Failed to reply to the user.");
+            let user_id = msg.author.id.0.to_string();
+            let user_records = PERSISTENCE_STORAGE.user_records
+                .as_mut()
+                .unwrap()
+                .entry(user_id)
+                .or_insert(UserRecords::new());
+            let reply_count = &mut user_records.replies;
+            *reply_count += 1;
         }
     }
 }
@@ -155,7 +170,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
     let lower_case = msg.content.to_lowercase();
     unsafe {
         let all_messages = PERSISTENCE_STORAGE.random_messages.as_ref().unwrap();
-        let random_reply_chance: u8 = dotenv!("RDM_REPLY_CHANCE").parse::<u8>().unwrap();
+        let random_reply_chance: u8 = env::var("RDM_REPLY_CHANCE")
+            .unwrap()
+            .parse::<u8>().unwrap();
 
         let should_reply = all_messages.iter()
             .any(|m| lower_case.contains(m.keyword.as_str()));
@@ -183,7 +200,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
             }
         }
         else {
-            let specialized_reply_chance: u8 = dotenv!("SPECIALIZED_CHANCE").parse::<u8>().unwrap();
+            let specialized_reply_chance: u8 = env::var("SPECIALIZED_CHANCE")
+                .unwrap()
+                .parse::<u8>().unwrap();
             if hit_or_miss(specialized_reply_chance) {
                 let backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds
                     .as_ref()
@@ -336,11 +355,11 @@ impl EventHandler for Handler {
             greeting = greetings[rng.gen_range(0, greetings.len())]
                 .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
         }
-        let mut general_channels: Vec<&str> = vec![];
-        general_channels.push(dotenv!("GENCHN"));
-        general_channels.push(dotenv!("TESTGENCHN"));
-        general_channels.push(dotenv!("KOUGENCHN"));
-        general_channels.push(dotenv!("ECC_GENCHAN"));
+        let mut general_channels: Vec<String> = vec![];
+        general_channels.push(env::var("GENCHN").unwrap());
+        general_channels.push(env::var("TESTGENCHN").unwrap());
+        general_channels.push(env::var("KOUGENCHN").unwrap());
+        general_channels.push(env::var("ECC_GENCHAN").unwrap());
 
         let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id.channels(&context.http)
             .await.unwrap();

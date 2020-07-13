@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env;
 
 pub static mut AUTHENTICATION_SERVICE: Authentication = Authentication{
     token: String::new(),
@@ -42,9 +43,9 @@ impl Authentication {
             }
         }
 
-        let mut request_data: HashMap<&str, &str> = HashMap::new();
-        request_data.insert("UserName", dotenv!("LOGIN_NAME"));
-        request_data.insert("Password", dotenv!("LOGIN_PASS"));
+        let mut request_data: HashMap<&str, String> = HashMap::new();
+        request_data.insert("UserName", env::var("LOGIN_NAME").unwrap());
+        request_data.insert("Password", env::var("LOGIN_PASS").unwrap());
 
         let client = reqwest::Client::new();
         let response = client.post("https://tetsukizone.com/api/login")

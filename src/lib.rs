@@ -10,5 +10,6 @@ pub use commands::{
     about, admin, comic, convert, dialog, enlarge, help, image, meal, oracle,
     owoify, pick, ping, route, remind, say, ship, stats, time, valentine
 };
+pub use dotenv::dotenv;
 pub use handlers::*;
 pub use shared::*;

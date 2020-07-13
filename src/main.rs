@@ -45,13 +45,14 @@ struct Utilities;
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    dotenv::dotenv().ok();
     env_logger::init();
     let args = env::args().collect::<Vec<String>>();
     let args = args.iter()
         .map(|s| s.to_lowercase())
         .collect::<Vec<String>>();
-    let token: &str = dotenv!("TOKEN");
-    let http = Http::new_with_token(token);
+    let token = env::var("TOKEN").unwrap();
+    let http = Http::new_with_token(token.as_str());
     let app_info = http.get_current_application_info().await?;
     let mut owners = HashSet::new();
     owners.insert(app_info.owner.id.clone());

@@ -6,7 +6,6 @@ use serenity::model::channel::Message;
 use crate::shared::{CommandStrings, UserRecords};
 use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE};
 use serenity::utils::Color;
-use crate::commands::valentine::valentine;
 use std::borrow::BorrowMut;
 
 #[command]
@@ -39,6 +38,7 @@ pub async fn stats(context: &Context, msg: &Message, mut args: Args) -> CommandR
             match _arg.as_str() {
                 "route" => show_route(context, msg, &user_id).await?,
                 "valentine" => show_valentine(context, msg, &user_id).await?,
+                "reply" => show_replies(context, msg, &user_id).await?,
                 "reset" => reset(context, msg, args).await?,
                 _ => {
                     let error_msg = interface_string.errors["no_such_command"].as_str();
@@ -143,6 +143,36 @@ async fn show_valentine(context: &Context, msg: &Message, user_id: &str) -> Comm
     Ok(())
 }
 
+async fn show_replies(context: &Context, msg: &Message, user_id: &str) -> CommandResult {
+    unsafe {
+        let user_records = PERSISTENCE_STORAGE
+            .user_records
+            .as_ref()
+            .unwrap();
+        let replies = &user_records[user_id].replies;
+        let member = msg.member(&context.cache).await.unwrap();
+        let user_name = if let Some(s) = member.nick.as_ref() {
+            s
+        } else {
+            &msg.author.name
+        };
+        let color = u32::from_str_radix("abcdef", 16).unwrap();
+        msg.channel_id.send_message(&context.http, |m| m
+            .embed(|e| e
+                .author(|a| {
+                    if let Some(url) = msg.author.avatar_url() {
+                        a.icon_url(&url);
+                    }
+                    a.name(&user_name)
+                })
+                .description(&format!("Here's {}'s records with `reply`", &user_name))
+                .color(Color::from(color))
+                .field("Special Replies", replies, false)))
+            .await?;
+    }
+    Ok(())
+}
+
 async fn show_all(context: &Context, msg: &Message, user_id: &str) -> CommandResult {
     unsafe {
         let user_records = PERSISTENCE_STORAGE
@@ -226,6 +256,14 @@ async fn reset(context: &Context, msg: &Message, mut args: Args) -> CommandResul
                         .valentine.borrow_mut();
                     valentines.clear();
                     msg.channel_id.say(&context.http, "Record cleared.").await?;
+                },
+                "reply" => {
+                    let replies = user_records
+                        .entry(user_id.clone())
+                        .or_insert(UserRecords::new())
+                        .replies.borrow_mut();
+                    *replies = 0;
+                    msg.channel_id.say(&context.http, "Record cleared.").await?;
                 }
                 _ => ()
             }
@@ -241,6 +279,11 @@ async fn reset(context: &Context, msg: &Message, mut args: Args) -> CommandResul
                 .or_insert(UserRecords::new())
                 .valentine.borrow_mut();
             valentines.clear();
+            let replies = user_records
+                .entry(user_id.clone())
+                .or_insert(UserRecords::new())
+                .replies.borrow_mut();
+            *replies = 0;
             msg.channel_id.say(&context.http, "Record cleared.").await?;
         }
     }

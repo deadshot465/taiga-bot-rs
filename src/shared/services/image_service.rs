@@ -25,9 +25,9 @@ struct SearchResult {
 const ITEM_PER_PAGE: u8 = 10;
 
 pub async fn get_image(keyword: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let token: &str = dotenv!("UNSPLASH_TOKEN");
+    let token = std::env::var("UNSPLASH_TOKEN").unwrap();
     let client = reqwest::Client::new();
-    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page=1", token, keyword).as_str())
+    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page=1", &token, keyword).as_str())
         .send()
         .await?;
     let data: SearchResult = response.json().await?;
@@ -40,7 +40,7 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, Box<dyn std::error::Err
     // Limit to the first 25% pages.
     let upper_page_limit = ((total_pages as f32) * 0.25_f32).ceil();
     let random_page_number = thread_rng().gen_range(0_u32, (upper_page_limit as u32) + 1_u32);
-    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page={}", token, keyword, random_page_number).as_str())
+    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page={}", &token, keyword, random_page_number).as_str())
         .send()
         .await?;
     let data: SearchResult = response.json().await?;
