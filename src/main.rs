@@ -1,7 +1,5 @@
-#[macro_use]
-extern crate dotenv_codegen;
 extern crate taiga_bot_rs;
-use log::{debug, error, info};
+use log::{error};
 use std::collections::HashSet;
 use std::env;
 use serenity::{

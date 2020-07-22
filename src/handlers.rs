@@ -141,10 +141,34 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
                         None
                     }
                 }).unwrap();
-            let index = thread_rng().gen_range(0, messages.len());
-            msg.reply(&context.http, messages[index].as_str())
-                .await
-                .expect("Failed to reply to the user.");
+            if msg.author.id.0 == 677249244842950684 {
+                let average_probability = 1_f64 / (messages.len() as f64);
+                let specialized_chance = (average_probability / 2_f64).floor();
+                let reply = messages.iter()
+                    .find(|s| s.contains("You know what") && s.contains("moderate"))
+                    .unwrap();
+                let hit = hit_or_miss(specialized_chance as u8);
+                if hit {
+                    msg.reply(&context.http, reply)
+                        .await
+                        .expect("Failed to reply to the user.");
+                }
+                else {
+                    let _messages = messages.iter()
+                        .filter(|s| !s.starts_with("You know what"))
+                        .collect::<Vec<&String>>();
+                    let index = thread_rng().gen_range(0, _messages.len());
+                    msg.reply(&context.http, _messages[index])
+                        .await
+                        .expect("Failed to reply to the user.");
+                }
+            }
+            else {
+                let index = thread_rng().gen_range(0, messages.len());
+                msg.reply(&context.http, messages[index].as_str())
+                    .await
+                    .expect("Failed to reply to the user.");
+            }
             let user_id = msg.author.id.0.to_string();
             let user_records = PERSISTENCE_STORAGE.user_records
                 .as_mut()
