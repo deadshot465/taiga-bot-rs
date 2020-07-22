@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{info};
 use rand::{
     prelude::*,
     Rng,

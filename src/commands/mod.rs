@@ -4,6 +4,8 @@ pub mod comic;
 pub mod convert;
 pub mod dialog;
 pub mod enlarge;
+pub mod emote;
+pub mod games;
 pub mod help;
 pub mod image;
 pub mod meal;

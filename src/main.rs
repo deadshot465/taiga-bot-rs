@@ -10,11 +10,22 @@ use serenity::{
         Client,
     },
     framework::standard::{StandardFramework, macros::{
-        group, check
+        group
     }},
     http::Http,
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, Handler, before, message_received, unknown_command};
+use taiga_bot_rs::{
+    about::ABOUT_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND,
+    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*,
+    games::*, help::CUSTOM_HELP,
+    image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND,
+    owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND,
+    remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*,
+    ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND,
+    valentine::VALENTINE_COMMAND, admin::channel_control::*,
+    AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE,
+    Handler, before, message_received, unknown_command
+};
 
 #[group]
 #[only_in("guilds")]
@@ -24,8 +35,15 @@ struct Admin;
 
 #[group]
 #[only_in("guilds")]
-#[commands(comic, dialog, owoify, ship)]
+#[commands(bakugo, comic, dialog, kek, owoify, pensive, ship, yurishake)]
 struct Fun;
+
+#[group]
+#[description = "Play a small game with Kou."]
+#[prefixes("games")]
+#[only_in("guilds")]
+#[commands(hangman)]
+struct Games;
 
 #[group]
 #[only_in("guilds")]
@@ -88,9 +106,11 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             .unrecognised_command(unknown_command)
             .bucket("information", |l| l.delay(2)).await
             .bucket("say", |l| l.delay(10).time_span(30).limit(2)).await
+            .bucket("games", |l| l.delay(10).time_span(30).limit(2)).await
             .help(&CUSTOM_HELP)
             .group(&ADMIN_GROUP)
             .group(&FUN_GROUP)
+            .group(&GAMES_GROUP)
             .group(&INFORMATION_GROUP)
             .group(&SAY_GROUP)
             .group(&UTILITIES_GROUP)

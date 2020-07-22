@@ -31,7 +31,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     last_modified_time: None,
     presence_timer: None,
     reminders: None,
-    user_replies: None
+    user_replies: None,
+    game_words: None
 };
 
 pub struct PersistenceStorage {
@@ -52,7 +53,8 @@ pub struct PersistenceStorage {
     pub last_modified_time: Option<DateTime<Utc>>,
     pub presence_timer: Option<DateTime<Utc>>,
     pub reminders: Option<HashMap<u64, Reminder>>,
-    pub user_replies: Option<Vec<UserReply>>
+    pub user_replies: Option<Vec<UserReply>>,
+    pub game_words: Option<Vec<String>>
 }
 
 impl PersistenceStorage {
@@ -70,6 +72,7 @@ impl PersistenceStorage {
         let raw_random_messages = std::fs::read("./persistence/messages.json")?;
         let raw_reminders = std::fs::read(REMINDER_PATH)?;
         let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
+        let raw_words = std::fs::read("./persistence/game/words.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -79,6 +82,7 @@ impl PersistenceStorage {
         let user_records: HashMap<String, UserRecords> = serde_json::from_slice(raw_user_records.borrow())?;
         let random_messages: Vec<RandomMessage> = serde_json::from_slice(raw_random_messages.borrow())?;
         let user_replies: Vec<UserReply> = serde_json::from_slice(raw_user_replies.borrow())?;
+        let game_words: Vec<String> = serde_json::from_slice(raw_words.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
@@ -87,6 +91,7 @@ impl PersistenceStorage {
         self.user_records = Some(user_records);
         self.random_messages = Some(random_messages);
         self.user_replies = Some(user_replies);
+        self.game_words = Some(game_words);
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
