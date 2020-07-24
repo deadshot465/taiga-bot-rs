@@ -6,7 +6,7 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use tokio::time::Duration;
 use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
-use std::collections::HashSet;
+use serenity::utils::Color;
 
 #[command]
 #[description = "Play a hangman game with Kou."]
@@ -27,6 +27,13 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
         .await;
     let http = &context.http;
 
+    // Get user's avatar in advance
+    let url = msg.author.avatar_url();
+
+    // Construct the color of embed in advance
+    let color = u32::from_str_radix("ffd43b", 16).unwrap();
+    let color = Color::from(color);
+
     // Introduce the game
     let nick_name = member.as_ref().unwrap().nick.as_ref();
     let name: &String;
@@ -41,6 +48,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
 
     // Wait for 2 second
     tokio::time::delay_for(Duration::from_secs(2)).await;
+
     // Set the desired word
     let actual_word: &String;
     unsafe {
@@ -51,34 +59,60 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             .choose(&mut rng)
             .unwrap();
     }
+
     // Set max number of failed attempts to be 10
     let mut attempts: i32 = 10;
+
     // Tell the length of word
     msg.reply(http, &format!("There are {} letters in this word.", actual_word.len()))
         .await?;
     tokio::time::delay_for(Duration::from_secs(2)).await;
+
     // First print all letters to be "_"
     let mut message = String::new();
     for _ in actual_word.chars() {
         message += "\\_ ";
     }
-    msg.reply(http, &message).await?;
-    msg.reply(http, &format!("You have {} attempts left.", attempts)).await?;
+    msg.channel_id.send_message(http, |m| m.embed(|e| {
+        e.author(|a| {
+            if let Some(u) = &url {
+                a.icon_url(u);
+            }
+            a.name(name)
+        });
+        e.color(color);
+        e.description(format!("You have {} attempts left.", attempts));
+        e.title(&message);
+        e.thumbnail("https://cdn.discordapp.com/attachments/700003813981028433/736202279983513671/unnamed.png");
+        e.footer(|f| f.text("Hangman original Python version made by: @Kirito#9286"))
+    })).await?;
+
     // The guesses are stored in this variable
     let mut guesses = String::new();
+
+    // The main game loop
     while attempts > 0 {
         let mut input_char: char;
         loop {
             msg.reply(http, "Input a letter:").await?;
+
             // Ask the user to input letters
             let input = &msg.author.await_reply(&context)
                 .timeout(Duration::from_secs(15))
-                .await.unwrap();
-            input_char = input.content.chars().next().unwrap();
-            if input_char.is_alphabetic() && input.content.len() == 1 {
+                .await;
+            // Check if the user replies. If not, abort the game.
+            if input.is_none() {
+                msg.reply(http, "No input is provided. Game aborted.").await?;
+                return Ok(());
+            }
+            let input_result = input.as_ref().unwrap();
+            input_char = input_result.content.chars().next().unwrap();
+            // If the reply contains more than one character, or is not an alphabet, ask the user for the reply again.
+            if input_char.is_alphabetic() && input_result.content.len() == 1 {
                 break;
             }
         }
+
         // Check every letter position
         let input_char = input_char.to_uppercase().to_string();
         guesses += input_char.as_str();
@@ -95,12 +129,38 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
                 failed += 1;
             }
         }
-        msg.reply(http,&response).await?;
 
         // If no letter matches, decrease number of attempts by 1
         if !actual_word.contains(&input_char) {
             attempts -= 1;
         }
+
+        // Tell the user his past attempts
+        let mut previous_guesses: Vec<char> = vec![];
+        for letter in guesses.chars() {
+            previous_guesses.push(letter);
+        }
+        previous_guesses.sort();
+        previous_guesses.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
+        let previous_guesses = previous_guesses.into_iter()
+            .map(|c| format!("'{}', ", c))
+            .collect::<String>();
+
+        // Show the current progress, tell the user how many attempts left, and tell the user his past attempts.
+        msg.channel_id.send_message(http, |m| m.embed(|e| {
+            e.author(|a| {
+                if let Some(u) = &url {
+                    a.icon_url(u);
+                }
+                a.name(name)
+            });
+            e.color(color);
+            e.description(format!("You have {} attempts left.\n{}", attempts, &previous_guesses));
+            e.title(&response);
+            e.thumbnail("https://cdn.discordapp.com/attachments/700003813981028433/736202279983513671/unnamed.png");
+            e.footer(|f| f.text("Hangman original Python version made by: @Kirito#9286"))
+        })).await?;
+
         // If all letters are printed, that means the player won
         if failed == 0 {
             msg.reply(http,  "You got the correct answer!").await?;
@@ -111,21 +171,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             msg.reply(http,  "You lose!").await?;
             break;
         }
-
-        // Tell the user how many attempts left
-        msg.reply(http, &format!("You have {} attempts left.", attempts)).await?;
-        // Tell the user his past attempts
-        let mut previous_guesses = HashSet::new();
-        for letter in guesses.chars() {
-            previous_guesses.insert(letter);
-        }
-        let previous_guesses = previous_guesses.into_iter()
-            .map(|c| format!("'{}', ", c))
-            .collect::<String>();
-
-        msg.reply(http, &format!("Your previous guesses: {}", &previous_guesses)).await?;
     }
-    msg.reply(http, &format!("This answer is {}", &actual_word)).await?;
-    tokio::time::delay_for(Duration::from_secs(2)).await;
+    msg.reply(http, &format!("The answer is {}", &actual_word)).await?;
     Ok(())
 }

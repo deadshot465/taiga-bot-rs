@@ -86,15 +86,7 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
 
 async fn ship_secret_romance<'a>(context: &Context, msg: &Message, first: &'a str, second: &'a str) -> CommandResult {
     let (score, message) = (10000, format!("What are you talking about? {} and {} of course are the cutest two!", first, second));
-    let title = format!("{} and {}", if first == KOU_NAME {
-        KOU_NAME
-    } else {
-        HIRO_NAME
-    }, if second == HIRO_NAME {
-        HIRO_NAME
-    } else {
-        KOU_NAME
-    });
+    let title = format!("{} and {}", first, second);
 
     let client = reqwest::Client::new();
     let response = client.get(format!("https://api.alexflipnote.dev/ship?user={}&user2={}", if first == KOU_NAME {
@@ -141,25 +133,32 @@ fn find_next_user<'a>(first_user: &'a Member, seconds: &'a [Member]) -> Option<&
     None
 }
 
-async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) -> (u8, Cow<'a, str>) {
+async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) -> (u64, Cow<'a, str>) {
     let first_id = first_user.user.id.0;
     let second_id = second_user.user.id.0;
+    let t_id = std::env::var("T_ID").unwrap();
+    let k_id = std::env::var("K_ID").unwrap();
+    let t_id = t_id.parse::<u64>().unwrap();
+    let k_id = k_id.parse::<u64>().unwrap();
 
     if first_id == second_id {
-        (100, Cow::Borrowed("You're a perfect match... for yourself!"))
+        (100_u64, Cow::Borrowed("You're a perfect match... for yourself!"))
+    }
+    else if (first_id == t_id && second_id == k_id) || (first_id == k_id && second_id == t_id) {
+        (u64::MAX, Cow::Borrowed("Oops...You found us..."))
     }
     else {
-        let score = ((first_id + second_id) / 7 % 100) as u8;
+        let score = ((first_id + second_id) / 7 % 100) as u64;
         (score, Cow::Owned(find_message(score).await.clone()))
     }
 }
 
-async fn find_message(score: u8) -> &'static String {
+async fn find_message(score: u64) -> &'static String {
     unsafe {
         let ship_messages = PERSISTENCE_STORAGE.ship_messages.as_ref().unwrap();
         let ref msg = ship_messages
             .iter()
-            .filter(|m| score <= m.max_score)
+            .filter(|m| score <= m.max_score as u64)
             .collect::<Vec<&ShipMessage>>();
         &msg[0].message
     }

@@ -32,6 +32,7 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
 
     let footer = if is_keitaro {
         interface_string.infos["keitaro_footer"].clone()
+            .replace("{firstName}", get_first_name(valentine.name.as_str()))
     }
     else {
         interface_string.infos["normal_footer"].clone()
