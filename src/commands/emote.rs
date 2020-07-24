@@ -8,6 +8,7 @@ const KEK_LINK: &'static str = "https://cdn.discordapp.com/emojis/73023929515507
 const PENSIVE_LINK: &'static str = "https://cdn.discordapp.com/emojis/709416604269543514.gif";
 const BAKUGO_LINK: &'static str = "https://cdn.discordapp.com/emojis/703488149728526357.png";
 const YURI_LINK: &'static str = "https://cdn.discordapp.com/emojis/540259158155329601.gif";
+const KEITARO_UHH_LINK: &'static str = "https://cdn.discordapp.com/emojis/598176857493340170.png";
 
 #[command]
 #[description = ":kek:"]
@@ -92,6 +93,29 @@ pub async fn bakugo(context: &Context, msg: &Message, mut args: Args) -> Command
     }
     else {
         msg.channel_id.say(&context.http, BAKUGO_LINK)
+            .await?;
+    }
+    Ok(())
+}
+
+#[command]
+#[aliases("keitarouhh")]
+#[description = ":KeitaroUhh:"]
+#[usage = ""]
+#[example = ""]
+#[bucket = "fun"]
+pub async fn uhh(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<u8>();
+    if let Ok(count) = arg {
+        let mut link = String::from("<:keitaro_uhh:736221427178537000>");
+        for _ in 1..count {
+            link += " <:keitaro_uhh:736221427178537000>";
+        }
+        msg.channel_id.say(&context.http, &link)
+            .await?;
+    }
+    else {
+        msg.channel_id.say(&context.http, KEITARO_UHH_LINK)
             .await?;
     }
     Ok(())

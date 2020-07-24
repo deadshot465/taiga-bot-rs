@@ -14,6 +14,7 @@ const KOU_NAME: &'static str = "Minamoto Kou";
 const HIRO_NAME: &'static str = "Akiba Hiro";
 
 #[command]
+#[aliases("lover", "love")]
 #[description = "Ship two users."]
 #[usage = "<user1> <user2>"]
 #[example = "Taiga Keitaro"]
