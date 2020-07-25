@@ -6,7 +6,7 @@ use serenity::model::channel::Message;
 use crate::shared::{search_user, ShipMessage};
 use serenity::model::guild::Member;
 use std::borrow::{Borrow, Cow};
-use crate::PERSISTENCE_STORAGE;
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
 
 const KOU_EMOTE_URL: &'static str = "https://cdn.discordapp.com/emojis/700119260394946620.png";
 const HIRO_EMOTE_URL: &'static str = "https://cdn.discordapp.com/emojis/704022326412443658.png";
@@ -142,15 +142,17 @@ async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) ->
     let t_id = t_id.parse::<u64>().unwrap();
     let k_id = k_id.parse::<u64>().unwrap();
 
-    if first_id == second_id {
-        (100_u64, Cow::Borrowed("You're a perfect match... for yourself!"))
-    }
-    else if (first_id == t_id && second_id == k_id) || (first_id == k_id && second_id == t_id) {
-        (u64::MAX, Cow::Borrowed("Oops...You found us..."))
-    }
-    else {
-        let score = ((first_id + second_id) / 7 % 100) as u64;
-        (score, Cow::Owned(find_message(score).await.clone()))
+    unsafe {
+        if first_id == second_id {
+            (100_u64, Cow::Borrowed("You're a perfect match... for yourself!"))
+        }
+        else if ((first_id == t_id && second_id == k_id) || (first_id == k_id && second_id == t_id)) && INTERFACE_SERVICE.is_kou {
+            (u64::MAX, Cow::Borrowed("Oops...You found us..."))
+        }
+        else {
+            let score = ((first_id + second_id) / 7 % 100) as u64;
+            (score, Cow::Owned(find_message(score).await.clone()))
+        }
     }
 }
 
