@@ -12,18 +12,7 @@ use serenity::{
     }},
     http::Http,
 };
-use taiga_bot_rs::{
-    about::ABOUT_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND,
-    dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*,
-    games::*, help::CUSTOM_HELP,
-    image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND,
-    owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND,
-    remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*,
-    ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND,
-    valentine::VALENTINE_COMMAND, admin::channel_control::*,
-    AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE,
-    Handler, before, message_received, unknown_command
-};
+use taiga_bot_rs::{about::ABOUT_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*, games::*, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, Handler, before, message_received, unknown_command, dispatch_error};
 
 #[group]
 #[only_in("guilds")]
@@ -102,6 +91,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             .before(before)
             .normal_message(message_received)
             .unrecognised_command(unknown_command)
+            .on_dispatch_error(dispatch_error)
             .bucket("information", |l| l.delay(2)).await
             .bucket("say", |l| l.delay(10).time_span(30).limit(2)).await
             .bucket("games", |l| l.delay(10).time_span(30).limit(2)).await

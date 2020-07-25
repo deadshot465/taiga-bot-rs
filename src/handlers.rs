@@ -18,6 +18,7 @@ use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env;
 use chrono::{Utc, Local, Duration};
+use serenity::framework::standard::DispatchError;
 
 const ADMIN_COMMANDS: [&'static str; 7] = [
     "allow", "cvt", "convert", "disable", "enable", "ignore", "purge"
@@ -301,6 +302,35 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
 #[hook]
 pub async fn message_received(context: &Context, msg: &Message) {
     unsafe {
+        let mut member = context
+            .cache
+            .member(msg.guild_id.clone().unwrap(), UserId(msg.author.id.0))
+            .await
+            .unwrap();
+
+        if msg.channel_id.0 == 722824790972563547_u64 {
+            let has_role: bool = msg.author
+                .has_role(&context.http, msg.guild_id.clone().unwrap(), RoleId(736534226945572884))
+                .await
+                .unwrap();
+            if msg.content.as_str() == "I agree with the rule and Kou is the best boi." && !has_role {
+                member.add_role(&context.http, RoleId(736534226945572884)).await
+                    .expect("Failed to add a role to the user.");
+                greeting(context, msg.guild_id.as_ref().unwrap(), &member).await;
+                msg.delete(&context.http).await
+                    .expect("Failed to delete the message.");
+            }
+            else if !has_role {
+                msg.delete(&context.http).await
+                    .expect("Failed to delete the message.");
+                let _msg = msg.reply(&context.http, "Your answer is incorrect. Please try again.")
+                    .await;
+                tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
+                _msg.unwrap().delete(&context.http).await
+                    .expect("Failed to delete the message.");
+            }
+        }
+
         handle_self_mentions(context, msg).await;
         handle_reactions(context, msg).await;
         handle_replies(context, msg).await;
@@ -366,40 +396,75 @@ pub async fn before(context: &Context, msg: &Message, command_name: &str) -> boo
     true
 }
 
+#[hook]
+pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchError) {
+    let http = &context.http;
+    match error {
+        DispatchError::LackingRole => {
+            msg.reply(http, "You don't have the required role to perform such operation.")
+                .await
+                .expect("Failed to indicate that the user needs proper roles to perform the operation.");
+        },
+        DispatchError::OnlyForGuilds => {
+            msg.reply(http, "This command can only be used in a guild.")
+                .await
+                .expect("Failed to indicate that the command can only be used in a guild.");
+        },
+        DispatchError::OnlyForOwners => {
+            msg.reply(http, "This command can only be used by the owners.")
+                .await
+                .expect("Failed to indicate that the command can only be used by the owners.");
+        },
+        DispatchError::Ratelimited(time) => {
+            unsafe {
+                let error_msg = INTERFACE_SERVICE
+                    .interface_strings
+                    .as_ref()
+                    .unwrap()
+                    .cool_down.as_str();
+                let error_msg = error_msg.replace("{timeLeft}", &time.to_string());
+                msg.reply(http, &error_msg).await
+                    .expect("Failed to show cool down message.");
+            }
+        },
+        _ => {
+            msg.reply(http, "There was an error trying to execute that command...")
+                .await
+                .expect("Failed to reply to a generic error.");
+        }
+    }
+}
+
 #[async_trait]
 impl EventHandler for Handler {
     async fn guild_member_addition(&self, context: Context, guild_id: GuildId, member: Member) {
-        let greetings: &Vec<String>;
+        if guild_id.0 == 705036924330704968_u64 {
+            return;
+        }
         unsafe {
-            greetings = &INTERFACE_SERVICE.interface_strings
-                .as_ref()
-                .unwrap()
-                .greetings;
-        }
-        let greeting: String;
-        {
-            let mut rng = thread_rng();
-            greeting = greetings[rng.gen_range(0, greetings.len())]
-                .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
-        }
-        let mut general_channels: Vec<String> = vec![];
-        general_channels.push(env::var("GENCHN").unwrap());
-        general_channels.push(env::var("TESTGENCHN").unwrap());
-        general_channels.push(env::var("KOUGENCHN").unwrap());
-        general_channels.push(env::var("ECC_GENCHAN").unwrap());
-
-        let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id.channels(&context.http)
-            .await.unwrap();
-        for channel in general_channels.iter() {
-            let guild = guild_channels
-                .get(&ChannelId::from(channel.parse::<u64>().unwrap()));
-            if let Some(c) = guild {
-                c.say(&context.http, &greeting).await
-                    .expect("Failed to greet the newly added member.");
-                return;
-            }
+            greeting(&context, &guild_id, &member).await;
         }
     }
+
+    /*async fn guild_member_update(&self, context: Context, old_data: Option<Member>, new_data: Member) {
+        if new_data.guild_id.0 == 696414250406510623_u64 {
+            return;
+        }
+        let old_data_has_role: bool = old_data
+            .as_ref()
+            .unwrap()
+            .user
+            .has_role(&context.http, old_data.as_ref().unwrap().guild_id.clone(), RoleId(736534226945572884))
+            .await.unwrap();
+        let new_data_has_role: bool = new_data
+            .user
+            .has_role(&context.http, new_data.guild_id.clone(), RoleId(736534226945572884))
+            .await.unwrap();
+        if !old_data_has_role && new_data_has_role {
+            self.greeting(&context, &new_data.guild_id, &new_data)
+                .await;
+        }
+    }*/
 
     async fn ready(&self, context: Context, ready: Ready) {
         unsafe {
@@ -412,5 +477,38 @@ impl EventHandler for Handler {
             context.set_presence(Some(activity), status).await;
         }
         info!("{} is now online!", ready.user.name.as_str());
+    }
+}
+
+async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
+    let greetings: &Vec<String>;
+    unsafe {
+        greetings = &INTERFACE_SERVICE.interface_strings
+            .as_ref()
+            .unwrap()
+            .greetings;
+    }
+    let greeting: String;
+    {
+        let mut rng = thread_rng();
+        greeting = greetings[rng.gen_range(0, greetings.len())]
+            .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
+    }
+    let mut general_channels: Vec<String> = vec![];
+    general_channels.push(env::var("GENCHN").unwrap());
+    general_channels.push(env::var("TESTGENCHN").unwrap());
+    general_channels.push(env::var("KOUGENCHN").unwrap());
+    general_channels.push(env::var("ECC_GENCHAN").unwrap());
+
+    let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id.channels(&context.http)
+        .await.unwrap();
+    for channel in general_channels.iter() {
+        let guild = guild_channels
+            .get(&ChannelId::from(channel.parse::<u64>().unwrap()));
+        if let Some(c) = guild {
+            c.say(&context.http, &greeting).await
+                .expect("Failed to greet the newly added member.");
+            return;
+        }
     }
 }

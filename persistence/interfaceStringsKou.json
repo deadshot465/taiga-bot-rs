@@ -44,6 +44,7 @@
     "Maybe try again? Because I don't know how to do that...",
     "This command is not right...Something must be wrong! <:KouHeh2:712632145562304582>"
   ],
+  "cool_down": "Sorry, but I still need {timeLeft} more second(s) to do the command again...I'm not like Teru-nii... <:KouCry:736061517534855201>",
   "about": {
     "description": "Shows information about the Kou bot",
     "usage": "Show information about the Kou bot.",

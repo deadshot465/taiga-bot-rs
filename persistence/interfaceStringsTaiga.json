@@ -54,6 +54,7 @@
     "Fucky Wucky Woopsie...",
     "Uh oh, this failed about as much as Kieran’s redemption arc. Try again!"
   ],
+  "cool_down": "You dumbass need {timeLeft} more second(s) before telling me to do the command again.",
   "about": {
     "description": "Shows information about the Taiga bot",
     "usage": "Show information about the Taiga bot.",

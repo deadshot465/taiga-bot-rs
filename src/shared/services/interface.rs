@@ -35,9 +35,9 @@ impl InterfaceStorage {
         self.interface_strings = Some(deserialized);
         self.is_kou = kou;
         self.prefix = if kou {
-            "ah!".into()
+            "k!".into()
         } else {
-            "ah!".into()
+            "ta!".into()
         };
 
         Ok(())

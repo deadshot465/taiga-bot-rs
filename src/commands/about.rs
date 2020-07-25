@@ -61,8 +61,6 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
                 "**Arch#0226**, **Kirito#9286**, **Tetsuki Syu#1250** \n" +
                 "Taiga version 2.5 and Taiga's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
                 "Japanese oracle co-translated with: \n**Kirito#9286** \n" +
-                "Taiga reactions and feedback shared by: \n" +
-                "**Kirito#9286**, **Kachiryoku#0387**, and countless Camp Buddy fans. \n" +
                 "Kou Bot is licensed under GNU GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html \n")
             .footer(|f| f.text("Kou Bot: Release 1.5 | 2020-07-04 | For my most important person."))
             .thumbnail("https://cdn.discordapp.com/emojis/448579316171669545.png")))
