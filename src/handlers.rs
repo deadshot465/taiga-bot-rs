@@ -271,6 +271,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
                     if message.keyword.as_str() == "lee" && lower_case.contains("sleep") {
                         continue;
                     }
+                    if message.keyword.as_str() == "kou" && lower_case.contains("kou") {
+                        continue;
+                    }
                     let m = message.messages.get("en").unwrap();
                     let index = thread_rng().gen_range(0, m.len());
                     msg.channel_id.say(&context.http, m[index].as_str())
