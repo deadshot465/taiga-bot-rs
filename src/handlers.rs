@@ -300,7 +300,7 @@ async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
         let count = remains.parse::<u8>();
         if let Ok(c) = count {
             let mut message = String::from(&emote.raw);
-            for _ in 0..c {
+            for _ in 1..c {
                 message += " ";
                 message += &emote.raw;
             }
