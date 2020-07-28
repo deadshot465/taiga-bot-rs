@@ -104,6 +104,19 @@
     },
     "result": "Here you go~!"
   },
+  "emote": {
+    "description": "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected.",
+    "usage": "Run `emote <register|deregister>` to register or deregister an emote.",
+    "errors": {
+      "length_too_short": "This command requires at least a command, a name, and optionally an emote.",
+      "unsupported_operation": "Currently I can only register or deregister an emote.",
+      "invalid_name": "Well I *can* do it if you really want such a weird name, but no, I don't *want* to do.",
+      "invalid_emote": "Obviously this is not a correct or valid emote, you dummy..."
+    },
+    "infos": {
+    },
+    "result": ""
+  },
   "enlarge": {
     "description": "Returns an enlarged emote",
     "usage": "Run `enlarge <emote>` to get the full link to `<emote>` at a large size.",

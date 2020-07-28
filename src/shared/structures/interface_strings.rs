@@ -13,6 +13,7 @@ pub struct InterfaceStrings {
     pub cvt: CommandStrings,
     pub dialog: CommandStrings,
     pub enlarge: CommandStrings,
+    pub emote: CommandStrings,
     pub image: CommandStrings,
     pub meal: CommandStrings,
     pub owoify: CommandStrings,

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply};
+use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply, Config};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
 use std::borrow::Borrow;
@@ -12,6 +12,7 @@ const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
 const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
 const CHANNEL_SETTINGS_PATH: &'static str = "./persistence/channelSettings.json";
 const REMINDER_PATH: &'static str = "./persistence/reminders.json";
+const CONFIG_PATH: &'static str = "./persistence/config.json";
 
 pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     routes: None,
@@ -32,7 +33,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     presence_timer: None,
     reminders: None,
     user_replies: None,
-    game_words: None
+    game_words: None,
+    config: None
 };
 
 pub struct PersistenceStorage {
@@ -54,7 +56,8 @@ pub struct PersistenceStorage {
     pub presence_timer: Option<DateTime<Utc>>,
     pub reminders: Option<HashMap<u64, Reminder>>,
     pub user_replies: Option<Vec<UserReply>>,
-    pub game_words: Option<Vec<String>>
+    pub game_words: Option<Vec<String>>,
+    pub config: Option<Config>
 }
 
 impl PersistenceStorage {
@@ -73,6 +76,7 @@ impl PersistenceStorage {
         let raw_reminders = std::fs::read(REMINDER_PATH)?;
         let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
         let raw_words = std::fs::read("./persistence/game/words.json")?;
+        let raw_config = std::fs::read(CONFIG_PATH)?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -83,6 +87,7 @@ impl PersistenceStorage {
         let random_messages: Vec<RandomMessage> = serde_json::from_slice(raw_random_messages.borrow())?;
         let user_replies: Vec<UserReply> = serde_json::from_slice(raw_user_replies.borrow())?;
         let game_words: Vec<String> = serde_json::from_slice(raw_words.borrow())?;
+        let config: Config = serde_json::from_slice(raw_config.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
@@ -92,6 +97,7 @@ impl PersistenceStorage {
         self.random_messages = Some(random_messages);
         self.user_replies = Some(user_replies);
         self.game_words = Some(game_words);
+        self.config = Some(config);
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
@@ -175,6 +181,13 @@ impl PersistenceStorage {
         let io_res = std::fs::write(REMINDER_PATH, serialized_reminders_data);
         if let Err(e) = io_res {
             log::error!("Error when writing reminders: {:?}", e);
+        }
+
+        let serialized_config: Vec<u8> = serde_json::to_vec_pretty(self.config.as_ref().unwrap()).unwrap();
+        let serialized_config_data: &[u8] = serialized_config.borrow();
+        let io_res = std::fs::write(CONFIG_PATH, serialized_config_data);
+        if let Err(e) = io_res {
+            log::error!("Error when writing config: {:?}", e);
         }
     }
 }

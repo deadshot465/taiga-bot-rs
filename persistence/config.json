@@ -1,0 +1,16 @@
+{
+  "emotes": [
+    {
+      "name": "koushy",
+      "id": 719349147655864400,
+      "link": "https://cdn.discordapp.com/emojis/719349147655864400.png",
+      "raw": "<:KouShy:719349147655864400>"
+    },
+    {
+      "name": "koucry",
+      "id": 736061517534855201,
+      "link": "https://cdn.discordapp.com/emojis/736061517534855201.png",
+      "raw": "<:KouCry:736061517534855201>"
+    }
+  ]
+}

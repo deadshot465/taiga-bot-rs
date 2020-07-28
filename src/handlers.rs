@@ -13,7 +13,7 @@ use serenity::{
     model::prelude::*,
     prelude::*
 };
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_image, get_dialog, UserRecords};
+use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, get_image, get_dialog, UserRecords, Emote};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env;
@@ -286,8 +286,45 @@ async fn handle_replies(context: &Context, msg: &Message) {
     }
 }
 
+async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
+    unsafe {
+        let mut cmd = std::env::var("PREFIX").unwrap();
+        cmd += emote.name.as_str();
+        let remains: &str;
+        if msg.content.len() > cmd.len() {
+            remains = &msg.content[cmd.len() + 1..];
+        }
+        else {
+            remains = "";
+        }
+        let count = remains.parse::<u8>();
+        if let Ok(c) = count {
+            let mut message = String::from(&emote.raw);
+            for _ in 0..c {
+                message += " ";
+                message += &emote.raw;
+            }
+            msg.channel_id.say(&context.http, &message).await
+                .expect("Failed to send emote messages.");
+        }
+        else {
+            msg.channel_id.say(&context.http, &emote.link).await
+                .expect("Failed to send the emote link.");
+        }
+    }
+}
+
 #[hook]
 pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
+    unsafe {
+        let config = PERSISTENCE_STORAGE.config.as_ref().unwrap();
+        let emote_exist = config.emotes.iter()
+            .find(|e| e.name == cmd);
+        if let Some(e) = emote_exist {
+            emote_command(context, msg, e).await;
+            return;
+        }
+    }
     let failed_messages: &Vec<String>;
     unsafe {
         failed_messages = &INTERFACE_SERVICE.interface_strings.as_ref().unwrap()
@@ -392,7 +429,6 @@ pub async fn before(context: &Context, msg: &Message, command_name: &str) -> boo
             return false;
         }
     }
-
     true
 }
 
@@ -445,26 +481,6 @@ impl EventHandler for Handler {
             greeting(&context, &guild_id, &member).await;
         }
     }
-
-    /*async fn guild_member_update(&self, context: Context, old_data: Option<Member>, new_data: Member) {
-        if new_data.guild_id.0 == 696414250406510623_u64 {
-            return;
-        }
-        let old_data_has_role: bool = old_data
-            .as_ref()
-            .unwrap()
-            .user
-            .has_role(&context.http, old_data.as_ref().unwrap().guild_id.clone(), RoleId(736534226945572884))
-            .await.unwrap();
-        let new_data_has_role: bool = new_data
-            .user
-            .has_role(&context.http, new_data.guild_id.clone(), RoleId(736534226945572884))
-            .await.unwrap();
-        if !old_data_has_role && new_data_has_role {
-            self.greeting(&context, &new_data.guild_id, &new_data)
-                .await;
-        }
-    }*/
 
     async fn ready(&self, context: Context, ready: Ready) {
         unsafe {

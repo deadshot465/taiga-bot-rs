@@ -22,7 +22,7 @@ struct Admin;
 
 #[group]
 #[only_in("guilds")]
-#[commands(bakugo, comic, dialog, kek, owoify, pensive, ship, uhh, yurishake)]
+#[commands(comic, dialog, emote, owoify, ship)]
 struct Fun;
 
 #[group]

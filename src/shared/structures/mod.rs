@@ -1,5 +1,6 @@
 pub mod channel_settings;
 pub mod character;
+pub mod config;
 pub mod interface_strings;
 pub mod oracle;
 pub mod random_message;
@@ -11,6 +12,7 @@ pub mod user_records;
 pub mod user_reply;
 pub use channel_settings::ChannelSettings;
 pub use character::Character;
+pub use config::*;
 pub use interface_strings::*;
 pub use oracle::Oracle;
 pub use random_message::RandomMessage;
