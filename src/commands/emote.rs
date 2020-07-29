@@ -5,6 +5,7 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::{CommandStrings, INTERFACE_SERVICE, Emote, PERSISTENCE_STORAGE};
+use serenity::utils::Color;
 
 lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"\w").unwrap();
@@ -28,6 +29,27 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
         let ref interface_service = INTERFACE_SERVICE;
         let interface = interface_service.interface_strings.as_ref().unwrap();
         interface_string = &interface.emote;
+    }
+
+    if args.is_empty() {
+        let color = u32::from_str_radix("93B986", 16).unwrap();
+        msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
+            e.thumbnail("https://cdn.discordapp.com/emojis/730239295155077251.png");
+            e.title("Registered Emotes");
+            e.description("The following is a list of currently registered emotes.");
+            e.color(Color::new(color));
+
+            unsafe {
+                let config = PERSISTENCE_STORAGE.config.as_ref().unwrap();
+                let emotes = &config.emotes;
+                let emote_names = emotes.iter()
+                    .map(|e| format!("`{}`, ", e.name.as_str()))
+                    .collect::<String>();
+                e.field("Emotes", &emote_names.trim()[0..emote_names.len() - 2], false);
+            }
+            e
+        })).await?;
+        return Ok(());
     }
 
     let cmd = args.single::<String>();
