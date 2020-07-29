@@ -1,6 +1,8 @@
 /target
 .env
+.vs/
 /persistence/channelSettings.json
 /persistence/userRecords.json
 /persistence/reminders.json
 /persistence/userReplies.json
+/persistence/config.json
