@@ -1,6 +1,6 @@
 use serenity::framework::standard::{macros::{
     command
-}, CommandResult, Args};
+}, CommandResult, Args, CommandError};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::shared::{CommandStrings, SpecializedInfo};
@@ -217,7 +217,7 @@ pub async fn huntersay(context: &Context, msg: &Message, mut args: Args) -> Comm
     Ok(())
 }
 
-async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool) -> Result<Vec<u8>, CommandError> {
     let interface_string: &CommandStrings;
     unsafe {
         let ref interface_service = INTERFACE_SERVICE;

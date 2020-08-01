@@ -77,6 +77,7 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
         Ok(())
     }
     else {
-        help_commands::with_embeds(context, msg, args, help_options, groups, owners).await
+        help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
+        Ok(())
     }
 }

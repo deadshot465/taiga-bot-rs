@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use rand::{thread_rng, Rng};
+use serenity::framework::standard::CommandError;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Url {
@@ -24,7 +25,7 @@ struct SearchResult {
 
 const ITEM_PER_PAGE: u8 = 10;
 
-pub async fn get_image(keyword: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
     let token = std::env::var("UNSPLASH_TOKEN").unwrap();
     let client = reqwest::Client::new();
     let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page=1", &token, keyword).as_str())

@@ -2,8 +2,9 @@ use regex::Regex;
 use serenity::model::guild::{Guild, Member};
 use serenity::model::id::UserId;
 use serenity::prelude::Context;
+use serenity::framework::standard::CommandError;
 
-pub async fn search_user(context: &Context, guild: &Guild, query: &str) -> Result<Vec<Member>, Box<dyn std::error::Error>> {
+pub async fn search_user(context: &Context, guild: &Guild, query: &str) -> Result<Vec<Member>, CommandError> {
 
     lazy_static! {
         static ref USER_MENTION_REGEX: Regex = Regex::new(r"<@!?(\d{17,20})>").unwrap();
