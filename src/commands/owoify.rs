@@ -65,8 +65,19 @@ pub async fn owoify(context: &Context, msg: &Message, mut args: Args) -> Command
         msg.channel_id.say(&context.http, &header_message).await?;
     }
     else {
-        let error_msg = interface_string.errors["length_too_short"].as_str();
-        msg.channel_id.say(&context.http, error_msg).await?;
+        if use_default {
+            let message = first_arg.unwrap().as_str().owoify(&mode)
+                .replace("`", "\\`")
+                .replace("*", "\\*");
+            let header_message = interface_string.result.as_str()
+                .replace("{author}", msg.author.name.as_str())
+                .replace("{text}", &message);
+            msg.channel_id.say(&context.http, &header_message).await?;
+        }
+        else {
+            let error_msg = interface_string.errors["length_too_short"].as_str();
+            msg.channel_id.say(&context.http, error_msg).await?;
+        }
     }
     Ok(())
 }
