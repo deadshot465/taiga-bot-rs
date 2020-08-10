@@ -24,6 +24,8 @@ const ADMIN_COMMANDS: [&'static str; 7] = [
     "allow", "cvt", "convert", "disable", "enable", "ignore", "purge"
 ];
 
+const KOU_SERVER_ID: u64 = 705036924330704968_u64;
+
 lazy_static::lazy_static! {
     static ref ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();
     static ref EMOTE_REGEX: Regex = Regex::new(r"<a?:(\w+):(\d+)>").unwrap();
@@ -474,10 +476,18 @@ pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchErr
 #[async_trait]
 impl EventHandler for Handler {
     async fn guild_member_addition(&self, context: Context, guild_id: GuildId, member: Member) {
-        if guild_id.0 == 705036924330704968_u64 {
+        if guild_id.0 == KOU_SERVER_ID {
             return;
         }
         unsafe {
+            let mut cached_member = context
+                .cache
+                .member(&guild_id, &member.user.id)
+                .await;
+            if let Some(_member) = cached_member.as_mut() {
+                _member.add_role(&context.http, RoleId(696415232213385266)).await
+                    .expect("Failed to add role to the new member.");
+            }
             greeting(&context, &guild_id, &member).await;
         }
     }
