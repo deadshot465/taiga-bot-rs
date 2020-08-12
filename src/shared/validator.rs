@@ -81,7 +81,7 @@ pub fn validate_text(text: &str) -> (bool, TextError) {
     if text.len() == 0 || text.is_empty() {
         return (false, TextError::NoMessage);
     }
-    if JAPANESE_REGEX.is_match(text) && text.len() > 78 || text.len() > 180 {
+    if (JAPANESE_REGEX.is_match(text) && text.len() > 230) || (!JAPANESE_REGEX.is_match(text) && text.len() > 180) {
         return (false, TextError::LengthTooLong);
     }
     if EMOTE_MENTIONS_REGEX.is_match(text) || NON_ASCII_AND_JAPANESE_REGEX.is_match(text) {

@@ -75,13 +75,14 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let build_message = message.replace("{name}", name1.as_str())
         .replace("{name2}", name2.as_str());
     let files: Vec<(&[u8], &str)> = vec![(response.borrow(), "result.png")];
-
-    msg.channel_id.send_message(&context.http, |m| m
+    
+    msg.channel_id.send_files(&context.http, files, |m| m
         .embed(|e| {
-            e.title(format!("{} and {}", name1, name2))
-                .field(format!("Your love score is {}", score), build_message.as_str(), false)
+            e.title(format!("{} and {}", name1, name2));
+            e.field(format!("Your love score is {}", score), build_message.as_str(), false);
+            e.attachment("result.png");
+            e
         })).await?;
-    msg.channel_id.send_files(&context.http, files, |m| m.content("")).await?;
     Ok(())
 }
 

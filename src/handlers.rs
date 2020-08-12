@@ -343,15 +343,15 @@ pub async fn message_received(context: &Context, msg: &Message) {
     unsafe {
         let mut member = context
             .cache
-            .member(msg.guild_id.clone().unwrap(), UserId(msg.author.id.0))
+            .member(msg.guild_id.clone().expect("Failed to get guild id from message."), UserId(msg.author.id.0))
             .await
-            .unwrap();
+            .expect("Failed to get member from cache.");
 
         if msg.channel_id.0 == 722824790972563547_u64 {
             let has_role: bool = msg.author
-                .has_role(&context.http, msg.guild_id.clone().unwrap(), RoleId(736534226945572884))
+                .has_role(&context.http, msg.guild_id.clone().expect("Failed to get guild id from message."), RoleId(736534226945572884))
                 .await
-                .unwrap();
+                .expect("Failed to check if user has required role.");
             if msg.content.as_str() == "I agree with the rule and Kou is the best boi." && !has_role {
                 member.add_role(&context.http, RoleId(736534226945572884)).await
                     .expect("Failed to add a role to the user.");
