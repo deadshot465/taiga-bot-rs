@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
-use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply, Config};
+use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply, Config, QuizQuestion};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
 use std::borrow::Borrow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"
@@ -34,7 +34,9 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     reminders: None,
     user_replies: None,
     game_words: None,
-    config: None
+    config: None,
+    quiz_questions: None,
+    ongoing_quizzes: None
 };
 
 pub struct PersistenceStorage {
@@ -57,7 +59,9 @@ pub struct PersistenceStorage {
     pub reminders: Option<HashMap<u64, Reminder>>,
     pub user_replies: Option<Vec<UserReply>>,
     pub game_words: Option<Vec<String>>,
-    pub config: Option<Config>
+    pub config: Option<Config>,
+    pub quiz_questions: Option<Vec<QuizQuestion>>,
+    pub ongoing_quizzes: Option<HashMap<u64, DateTime<Utc>>>
 }
 
 impl PersistenceStorage {
@@ -77,6 +81,7 @@ impl PersistenceStorage {
         let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
         let raw_words = std::fs::read("./persistence/game/words.json")?;
         let raw_config = std::fs::read(CONFIG_PATH)?;
+        let raw_quiz_questions = std::fs::read("./persistence/game/quiz.json")?;
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -88,6 +93,7 @@ impl PersistenceStorage {
         let user_replies: Vec<UserReply> = serde_json::from_slice(raw_user_replies.borrow())?;
         let game_words: Vec<String> = serde_json::from_slice(raw_words.borrow())?;
         let config: Config = serde_json::from_slice(raw_config.borrow())?;
+        let quiz_questions: Vec<QuizQuestion> = serde_json::from_slice(raw_quiz_questions.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
@@ -98,6 +104,8 @@ impl PersistenceStorage {
         self.user_replies = Some(user_replies);
         self.game_words = Some(game_words);
         self.config = Some(config);
+        self.quiz_questions = Some(quiz_questions);
+        self.ongoing_quizzes = Some(HashMap::new());
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
