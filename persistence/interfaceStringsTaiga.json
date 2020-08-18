@@ -64,6 +64,16 @@
     },
     "result": ""
   },
+  "avatar": {
+    "description": "Get avatar/profile image of yourself or another user.",
+    "usage": "Run `avatar` without any arguments to get your own avatar image. Run `avatar <username>` to use keyword search to get another user's profile image.",
+    "errors": {
+      "no_result": "Guess I can't find the user you're talking about... <:TaigaUneasy2:700006812673638500>"
+    },
+    "infos": {
+    },
+    "result": "Here is {username}'s avatar! <:TaigaFingerGunsLeft:702691580078850078>\n**[Avatar URL]({url})**"
+  },
   "comic": {
     "description": "Make a simple and short Camp Buddy comic.",
     "usage": "Run `comic` and upload the file at the same time to make a simple manga.",

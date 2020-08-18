@@ -75,7 +75,7 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let build_message = message.replace("{name}", name1.as_str())
         .replace("{name2}", name2.as_str());
     let files: Vec<(&[u8], &str)> = vec![(response.borrow(), "result.png")];
-    
+
     msg.channel_id.send_files(&context.http, files, |m| m
         .embed(|e| {
             e.title(format!("{} and {}", name1, name2));

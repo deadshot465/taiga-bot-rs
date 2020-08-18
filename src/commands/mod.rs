@@ -1,5 +1,6 @@
 pub mod about;
 pub mod admin;
+pub mod avatar;
 pub mod comic;
 pub mod convert;
 pub mod dialog;

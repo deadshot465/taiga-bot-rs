@@ -5,7 +5,7 @@ mod commands;
 mod handlers;
 mod shared;
 pub use commands::{
-    about, admin, comic, convert, dialog, enlarge, emote, games, help, image, meal, oracle,
+    about, admin, avatar, comic, convert, dialog, enlarge, emote, games, help, image, meal, oracle,
     owoify, pick, ping, route, remind, say, ship, stats, time, valentine
 };
 pub use dotenv::dotenv;
