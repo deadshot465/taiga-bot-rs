@@ -73,7 +73,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     for _ in actual_word.chars() {
         message += "\\_ ";
     }
-    msg.channel_id.send_message(http, |m| m.embed(|e| {
+    let mut embed = msg.channel_id.send_message(http, |m| m.embed(|e| {
         e.author(|a| {
             if let Some(u) = &url {
                 a.icon_url(u);
@@ -94,7 +94,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     while attempts > 0 {
         let mut input_char: char;
         loop {
-            msg.reply(http, "Input a letter:").await?;
+            let notice = msg.reply(http, "Input a letter:").await?;
 
             // Ask the user to input letters
             let input = &msg.author.await_reply(&context)
@@ -103,14 +103,19 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             // Check if the user replies. If not, abort the game.
             if input.is_none() {
                 msg.reply(http, "No input is provided. Game aborted.").await?;
+                notice.delete(http).await?;
                 return Ok(());
             }
             let input_result = input.as_ref().unwrap();
             input_char = input_result.content.chars().next().unwrap();
             // If the reply contains more than one character, or is not an alphabet, ask the user for the reply again.
             if input_char.is_alphabetic() && input_result.content.len() == 1 {
+                input_result.delete(http).await?;
+                notice.delete(http).await?;
                 break;
             }
+            input_result.delete(http).await?;
+            notice.delete(http).await?;
         }
 
         // Check every letter position
@@ -147,7 +152,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             .collect::<String>();
 
         // Show the current progress, tell the user how many attempts left, and tell the user his past attempts.
-        msg.channel_id.send_message(http, |m| m.embed(|e| {
+        embed.edit(http, |m| m.embed(|e| {
             e.author(|a| {
                 if let Some(u) = &url {
                     a.icon_url(u);

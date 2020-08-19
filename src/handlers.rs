@@ -86,6 +86,9 @@ async fn handle_reactions(context: &Context, msg: &Message) {
                 if m.keyword.as_str() != "kou" && INTERFACE_SERVICE.is_kou {
                     continue;
                 }
+                if m.keyword.as_str() == "kou" && lower_case.contains("mikkou") {
+                    continue;
+                }
                 let index = thread_rng().gen_range(0, m.reactions.len());
                 let reaction = m.reactions[index].as_str();
                 let emote_regex = &*EMOTE_REGEX;
