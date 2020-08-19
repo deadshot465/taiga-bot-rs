@@ -11,7 +11,7 @@ use crate::{INTERFACE_SERVICE, search_user};
 #[description = "Get avatar/profile image of yourself or another user."]
 #[usage = "or avatar <username>"]
 #[example = "Kou"]
-async fn avatar(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+async fn avatar(context: &Context, msg: &Message, args: Args) -> CommandResult {
     let interface_string: &CommandStrings;
     unsafe {
         let ref interface_service = INTERFACE_SERVICE;

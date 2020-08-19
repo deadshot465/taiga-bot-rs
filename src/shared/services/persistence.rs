@@ -13,6 +13,8 @@ const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
 const CHANNEL_SETTINGS_PATH: &'static str = "./persistence/channelSettings.json";
 const REMINDER_PATH: &'static str = "./persistence/reminders.json";
 const CONFIG_PATH: &'static str = "./persistence/config.json";
+const TAIGA_QUIZ_PATH: &'static str = "./persistence/game/quiz_taiga.json";
+const KOU_QUIZ_PATH: &'static str = "./persistence/game/quiz_kou.json";
 
 pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     routes: None,
@@ -61,7 +63,7 @@ pub struct PersistenceStorage {
     pub game_words: Option<Vec<String>>,
     pub config: Option<Config>,
     pub quiz_questions: Option<Vec<QuizQuestion>>,
-    pub ongoing_quizzes: Option<HashMap<u64, DateTime<Utc>>>
+    pub ongoing_quizzes: Option<HashSet<u64>>
 }
 
 impl PersistenceStorage {
@@ -81,7 +83,15 @@ impl PersistenceStorage {
         let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
         let raw_words = std::fs::read("./persistence/game/words.json")?;
         let raw_config = std::fs::read(CONFIG_PATH)?;
-        let raw_quiz_questions = std::fs::read("./persistence/game/quiz.json")?;
+        let raw_quiz_questions: Vec<u8>;
+        unsafe {
+            if INTERFACE_SERVICE.is_kou {
+                raw_quiz_questions = std::fs::read(KOU_QUIZ_PATH)?;
+            }
+            else {
+                raw_quiz_questions = std::fs::read(TAIGA_QUIZ_PATH)?;
+            }
+        }
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
@@ -105,7 +115,7 @@ impl PersistenceStorage {
         self.game_words = Some(game_words);
         self.config = Some(config);
         self.quiz_questions = Some(quiz_questions);
-        self.ongoing_quizzes = Some(HashMap::new());
+        self.ongoing_quizzes = Some(HashSet::new());
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;

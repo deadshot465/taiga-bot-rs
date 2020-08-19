@@ -29,7 +29,7 @@ struct Fun;
 #[description = "Play a small game with Kou."]
 #[prefixes("games")]
 #[only_in("guilds")]
-#[commands(hangman)]
+#[commands(quiz, hangman)]
 struct Games;
 
 #[group]
@@ -94,7 +94,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             .on_dispatch_error(dispatch_error)
             .bucket("information", |l| l.delay(2)).await
             .bucket("say", |l| l.delay(10).time_span(30).limit(2)).await
-            .bucket("games", |l| l.delay(10).time_span(30).limit(2)).await
+            .bucket("games", |l| l.delay(5).time_span(30).limit(2)).await
             .help(&CUSTOM_HELP)
             .group(&ADMIN_GROUP)
             .group(&FUN_GROUP)
