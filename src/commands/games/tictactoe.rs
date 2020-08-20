@@ -9,12 +9,11 @@ use serenity::framework::standard::{macros::{
 use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
-use std::ops::Deref;
 use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
 
 enum TicTacToeResult {
-    Invalid, CircleWin, CrossWin, Draw
+    GameNotOver, CircleWin, CrossWin, Draw
 }
 
 const EMPTY_SLOT: &'static str = "□";
@@ -29,8 +28,8 @@ const CROSS: &'static str = "×";
 async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     unsafe {
         if !INTERFACE_SERVICE.is_kou {
-            //msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
-            //return Ok(());
+            msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
+            return Ok(());
         }
 
         let http = &context.http;
@@ -50,15 +49,9 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
             .await;
         // If game starts, wait for game result.
         if game_started {
-            let result = progress(context, msg, players.unwrap(), color).await?;
-            if !result {
-                end_game(context, msg).await?;
-            }
+            let _ = progress(context, msg, players.unwrap(), color).await;
         }
-        else {
-            // Otherwise clean up and unregister game.
-            end_game(context, msg).await?;
-        }
+        end_game(msg);
     }
     Ok(())
 }
@@ -304,9 +297,23 @@ async fn progress(context: &Context, msg: &Message, players: Vec<User>, color: C
         announcement.delete(http).await.expect("Failed to delete the message.");
         board[(y - 1) as usize][(x - 1) as usize] = sign;
         let _ = draw_board(context, msg, color, &players, &board, true, Some(&mut message)).await?;
+        match check_result(&board) {
+            TicTacToeResult::CircleWin => {
+                msg.channel_id.say(http, &format!("{} won the game!", players[0].mention())).await?;
+                return Ok(true);
+            },
+            TicTacToeResult::CrossWin => {
+                msg.channel_id.say(http, &format!("{} won the game!", players[1].mention())).await?;
+                return Ok(true);
+            },
+            TicTacToeResult::Draw => {
+                msg.channel_id.say(http, "It's a draw!").await?;
+                return Ok(true);
+            },
+            _ => ()
+        }
         round += 1;
     }
-    Ok(true)
 }
 
 fn check_mark_is_equal(a: &str, b: &str, c: &str) -> bool {
@@ -327,12 +334,53 @@ fn check_mark_is_equal(a: &str, b: &str, c: &str) -> bool {
 
 fn check_result(board: &Vec<Vec<&str>>) -> TicTacToeResult {
     for y in 0..3 {
-
+        if check_mark_is_equal(board[y][0], board[y][1], board[y][2]) {
+            if board[y][0] == CIRCLE {
+                return TicTacToeResult::CircleWin;
+            }
+            else if board[y][0] == CROSS {
+                return TicTacToeResult::CrossWin;
+            }
+        }
+        if check_mark_is_equal(board[0][y], board[1][y], board[2][y]) {
+            if board[0][y] == CIRCLE {
+                return TicTacToeResult::CircleWin;
+            }
+            else if board[0][y] == CROSS {
+                return TicTacToeResult::CrossWin;
+            }
+        }
     }
-    TicTacToeResult::Invalid
+
+    if check_mark_is_equal(board[2][0], board[1][1], board[0][2]) {
+        if board[2][0] == CIRCLE {
+            return TicTacToeResult::CircleWin;
+        }
+        else if board[2][0] == CROSS {
+            return TicTacToeResult::CrossWin;
+        }
+    }
+
+    if check_mark_is_equal(board[0][0], board[1][1], board[2][2]) {
+        if board[0][0] == CIRCLE {
+            return TicTacToeResult::CircleWin;
+        }
+        else if board[0][0] == CROSS {
+            return TicTacToeResult::CrossWin;
+        }
+    }
+
+    for y in 0..3 {
+        for x in 0..3 {
+            if board[y][x] == EMPTY_SLOT {
+                return TicTacToeResult::GameNotOver;
+            }
+        }
+    }
+    TicTacToeResult::Draw
 }
 
-async fn end_game(context: &Context, msg: &Message) -> CommandResult {
+fn end_game(msg: &Message) {
     unsafe {
         let ongoing_tictactoes = PERSISTENCE_STORAGE
             .ongoing_tictactoes
@@ -340,5 +388,4 @@ async fn end_game(context: &Context, msg: &Message) -> CommandResult {
             .unwrap();
         ongoing_tictactoes.remove(&msg.channel_id.0);
     }
-    Ok(())
 }
