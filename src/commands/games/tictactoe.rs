@@ -174,6 +174,7 @@ async fn draw_board(context: &Context, msg: &Message, color: Color, players: &Ve
             e.title("Current Board");
             let _description = format!("First: {}, Second: {}\n```{}```", players[0].mention(), players[1].mention(), &description);
             e.description(&_description);
+            e.footer(|f| f.text("Tic-tac-toe original Python version made by: @Kirito#9286"));
             e
         })).await?;
         Ok(Some(_msg))
