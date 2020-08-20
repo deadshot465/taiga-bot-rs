@@ -261,5 +261,357 @@
             "tea",
             "water"
         ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Why was Hiro feeling jealous during their first camp?",
+        "answers": [
+            "Because Natsumi taught Keitaro how to make a campfire."
+        ],
+        "wrong": [
+            "Because Natsumi accidentally kissed Keitaro.",
+            "Because Hunter and Keitaro made a tent together.",
+            "Because Yoichi and Keitaro ate the whole bag of marshmallows."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Why did Keitaro give the hairpin to Hiro?",
+        "answers": [
+            "Because it was Hiro's birthday present."
+        ],
+        "wrong": [
+            "Because he made Hiro angry.",
+            "Because Hiro gave him a present too.",
+            "Because it was a Christmas present."
+        ]
+    },
+    {
+        "type": "FILL",
+        "question": "Who is a potential threat to Hiro in his route?",
+        "answers": [
+            "Natsumi"
+        ],
+        "wrong": []
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Taiga secretly buy in grocery shopping?",
+        "answers": [
+            "massage oil"
+        ],
+        "wrong": [
+            "a bag of marshmallow",
+            "Kieran's album",
+            "a female pornstar's adult video"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What type of flour did Keitaro wanted during grocery shopping in Taiga's route?",
+        "answers": [
+            "almond"
+        ],
+        "wrong": [
+            "peanut",
+            "cocoa",
+            "coconut"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "How many bags of flour did Keitaro wanted during grocery shopping in Taiga's route?",
+        "answers": [
+            "5"
+        ],
+        "wrong": [
+            "3",
+            "4",
+            "6"
+        ]
+    },
+    {
+        "type": "FILL",
+        "question": "Where did Hiro confess to Keitaro?",
+        "answers": [
+            "pier"
+        ],
+        "wrong": []
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Why was Keitaro feeling uneasy when Kieran appeared?",
+        "answers": [
+            "Because Kieran loves Taiga."
+        ],
+        "wrong": [
+            "Because Kieran hates Keitaro.",
+            "Because Kieran wanted to destroy Camp Buddy.",
+            "Keitaro didn't feel uneasy."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "In Winter's Splendor, why wasn't Taiga able to visit Keitaro at first?",
+        "answers": [
+            "Because of the heavy snow."
+        ],
+        "wrong": [
+            "Because Taiga doesn't love Keitaro anymore.",
+            "Because Kieran was visiting Camp Buddy.",
+            "Because Yuri was always around."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Winter's Splendor is set in...",
+        "answers": [
+            "Modern Japan"
+        ],
+        "wrong": [
+            "Medieval France",
+            "Future Canada",
+            "Ancient Greece"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Winter's Splendor is set in...",
+        "answers": [
+            "Sapporo, Japan"
+        ],
+        "wrong": [
+            "New York, NY, United States",
+            "Munich, Germany",
+            "Bangkok, Thailand"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "In Winter's Splendor, Hiro is hesitant about what?",
+        "answers": [
+            "Studying abroad for culinary arts"
+        ],
+        "wrong": [
+            "Becoming a mercenary in France",
+            "Joining a code camp held in Finland",
+            "Marrying a woman"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "In Winter's Splendor, what's the name of the game Taiga, Keitaro and others play together?",
+        "answers": [
+            "Heroes and Hardons"
+        ],
+        "wrong": [
+            "Baldur's Gate",
+            "Neverwinter Nights",
+            "Planescape: Torment"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Where does Taiga stay after he, Yoichi and scoutmasters left Camp Buddy due to the snow?",
+        "answers": [
+            "In an apartment"
+        ],
+        "wrong": [
+            "In a love hotel",
+            "In a tent",
+            "On the streets"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What does Eduard promise Taiga in Winter's Splendor?",
+        "answers": [
+            "hair wax"
+        ],
+        "wrong": [
+            "lubricant",
+            "another bracelet",
+            "Eduard's fashion magazine"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Taiga choose when he, Keitaro, Eduard and Lee play Heroes and Hardons **for the first time**?",
+        "answers": [
+            "barbarian"
+        ],
+        "wrong": [
+            "priest",
+            "archer",
+            "paladin"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Eduard choose when he, Keitaro, Taiga and Lee play Heroes and Hardons **for the first time**?",
+        "answers": [
+            "priest"
+        ],
+        "wrong": [
+            "barbarian",
+            "archer",
+            "paladin"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Keitaro choose when he, Taiga, Eduard and Lee play Heroes and Hardons **for the first time**?",
+        "answers": [
+            "archer"
+        ],
+        "wrong": [
+            "priest",
+            "barbarian",
+            "paladin"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What monster did Taiga, Keitaro, Eduard fight with during their **first time** playing Heroes and Hardons?",
+        "answers": [
+            "a giant slime"
+        ],
+        "wrong": [
+            "an ogre",
+            "a goblin",
+            "a dragon"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What was **NOT** the reason of the argument between Kieran and Taiga back then?",
+        "answers": [
+            "That Kieran fell in love with a girl."
+        ],
+        "wrong": [
+            "That Kieran set up and frame Taiga.",
+            "That Kieran was upset that Taiga was always playing with others.",
+            "That Kieran was angry that Taiga forgot their promises to play table games together."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Where did Taiga and Keitaro go for their first date after the main event of Camp Buddy?",
+        "answers": [
+            "Buddy Falls"
+        ],
+        "wrong": [
+            "An amusement park",
+            "A movie theater",
+            "Hunter's dormitory"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What's Taiga's favorite food?",
+        "answers": [
+            "fast food"
+        ],
+        "wrong": [
+            "pumpkin pasta",
+            "s'more",
+            "salad"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What's Taiga's favorite drink?",
+        "answers": [
+            "soda"
+        ],
+        "wrong": [
+            "coke",
+            "coffee",
+            "almond milk tea"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What was **NOT** the reason of the argument between Taiga and Keitaro?",
+        "answers": [
+            "That Keitaro was actually having sex with everyone in the camp."
+        ],
+        "wrong": [
+            "That Keitaro was reading Taiga's journal since day one.",
+            "That he felt everything Keitaro did is out of sympathy.",
+            "That he felt betrayed again by a person who's important to him."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Taiga do to reconcile with Natsumi, Yoichi, Hiro, Hunter, and others?",
+        "answers": [
+            "Make specially designed cookies for them."
+        ],
+        "wrong": [
+            "Sing a song around the campfire to everyone.",
+            "Write biography for everyone.",
+            "Draw pictures for everyone."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Taiga do on the first day of a new year's Camp Buddy?",
+        "answers": [
+            "Go to Keitaro's home and pick him up."
+        ],
+        "wrong": [
+            "Apologize and decline joining Camp Buddy this year.",
+            "Play Heroes and Hardons with Keitaro, Lee, and Eduard.",
+            "Borrow PnesP from Seto."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Taiga, Keitaro, and Kieran do for the fundraiser?",
+        "answers": [
+            "Renovating broken cabins."
+        ],
+        "wrong": [
+            "Introducing the camp ground for Felix's father.",
+            "Chaining up each other in a prison-like place to have fun.",
+            "Slapping each other's face."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What costume did Taiga wear during the Halloween Party after the fundraiser?",
+        "answers": [
+            "barbarian"
+        ],
+        "wrong": [
+            "police officer",
+            "prince",
+            "panda"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Why was Taiga taking a shower around day 9?",
+        "answers": [
+            "Because he fell into the lake."
+        ],
+        "wrong": [
+            "Because taking shower is the only thing he did during the camp.",
+            "Because he wanted to see Keitaro naked.",
+            "Because he's trying to seduce Keitaro."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Taiga and Keitaro do in the end of their first date after Camp Buddy?",
+        "answers": [
+            "Watching sunset together"
+        ],
+        "wrong": [
+            "Singing songs together",
+            "Writing journals together",
+            "Eating"
+        ]
     }
 ]

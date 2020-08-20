@@ -386,7 +386,7 @@ async fn end_game(context: &Context, msg: &Message, show_scoreboard: bool, resul
             description += joined.as_str();
             e.description(description);
             e.thumbnail(if is_kou {
-                "https://cdn.discordapp.com/emojis/705613007119450172.png"
+                "https://cdn.discordapp.com/emojis/717505202651136051.png"
             } else {
                 "https://cdn.discordapp.com/emojis/706757435553218620.png"
             });
