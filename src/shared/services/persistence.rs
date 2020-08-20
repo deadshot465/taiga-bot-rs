@@ -38,7 +38,8 @@ pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
     game_words: None,
     config: None,
     quiz_questions: None,
-    ongoing_quizzes: None
+    ongoing_quizzes: None,
+    ongoing_tictactoes: None
 };
 
 pub struct PersistenceStorage {
@@ -63,7 +64,8 @@ pub struct PersistenceStorage {
     pub game_words: Option<Vec<String>>,
     pub config: Option<Config>,
     pub quiz_questions: Option<Vec<QuizQuestion>>,
-    pub ongoing_quizzes: Option<HashSet<u64>>
+    pub ongoing_quizzes: Option<HashSet<u64>>,
+    pub ongoing_tictactoes: Option<HashSet<u64>>
 }
 
 impl PersistenceStorage {
@@ -116,6 +118,7 @@ impl PersistenceStorage {
         self.config = Some(config);
         self.quiz_questions = Some(quiz_questions);
         self.ongoing_quizzes = Some(HashSet::new());
+        self.ongoing_tictactoes = Some(HashSet::new());
 
         if !raw_channel_settings.is_empty() {
             let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;

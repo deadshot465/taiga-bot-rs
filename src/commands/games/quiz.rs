@@ -39,7 +39,7 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         {
             let ongoing_quizzes = PERSISTENCE_STORAGE
                 .ongoing_quizzes
-                .as_mut()
+                .as_ref()
                 .expect("Failed to acquire ongoing quizzes.");
 
             // Check if there's an existing game.
@@ -77,7 +77,13 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         let mut result: Option<HashMap<u64, u8>> = None;
         // If game starts, wait for game result.
         if game_started {
-            result = Some(progress(context, msg, max_rounds, is_kou, &players.unwrap()).await?);
+            let _result = progress(context, msg, max_rounds, is_kou, &players.unwrap()).await;
+            if _result.is_ok() {
+                result = Some(_result.unwrap());
+            }
+            else {
+                result = None;
+            }
         }
         else {
             // Otherwise clean up and unregister game.
@@ -125,7 +131,7 @@ async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool
     // Setting up the time limit for joining in the game.
     let end_joining_time = Utc::now() + Duration::seconds(10);
     // Setting up the initial embed so we will have an embed to edit.
-    let mut description = format!("React below to join the game!\nThis game may contain spoilers{}.\nPlease run `skip` to skip a question.\nCurrent players:{}\n{} seconds left!", if is_kou {
+    let mut description = format!("React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!", if is_kou {
         ""
     } else {
         " or NSFW themes"
@@ -143,7 +149,7 @@ async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool
             .collect::<Vec<String>>();
         // Kou will possibly only have SFW questions.
         // While Taiga might have NSFW questions.
-        description = format!("React below to join the game!\nThis game may contain spoilers{}.\nPlease run `skip` to skip a question.\nCurrent players:{}\n{} seconds left!", if is_kou {
+        description = format!("React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!", if is_kou {
             ""
         } else {
             " or NSFW themes"
@@ -185,7 +191,7 @@ async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool
     if users.is_empty() {
         message.edit(http, |m| m.embed(|e| {
             e.color(color.clone());
-            e.title("Minigame cancelled!");
+            e.title("Minigame Cancelled!");
             e.description("Nobody joined...");
             e.thumbnail(if is_kou {
                 "https://cdn.discordapp.com/emojis/736061517534855201.png"
@@ -200,7 +206,7 @@ async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool
         // Otherwise starts the game by returning true and valid player list.
         message.edit(http, |m| m.embed(|e| {
             e.color(color.clone());
-            e.title("Minigame started!");
+            e.title("Minigame Started!");
             e.description("The game has begun!");
             e.thumbnail(if is_kou {
                 "https://cdn.discordapp.com/emojis/705182851754360912.png"
@@ -275,7 +281,7 @@ async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool
                                     TAIGA_RESPONSES.choose(&mut rng).unwrap()
                                 }
                             }
-                            if answers.contains(&message.content) {
+                            if answers.contains(&message.content.to_lowercase()) {
                                 message.channel_id.say(http, format!("{} {}", message.author.mention(), response).as_str()).await?;
                                 let score_entry = score_board.entry(message.author.id.0);
                                 let score = score_entry.or_default();
