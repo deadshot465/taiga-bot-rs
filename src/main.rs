@@ -29,7 +29,7 @@ struct Fun;
 #[description = "Play a small game with Kou."]
 #[prefixes("games")]
 #[only_in("guilds")]
-#[commands(quiz, hangman)]
+#[commands(quiz, hangman, tictactoe)]
 struct Games;
 
 #[group]

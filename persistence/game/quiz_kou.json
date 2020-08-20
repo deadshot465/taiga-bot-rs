@@ -513,7 +513,7 @@
             "She's going to die soon."
         ],
         "wrong": [
-            "She's inner heart calls for Hanako.",
+            "Her inner heart calls for Hanako.",
             "She's an apparition herself.",
             "Her thighs are thick."
         ]
@@ -924,6 +924,182 @@
             "Singing songs together",
             "Writing journals together",
             "Eating"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What's the animal motif of Eduard?",
+        "answers": [
+            "flamingo"
+        ],
+        "wrong": [
+            "tiger",
+            "lion",
+            "snake"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What's the animal motif of Kieran?",
+        "answers": [
+            "lion"
+        ],
+        "wrong": [
+            "parrot",
+            "spider",
+            "scorpion"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Which of the following is **NOT** Eduard's interest?",
+        "answers": [
+            "piercings"
+        ],
+        "wrong": [
+            "hairstyling",
+            "modeling",
+            "reality shows"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Taiga choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "warlock"
+        ],
+        "wrong": [
+            "sorcerer",
+            "barbarian",
+            "paladin"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Hiro choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "bard"
+        ],
+        "wrong": [
+            "sorcerer",
+            "paladin",
+            "barbarian"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Keitaro choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "sorcerer"
+        ],
+        "wrong": [
+            "barbarian",
+            "cleric",
+            "wizard"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Eduard choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "cleric"
+        ],
+        "wrong": [
+            "bard",
+            "archer",
+            "sorcerer"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Natsumi choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "paladin"
+        ],
+        "wrong": [
+            "priest",
+            "wizard",
+            "cleric"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Hunter choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "wizard"
+        ],
+        "wrong": [
+            "paladin",
+            "barbarian",
+            "Hunter himself"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What class did Yoichi choose when playing Heroes and Hardons in Winter's Splendor?",
+        "answers": [
+            "barbarian"
+        ],
+        "wrong": [
+            "warrior",
+            "paladin",
+            "archer"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What is the background of Eduard's character in Heroes and Hardons?",
+        "answers": [
+            "a noble-born prince"
+        ],
+        "wrong": [
+            "a barbarian",
+            "an elf",
+            "a spiritual entity"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Which of the following was **NOT** Eduard suggested for Taiga when Taiga was bothered by nightmares in Winter's Splendor?",
+        "answers": [
+            "Tell Keitaro to ditch Hiro and only look at him."
+        ],
+        "wrong": [
+            "Have more faith in each other.",
+            "Talk to Keitaro.",
+            "Try not to make things so complicated."
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "Where was the place that Eduard allegedly said he was in during the call with Taiga?",
+        "answers": [
+            "Milan, Italy"
+        ],
+        "wrong": [
+            "Jakarta, Indonesia",
+            "Amsterdam, the Netherlands",
+            "Budapest, Hungary",
+            "Los Angeles, CA, the United States",
+            "Toronto, Canada",
+            "Hong Kong",
+            "Taipei, Taiwan",
+            "Warsaw, Poland",
+            "Honolulu, HI, the United States",
+            "Portland, OR, the United States",
+            "Nuuk, Greenland"
+        ]
+    },
+    {
+        "type": "MULTIPLE",
+        "question": "What did Eduard do during the fundraiser?",
+        "answers": [
+            "Designing the poster with Hunter."
+        ],
+        "wrong": [
+            "Renovating broken cabins for upcoming campers next year.",
+            "Making cookies for sale.",
+            "Filming videos."
         ]
     }
 ]
