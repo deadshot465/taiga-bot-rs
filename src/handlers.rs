@@ -549,17 +549,15 @@ impl EventHandler for Handler {
         if guild_id.0 == KOU_SERVER_ID {
             return;
         }
-        unsafe {
-            let mut cached_member = context
-                .cache
-                .member(&guild_id, &member.user.id)
-                .await;
-            if let Some(_member) = cached_member.as_mut() {
-                _member.add_role(&context.http, RoleId(696415232213385266)).await
-                    .expect("Failed to add role to the new member.");
-            }
-            greeting(&context, &guild_id, &member).await;
+        let mut cached_member = context
+            .cache
+            .member(&guild_id, &member.user.id)
+            .await;
+        if let Some(_member) = cached_member.as_mut() {
+            _member.add_role(&context.http, RoleId(696415232213385266)).await
+                .expect("Failed to add role to the new member.");
         }
+        greeting(&context, &guild_id, &member).await;
     }
 
     async fn ready(&self, context: Context, ready: Ready) {

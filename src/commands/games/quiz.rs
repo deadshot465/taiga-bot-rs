@@ -42,7 +42,7 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let _persistence = Arc::clone(persistence);
     drop(interface_lock);
     drop(data);
-    let persistence_lock = _persistence.lock().await;
+    let mut persistence_lock = _persistence.lock().await;
 
     // Borrow http for use in subsequent messages.
     let http = &context.http;
@@ -80,7 +80,7 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     }
     msg.channel_id.say(http, format!("Starting a game with {} rounds...", max_rounds).as_str())
         .await?;
-    let (game_started, players) = join_game(context, msg, &color, is_kou)
+    let (game_started, players) = join_game(context, msg, &color, is_kou, &mut persistence_lock)
         .await;
 
     let mut result: Option<HashMap<u64, u8>> = None;
@@ -96,17 +96,17 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     }
     else {
         // Otherwise clean up and unregister game.
-        end_game(context, msg, false, None, is_kou, &color).await?;
+        end_game(context, msg, false, None, is_kou, &color, &mut persistence_lock).await?;
         return Ok(());
     }
 
     // If the result is none, that means the game is aborted. Clean up and unregister game.
     if result.is_none() {
-        end_game(context, msg, false, None, is_kou, &color).await?;
+        end_game(context, msg, false, None, is_kou, &color, &mut persistence_lock).await?;
         return Ok(());
     }
     // Otherwise, show final results.
-    end_game(context, msg, true, result.as_ref(), is_kou, &color).await?;
+    end_game(context, msg, true, result.as_ref(), is_kou, &color, &mut persistence_lock).await?;
     drop(persistence_lock);
     Ok(())
 }
@@ -123,18 +123,13 @@ async fn build_embed(context: &Context, msg: &Message, title: &str, description:
 }
 
 /// Handles player joining.
-async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool) -> (bool, Option<Vec<User>>) {
-    let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
-    let mut persistence_lock = persistence.lock().await;
+async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool, persistence: &mut MutexGuard<'_, PersistenceStorage>) -> (bool, Option<Vec<User>>) {
     // Add the current channel to ongoing quizzes.
-    let ongoing_quizzes = persistence_lock
+    let ongoing_quizzes = persistence
         .ongoing_quizzes
         .as_mut()
         .unwrap();
     let _ = ongoing_quizzes.insert(msg.channel_id.0);
-    drop(persistence_lock);
-    drop(data);
 
     let http = &context.http;
     // Build welcoming messages and allow users to join.
@@ -370,18 +365,13 @@ async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool
     Ok(score_board)
 }
 
-async fn end_game(context: &Context, msg: &Message, show_scoreboard: bool, result: Option<&HashMap<u64, u8>>, is_kou: bool, color: &Color) -> CommandResult {
-    let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
-    let mut persistence_lock = persistence.lock().await;
+async fn end_game(context: &Context, msg: &Message, show_scoreboard: bool, result: Option<&HashMap<u64, u8>>, is_kou: bool, color: &Color, persistence: &mut MutexGuard<'_, PersistenceStorage>) -> CommandResult {
     // Remove the game from ongoing quizzes.
-    let ongoing_quizzes = persistence_lock
+    let ongoing_quizzes = persistence
         .ongoing_quizzes
         .as_mut()
         .unwrap();
     ongoing_quizzes.remove(&msg.channel_id.0);
-    drop(persistence_lock);
-    drop(data);
 
     // Build up the scoreboard.
     if show_scoreboard {

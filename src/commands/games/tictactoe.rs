@@ -6,12 +6,13 @@ use serenity::model::{
 use serenity::framework::standard::{macros::{
     command
 }, CommandResult, CommandError};
-use crate::{PersistenceService, InterfaceService};
+use crate::{PersistenceService, InterfaceService, PersistenceStorage};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
 use std::sync::Arc;
+use tokio::sync::MutexGuard;
 
 enum TicTacToeResult {
     GameNotOver, CircleWin, CrossWin, Draw
@@ -36,7 +37,7 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     let _persistence = Arc::clone(persistence);
     drop(interface_lock);
     drop(data);
-    let persistence_lock = _persistence.lock().await;
+    let mut persistence_lock = _persistence.lock().await;
     if !is_kou {
         msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
         return Ok(());
@@ -55,29 +56,25 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
 
     let color_value = u32::from_str_radix("306998", 16).unwrap();
     let color = Color::new(color_value);
-    let (game_started, players) = join_game(context, msg, color)
+    let (game_started, players) = join_game(context, msg, color, &mut persistence_lock)
         .await;
     // If game starts, wait for game result.
     if game_started {
         let _ = progress(context, msg, players.unwrap(), color).await;
     }
-    end_game(context, msg).await;
+    end_game(context, msg, &mut persistence_lock).await;
+    drop(persistence_lock);
     Ok(())
 }
 
 /// Handles player joining.
-async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Option<Vec<User>>) {
-    let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
-    let mut persistence_lock = persistence.lock().await;
+async fn join_game(context: &Context, msg: &Message, color: Color, persistence: &mut MutexGuard<'_, PersistenceStorage>) -> (bool, Option<Vec<User>>) {
     // Add the current channel to ongoing quizzes.
-    let ongoing_tictactoes = persistence_lock
+    let ongoing_tictactoes = persistence
         .ongoing_tictactoes
         .as_mut()
         .unwrap();
     let _ = ongoing_tictactoes.insert(msg.channel_id.0);
-    drop(persistence_lock);
-    drop(data);
 
     let http = &context.http;
     // Build welcoming messages and allow users to join.
@@ -197,6 +194,7 @@ async fn draw_board(context: &Context, msg: &Message, color: Color, players: &Ve
             e.title("Current Board");
             let _description = format!("First: {}, Second: {}\n```{}```", players[0].mention(), players[1].mention(), &description);
             e.description(&_description);
+            e.footer(|f| f.text("Tic-tac-toe original Python version made by: @Kirito#9286"));
             e
         })).await?;
         Ok(None)
@@ -393,15 +391,10 @@ fn check_result(board: &Vec<Vec<&str>>) -> TicTacToeResult {
     TicTacToeResult::Draw
 }
 
-async fn end_game(context: &Context, msg: &Message) {
-    let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
-    let mut persistence_lock = persistence.lock().await;
-    let ongoing_tictactoes = persistence_lock
+async fn end_game(context: &Context, msg: &Message, persistence: &mut MutexGuard<'_, PersistenceStorage>) {
+    let ongoing_tictactoes = persistence
         .ongoing_tictactoes
         .as_mut()
         .unwrap();
     ongoing_tictactoes.remove(&msg.channel_id.0);
-    drop(persistence_lock);
-    drop(data);
 }
