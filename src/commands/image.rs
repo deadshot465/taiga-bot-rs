@@ -19,7 +19,7 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
     let interface = data.get::<InterfaceService>().unwrap();
     let _interface = Arc::clone(interface);
     drop(data);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface.image;
 
@@ -33,7 +33,7 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
         msg.channel_id.say(&context.http, error_msg).await?;
         let data = context.data.read().await;
         let interface = data.get::<InterfaceService>().unwrap();
-        let interface_lock = interface.lock().await;
+        let interface_lock = interface.read().await;
         let is_kou = interface_lock.is_kou;
         drop(interface_lock);
         drop(data);

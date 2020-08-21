@@ -61,7 +61,7 @@ pub async fn time(context: &Context, msg: &Message, args: Args) -> CommandResult
     let interface = data.get::<InterfaceService>().unwrap();
     let _interface = Arc::clone(interface);
     drop(data);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface.time;
 

@@ -8,7 +8,7 @@ use serenity::utils::Color;
 use crate::{UserRecords, InterfaceService, PersistenceService, PersistenceStorage};
 use crate::shared::Character;
 use std::sync::Arc;
-use tokio::sync::MutexGuard;
+use tokio::sync::{MutexGuard, RwLockReadGuard};
 
 #[command]
 #[aliases("v")]
@@ -23,10 +23,10 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     let _interface = Arc::clone(interface);
     let _persistence = Arc::clone(persistence);
     drop(data);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.valentine;
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let valentine = get_valentine(&persistence_lock).await;
     drop(persistence_lock);
     let is_keitaro = get_first_name(valentine.name.as_str()) == "Keitaro";
@@ -73,7 +73,7 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         })
     }).await?;
 
-    let mut persistence_lock = _persistence.lock().await;
+    let mut persistence_lock = _persistence.write().await;
     let user_records = persistence_lock.user_records.as_mut().unwrap();
     let user_record = user_records.entry(msg.author.id.0.to_string())
         .or_insert(UserRecords::new());
@@ -84,7 +84,7 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
-async fn get_valentine(persistence: &MutexGuard<'_, PersistenceStorage>) -> Character {
+async fn get_valentine(persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> Character {
     let valentines = persistence.valentines.as_ref().unwrap();
     valentines[thread_rng().gen_range(0, valentines.len())].clone()
 }

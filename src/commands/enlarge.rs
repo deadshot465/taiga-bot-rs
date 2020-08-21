@@ -27,7 +27,7 @@ pub async fn enlarge(context: &Context, msg: &Message) -> CommandResult {
     let interface = data.get::<InterfaceService>().unwrap();
     let _interface = Arc::clone(interface);
     drop(data);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface.enlarge;
 

@@ -18,7 +18,7 @@ const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026
 pub async fn oracle(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
     let persistence = data.get::<PersistenceService>().unwrap();
-    let persistence_lock = persistence.lock().await;
+    let persistence_lock = persistence.read().await;
     let oracles = persistence_lock.oracles.as_ref().unwrap();
     let oracle: Oracle;
     {

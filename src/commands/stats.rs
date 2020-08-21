@@ -8,7 +8,7 @@ use crate::{InterfaceService, PersistenceService, PersistenceStorage};
 use serenity::utils::Color;
 use std::borrow::BorrowMut;
 use std::sync::Arc;
-use tokio::sync::MutexGuard;
+use tokio::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
 
 #[command]
 #[description = "This command will show your records with several commands."]
@@ -22,8 +22,8 @@ pub async fn stats(context: &Context, msg: &Message, mut args: Args) -> CommandR
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     drop(lock);
-    let mut persistence_lock = _persistence.lock().await;
-    let interface_lock = _interface.lock().await;
+    let mut persistence_lock = _persistence.write().await;
+    let interface_lock = _interface.read().await;
 
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.stats;
@@ -35,16 +35,33 @@ pub async fn stats(context: &Context, msg: &Message, mut args: Args) -> CommandR
     if !user_records.contains_key(&user_id) {
         user_records.insert(user_id.clone(), UserRecords::new());
     }
+    drop(persistence_lock);
 
     let arg = args.single::<String>();
     match arg {
         Ok(s) => {
             let _arg = s.to_lowercase();
             match _arg.as_str() {
-                "route" => show_route(context, msg, &user_id, &persistence_lock).await?,
-                "valentine" => show_valentine(context, msg, &user_id, &persistence_lock).await?,
-                "reply" => show_replies(context, msg, &user_id, &persistence_lock).await?,
-                "reset" => reset(context, msg, args, &mut persistence_lock).await?,
+                "route" => {
+                    let persistence_lock = _persistence.read().await;
+                    show_route(context, msg, &user_id, &persistence_lock).await?;
+                    drop(persistence_lock);
+                },
+                "valentine" => {
+                    let persistence_lock = _persistence.read().await;
+                    show_valentine(context, msg, &user_id, &persistence_lock).await?;
+                    drop(persistence_lock);
+                },
+                "reply" => {
+                    let persistence_lock = _persistence.read().await;
+                    show_replies(context, msg, &user_id, &persistence_lock).await?;
+                    drop(persistence_lock);
+                },
+                "reset" => {
+                    let mut persistence_lock = _persistence.write().await;
+                    reset(context, msg, args, &mut persistence_lock).await?;
+                    drop(persistence_lock);
+                },
                 _ => {
                     let error_msg = interface_string.errors["no_such_command"].as_str();
                     msg.channel_id.say(&context.http, error_msg).await?;
@@ -53,15 +70,16 @@ pub async fn stats(context: &Context, msg: &Message, mut args: Args) -> CommandR
             }
         },
         Err(_) => {
+            let persistence_lock = _persistence.read().await;
             show_all(context, msg, &user_id, &persistence_lock).await?;
+            drop(persistence_lock);
         }
     }
-    drop(persistence_lock);
     drop(interface_lock);
     Ok(())
 }
 
-async fn show_route(context: &Context, msg: &Message, user_id: &str, persistence: &MutexGuard<'_, PersistenceStorage>) -> CommandResult {
+async fn show_route(context: &Context, msg: &Message, user_id: &str, persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> CommandResult {
     let user_records = persistence
         .user_records
         .as_ref()
@@ -107,7 +125,7 @@ async fn show_route(context: &Context, msg: &Message, user_id: &str, persistence
     Ok(())
 }
 
-async fn show_valentine(context: &Context, msg: &Message, user_id: &str, persistence: &MutexGuard<'_, PersistenceStorage>) -> CommandResult {
+async fn show_valentine(context: &Context, msg: &Message, user_id: &str, persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> CommandResult {
     let user_records = persistence
         .user_records
         .as_ref()
@@ -145,7 +163,7 @@ async fn show_valentine(context: &Context, msg: &Message, user_id: &str, persist
     Ok(())
 }
 
-async fn show_replies(context: &Context, msg: &Message, user_id: &str, persistence: &MutexGuard<'_, PersistenceStorage>) -> CommandResult {
+async fn show_replies(context: &Context, msg: &Message, user_id: &str, persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> CommandResult {
     let user_records = persistence
         .user_records
         .as_ref()
@@ -173,7 +191,7 @@ async fn show_replies(context: &Context, msg: &Message, user_id: &str, persisten
     Ok(())
 }
 
-async fn show_all(context: &Context, msg: &Message, user_id: &str, persistence: &MutexGuard<'_, PersistenceStorage>) -> CommandResult {
+async fn show_all(context: &Context, msg: &Message, user_id: &str, persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> CommandResult {
     let user_records = persistence
         .user_records
         .as_ref()
@@ -229,7 +247,7 @@ async fn show_all(context: &Context, msg: &Message, user_id: &str, persistence: 
     Ok(())
 }
 
-async fn reset(context: &Context, msg: &Message, mut args: Args, persistence: &mut MutexGuard<'_, PersistenceStorage>) -> CommandResult {
+async fn reset(context: &Context, msg: &Message, mut args: Args, persistence: &mut RwLockWriteGuard<'_, PersistenceStorage>) -> CommandResult {
     let stat_name = args.single::<String>();
     let user_id = msg.author.id.0.to_string();
     let user_records = persistence.user_records

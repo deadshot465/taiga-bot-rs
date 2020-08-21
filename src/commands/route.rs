@@ -72,7 +72,7 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
 
     let data = context.data.read().await;
     let persistence = data.get::<PersistenceService>().unwrap();
-    let mut persistence_lock = persistence.lock().await;
+    let mut persistence_lock = persistence.write().await;
     let user_records = persistence_lock.user_records.as_mut().unwrap();
     let user_record = user_records.entry(msg.author.id.0.to_string())
         .or_insert(UserRecords::new());
@@ -88,7 +88,7 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
 async fn get_route(context: &Context) -> Character {
     let data = context.data.read().await;
     let persistence = data.get::<PersistenceService>().unwrap();
-    let persistence_lock = persistence.lock().await;
+    let persistence_lock = persistence.read().await;
     let res = thread_rng().gen_range(0, 100);
     let routes = persistence_lock.routes.as_ref().unwrap();
     match res {

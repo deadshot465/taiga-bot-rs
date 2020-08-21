@@ -61,8 +61,8 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let data = context.data.read().await;
     let persistence = data.get::<PersistenceService>().unwrap();
     let interface = data.get::<InterfaceService>().unwrap();
-    let persistence_lock = persistence.lock().await;
-    let interface_lock = interface.lock().await;
+    let persistence_lock = persistence.read().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     let ship_messages = persistence_lock.ship_messages.as_ref().unwrap();

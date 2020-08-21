@@ -6,7 +6,7 @@ use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"
@@ -21,7 +21,7 @@ const KOU_QUIZ_PATH: &'static str = "./persistence/game/quiz_kou.json";
 
 pub struct PersistenceService;
 impl TypeMapKey for PersistenceService {
-    type Value = Arc<Mutex<PersistenceStorage>>;
+    type Value = Arc<RwLock<PersistenceStorage>>;
 }
 
 pub struct PersistenceStorage {

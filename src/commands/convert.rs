@@ -36,7 +36,7 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
     let _interface = Arc::clone(interface);
     let _persistence = Arc::clone(persistence);
     drop(lock);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.cvt;
     let prefix = &interface_lock.prefix;
@@ -102,7 +102,7 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
         return Ok(());
     }
 
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let conversion_table = persistence_lock.conversion_table.as_ref().unwrap();
 
     let mut result;

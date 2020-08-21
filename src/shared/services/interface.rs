@@ -2,11 +2,11 @@ use crate::shared::InterfaceStrings;
 use std::borrow::Borrow;
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 
 pub struct InterfaceService;
 impl TypeMapKey for InterfaceService {
-    type Value = Arc<Mutex<InterfaceStorage>>;
+    type Value = Arc<RwLock<InterfaceStorage>>;
 }
 
 const TAIGA_STRING_PATH: &'static str = "./persistence/interfaceStringsTaiga.json";

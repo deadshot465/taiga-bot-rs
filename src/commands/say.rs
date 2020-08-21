@@ -227,10 +227,10 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
     let _interface = Arc::clone(interface);
     let _authentication = Arc::clone(authentication);
     drop(lock);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.say[character];
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
 
     let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
     msg.reply(&context.http, "Please specify a background in 10 seconds, or specify nothing or anything to use a random background.")
@@ -265,6 +265,7 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         else {
             let error_msg = interface_string.errors["pose_not_exist"].as_str();
             msg.reply(&context.http, error_msg).await?;
+            drop(persistence_lock);
             return Ok(vec![]);
         }
     }
@@ -280,6 +281,7 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         else {
             let error_msg = interface_string.errors["clothes_not_exist"].as_str();
             msg.reply(&context.http, error_msg).await?;
+            drop(persistence_lock);
             return Ok(vec![]);
         }
     }
@@ -295,6 +297,7 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         else {
             let error_msg = interface_string.errors["face_not_exist"].as_str();
             msg.reply(&context.http, error_msg).await?;
+            drop(persistence_lock);
             return Ok(vec![]);
         }
     }
@@ -310,22 +313,26 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
                 TextError::NoMessage => {
                     let error_msg = interface_string.errors["no_message"].as_str();
                     msg.reply(&context.http, error_msg).await?;
+                    drop(persistence_lock);
                     return Ok(vec![]);
                 },
                 TextError::LengthTooLong => {
                     let error_msg = interface_string.errors["message_too_long"].as_str();
                     msg.reply(&context.http, error_msg).await?;
+                    drop(persistence_lock);
                     return Ok(vec![]);
                 },
                 TextError::WrongCharacterSet => {
                     let error_msg = interface_string.errors["wrong_character_set"].as_str();
                     msg.reply(&context.http, error_msg).await?;
+                    drop(persistence_lock);
                     return Ok(vec![]);
                 }
                 _ => ()
             }
         }
         else {
+            drop(persistence_lock);
             text = t.content.clone();
             let client = reqwest::Client::new();
             let mut authentication_lock = _authentication.lock().await;
@@ -366,11 +373,11 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
     let interface = lock.get::<InterfaceService>().unwrap();
     let persistence = lock.get::<PersistenceService>().unwrap();
     let _persistence = Arc::clone(persistence);
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     drop(lock);
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
 
     let character_available_options: &SpecializedInfo;
     let available_backgrounds: &Vec<String>;
