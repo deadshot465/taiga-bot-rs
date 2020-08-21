@@ -5,8 +5,8 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::HashMap;
-use crate::shared::CommandStrings;
-use crate::INTERFACE_SERVICE;
+use crate::InterfaceService;
+use std::sync::Arc;
 
 #[command]
 #[aliases("choose")]
@@ -15,13 +15,13 @@ use crate::INTERFACE_SERVICE;
 #[example = "A | B | C"]
 #[bucket = "utilities"]
 pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    // Get interface strings.
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.pick;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.pick;
 
     // If there are no arguments at all, abort.
     if args.is_empty() || args.len() == 0 {
@@ -158,6 +158,6 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         msg.channel_id.say(&context.http, message)
             .await?;
     }
-
+    drop(interface_lock);
     Ok(())
 }

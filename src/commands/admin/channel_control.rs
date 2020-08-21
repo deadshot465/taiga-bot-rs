@@ -4,10 +4,11 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::*;
 use serenity::model::channel::{Message, GuildChannel};
-use crate::PERSISTENCE_STORAGE;
+use crate::PersistenceService;
 use std::collections::HashMap;
 use serenity::model::id::ChannelId;
 use tokio::time::Duration;
+use std::sync::Arc;
 
 lazy_static! {
     static ref CHANNEL_REGEX: Regex = Regex::new(r"<#(\d+)>").unwrap();
@@ -95,56 +96,60 @@ pub async fn purge(context: &Context, msg: &Message, mut args: Args) -> CommandR
 }
 
 async fn process(context: &Context, msg: &Message, channels: Vec<u64>, process_type: &ProcessType) -> CommandResult {
-    unsafe {
-        let channel_settings = PERSISTENCE_STORAGE.channel_settings.as_mut().unwrap();
-        for chn in channels.iter() {
-            match process_type {
-                ProcessType::Allow => {
-                    if !channel_settings.ignored_channels.contains(chn) {
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is not ignored.", chn).as_str())
-                            .await?;
-                    }
-                    else {
-                        channel_settings.ignored_channels.remove(&*chn);
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is now allowed for bot responses.", chn).as_str())
-                            .await?;
-                    }
-                },
-                ProcessType::Disable => {
-                    if !channel_settings.enabled_channels.contains(chn) {
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is not enabled.", chn).as_str())
-                            .await?;
-                    }
-                    else {
-                        channel_settings.enabled_channels.remove(&*chn);
-                        msg.channel_id.say(&context.http, format!("Successfully disabled <#{}> channel.", chn).as_str())
-                            .await?;
-                    }
-                },
-                ProcessType::Enable => {
-                    if channel_settings.enabled_channels.contains(chn) {
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is already enabled.", chn).as_str())
-                            .await?;
-                    }
-                    else {
-                        channel_settings.enabled_channels.insert(*chn);
-                        msg.channel_id.say(&context.http, format!("Successfully enabled <#{}> channel.", chn).as_str())
-                            .await?;
-                    }
-                },
-                ProcessType::Ignore => {
-                    if channel_settings.ignored_channels.contains(chn) {
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is already ignored.", chn).as_str())
-                            .await?;
-                    }
-                    else {
-                        channel_settings.ignored_channels.insert(*chn);
-                        msg.channel_id.say(&context.http, format!("The channel <#{}> is now disallowed for bot responses.", chn).as_str())
-                            .await?;
-                    }
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    drop(data);
+    let mut persistence_lock = _persistence.lock().await;
+    let channel_settings = persistence_lock.channel_settings.as_mut().unwrap();
+    for chn in channels.iter() {
+        match process_type {
+            ProcessType::Allow => {
+                if !channel_settings.ignored_channels.contains(chn) {
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is not ignored.", chn).as_str())
+                        .await?;
+                }
+                else {
+                    channel_settings.ignored_channels.remove(&*chn);
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is now allowed for bot responses.", chn).as_str())
+                        .await?;
+                }
+            },
+            ProcessType::Disable => {
+                if !channel_settings.enabled_channels.contains(chn) {
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is not enabled.", chn).as_str())
+                        .await?;
+                }
+                else {
+                    channel_settings.enabled_channels.remove(&*chn);
+                    msg.channel_id.say(&context.http, format!("Successfully disabled <#{}> channel.", chn).as_str())
+                        .await?;
+                }
+            },
+            ProcessType::Enable => {
+                if channel_settings.enabled_channels.contains(chn) {
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is already enabled.", chn).as_str())
+                        .await?;
+                }
+                else {
+                    channel_settings.enabled_channels.insert(*chn);
+                    msg.channel_id.say(&context.http, format!("Successfully enabled <#{}> channel.", chn).as_str())
+                        .await?;
+                }
+            },
+            ProcessType::Ignore => {
+                if channel_settings.ignored_channels.contains(chn) {
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is already ignored.", chn).as_str())
+                        .await?;
+                }
+                else {
+                    channel_settings.ignored_channels.insert(*chn);
+                    msg.channel_id.say(&context.http, format!("The channel <#{}> is now disallowed for bot responses.", chn).as_str())
+                        .await?;
                 }
             }
         }
-        Ok(())
     }
+    drop(persistence_lock);
+    Ok(())
 }

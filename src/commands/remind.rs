@@ -6,8 +6,9 @@ use serenity::framework::standard::{
         command
     }
 };
-use crate::{CommandStrings, INTERFACE_SERVICE, PERSISTENCE_STORAGE, Reminder};
+use crate::{Reminder, InterfaceService, PersistenceService};
 use chrono::{DateTime, Duration, Local, TimeZone, ParseResult};
+use std::sync::Arc;
 
 const PREPOSITIONS: [&'static str; 2] = [
     "in", "on"
@@ -23,12 +24,15 @@ const UNITS: [&'static str; 6] = [
 #[example = "in 1 <years|months|days|hours|minutes|seconds> or remind on 2020-07-30."]
 #[bucket = "utilities"]
 pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.remind;
-    }
+    let lock = context.data.read().await;
+    let interface = lock.get::<InterfaceService>().unwrap();
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    let _interface = Arc::clone(interface);
+    drop(lock);
+    let interface_lock = _interface.lock().await;
+    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.remind;
 
     if args.is_empty() || args.len() <= 1 {
         let error_msg = interface_string.errors["length_too_short"].as_str();
@@ -75,39 +79,38 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());
             }
-
-            unsafe {
-                let reminders = PERSISTENCE_STORAGE.reminders.as_mut().unwrap();
-                let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
-                match unit.as_ref().unwrap().as_str() {
-                    "years" => {
-                        (*entry).datetime = Local::now() + Duration::days(365_i64 * (amount.unwrap() as i64));
-                    },
-                    "months" => {
-                        (*entry).datetime = Local::now() + Duration::days(30_i64 * (amount.unwrap() as i64));
-                    },
-                    "days" => {
-                        (*entry).datetime = Local::now() + Duration::days(amount.unwrap() as i64);
-                    },
-                    "hours" => {
-                        (*entry).datetime = Local::now() + Duration::hours(amount.unwrap() as i64);
-                    },
-                    "minutes" => {
-                        (*entry).datetime = Local::now() + Duration::minutes(amount.unwrap() as i64);
-                    },
-                    "seconds" => {
-                        (*entry).datetime = Local::now() + Duration::seconds(amount.unwrap() as i64);
-                    },
-                    _ => ()
-                }
-                (*entry).message = message.unwrap().to_string();
-                let result_msg = interface_string.result
-                    .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
-                    .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
-                msg.channel_id.say(&context.http, &result_msg).await?;
-                PERSISTENCE_STORAGE.write();
-                return Ok(());
+            let mut persistence_lock = _persistence.lock().await;
+            let reminders = persistence_lock.reminders.as_mut().unwrap();
+            let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
+            match unit.as_ref().unwrap().as_str() {
+                "years" => {
+                    (*entry).datetime = Local::now() + Duration::days(365_i64 * (amount.unwrap() as i64));
+                },
+                "months" => {
+                    (*entry).datetime = Local::now() + Duration::days(30_i64 * (amount.unwrap() as i64));
+                },
+                "days" => {
+                    (*entry).datetime = Local::now() + Duration::days(amount.unwrap() as i64);
+                },
+                "hours" => {
+                    (*entry).datetime = Local::now() + Duration::hours(amount.unwrap() as i64);
+                },
+                "minutes" => {
+                    (*entry).datetime = Local::now() + Duration::minutes(amount.unwrap() as i64);
+                },
+                "seconds" => {
+                    (*entry).datetime = Local::now() + Duration::seconds(amount.unwrap() as i64);
+                },
+                _ => ()
             }
+            (*entry).message = message.unwrap().to_string();
+            let result_msg = interface_string.result
+                .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
+            msg.channel_id.say(&context.http, &result_msg).await?;
+            persistence_lock.write();
+            drop(persistence_lock);
+            return Ok(());
         },
         "on" => {
             let datetime = args.single::<String>();
@@ -149,21 +152,21 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());
             }
-            unsafe {
-                let reminders = PERSISTENCE_STORAGE.reminders.as_mut().unwrap();
-                let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
-                (*entry).datetime = datetime.unwrap();
-                (*entry).message = message.unwrap().to_string();
-                let result_msg = interface_string.result
-                    .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
-                    .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
-                msg.channel_id.say(&context.http, &result_msg).await?;
-                PERSISTENCE_STORAGE.write();
-                return Ok(());
-            }
+            let mut persistence_lock = _persistence.lock().await;
+            let reminders = persistence_lock.reminders.as_mut().unwrap();
+            let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
+            (*entry).datetime = datetime.unwrap();
+            (*entry).message = message.unwrap().to_string();
+            let result_msg = interface_string.result
+                .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
+            msg.channel_id.say(&context.http, &result_msg).await?;
+            persistence_lock.write();
+            drop(persistence_lock);
+            return Ok(());
         }
         _ => ()
     }
-
+    drop(interface_lock);
     Ok(())
 }

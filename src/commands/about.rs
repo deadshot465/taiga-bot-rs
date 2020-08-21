@@ -3,8 +3,7 @@ use serenity::framework::standard::{macros::{
 }, CommandResult};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::INTERFACE_SERVICE;
-use std::borrow::Borrow;
+use crate::InterfaceService;
 
 #[command]
 #[aliases("credits", "bot")]
@@ -13,10 +12,12 @@ use std::borrow::Borrow;
 #[example = ""]
 #[bucket = "information"]
 pub async fn about(context: &Context, msg: &Message) -> CommandResult {
-    let is_kou: bool;
-    unsafe {
-        is_kou = INTERFACE_SERVICE.borrow().is_kou;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let interface_lock = interface.lock().await;
+    let is_kou = interface_lock.is_kou;
+    drop(interface_lock);
+    drop(data);
 
     if !is_kou {
         let color_code = u32::from_str_radix("e81615", 16).unwrap();

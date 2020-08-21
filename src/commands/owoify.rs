@@ -4,8 +4,8 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use owoify_rs::{Owoifiable, OwoifyLevel};
-use crate::shared::CommandStrings;
-use crate::INTERFACE_SERVICE;
+use crate::InterfaceService;
+use std::sync::Arc;
 
 #[command]
 #[description = "This command will owoify your text."]
@@ -28,12 +28,13 @@ pub async fn owoify(context: &Context, msg: &Message, mut args: Args) -> Command
         };
     }
 
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.owoify;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.owoify;
 
     let remains = args.remains();
     if let Some(message) = remains {
@@ -79,5 +80,6 @@ pub async fn owoify(context: &Context, msg: &Message, mut args: Args) -> Command
             msg.channel_id.say(&context.http, error_msg).await?;
         }
     }
+    drop(interface_lock);
     Ok(())
 }

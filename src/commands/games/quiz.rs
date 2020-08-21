@@ -4,7 +4,7 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args, CommandError};
 use serenity::prelude::*;
 use serenity::model::channel::{Message, ReactionType};
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, QuizQuestion};
+use crate::{QuizQuestion, InterfaceService, PersistenceService, PersistenceStorage};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::model::user::User;
@@ -13,6 +13,8 @@ use std::collections::{HashMap, HashSet};
 use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
 use serenity::model::guild::Member;
+use std::sync::Arc;
+use tokio::sync::MutexGuard;
 
 const TAIGA_RESPONSES: [&'static str; 5] = [
     "Nice one!", "That's my sidekick!", "Guess you're not an amateur after all! <:TaigaSmug:702210822310723614>",
@@ -31,74 +33,81 @@ const KOU_RESPONSES: [&'static str; 5] = [
 #[example = "10"]
 #[bucket = "games"]
 pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let interface_lock = interface.lock().await;
+    // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
+    let is_kou = interface_lock.is_kou;
+    let _persistence = Arc::clone(persistence);
+    drop(interface_lock);
+    drop(data);
+    let persistence_lock = _persistence.lock().await;
+
     // Borrow http for use in subsequent messages.
     let http = &context.http;
 
     // Acquire ongoing quizzes first so we don't create another game in the same channel.
-    unsafe {
-        {
-            let ongoing_quizzes = PERSISTENCE_STORAGE
-                .ongoing_quizzes
-                .as_ref()
-                .expect("Failed to acquire ongoing quizzes.");
+    {
+        let ongoing_quizzes = persistence_lock
+            .ongoing_quizzes
+            .as_ref()
+            .expect("Failed to acquire ongoing quizzes.");
 
-            // Check if there's an existing game.
-            if ongoing_quizzes.contains(&msg.channel_id.0) {
-                // Tell user that a game is already running.
-                msg.channel_id.say(http, "A game is already running!").await?;
-                return Ok(());
-            }
-        }
-
-        // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
-        let is_kou = INTERFACE_SERVICE.is_kou;
-
-        // Build color to be used in embeds beforehand.
-        let color_value = u32::from_str_radix(if is_kou {
-            "e7a43a"
-        } else {
-            "e81615"
-        }, 16).unwrap();
-        let color = Color::new(color_value);
-
-        // Check if rounds are specified. If there's any error, sanitize it and set max rounds to 7.
-        let max_rounds = args.single::<u8>().unwrap_or(7);
-        // Limit max rounds to between 2 and 10.
-        if max_rounds < 2 || max_rounds > 10 {
-            msg.channel_id.say(http, "The number of rounds has to be greater than 1 and less than 11!")
-                .await?;
+        // Check if there's an existing game.
+        if ongoing_quizzes.contains(&msg.channel_id.0) {
+            // Tell user that a game is already running.
+            msg.channel_id.say(http, "A game is already running!").await?;
             return Ok(());
         }
-        msg.channel_id.say(http, format!("Starting a game with {} rounds...", max_rounds).as_str())
-            .await?;
-        let (game_started, players) = join_game(context, msg, &color, is_kou)
-            .await;
+    }
 
-        let mut result: Option<HashMap<u64, u8>> = None;
-        // If game starts, wait for game result.
-        if game_started {
-            let _result = progress(context, msg, max_rounds, is_kou, &players.unwrap()).await;
-            if _result.is_ok() {
-                result = Some(_result.unwrap());
-            }
-            else {
-                result = None;
-            }
+    // Build color to be used in embeds beforehand.
+    let color_value = u32::from_str_radix(if is_kou {
+        "e7a43a"
+    } else {
+        "e81615"
+    }, 16).unwrap();
+    let color = Color::new(color_value);
+
+    // Check if rounds are specified. If there's any error, sanitize it and set max rounds to 7.
+    let max_rounds = args.single::<u8>().unwrap_or(7);
+    // Limit max rounds to between 2 and 10.
+    if max_rounds < 2 || max_rounds > 10 {
+        msg.channel_id.say(http, "The number of rounds has to be greater than 1 and less than 11!")
+            .await?;
+        return Ok(());
+    }
+    msg.channel_id.say(http, format!("Starting a game with {} rounds...", max_rounds).as_str())
+        .await?;
+    let (game_started, players) = join_game(context, msg, &color, is_kou)
+        .await;
+
+    let mut result: Option<HashMap<u64, u8>> = None;
+    // If game starts, wait for game result.
+    if game_started {
+        let _result = progress(context, msg, max_rounds, is_kou, &players.unwrap(), &persistence_lock).await;
+        if _result.is_ok() {
+            result = Some(_result.unwrap());
         }
         else {
-            // Otherwise clean up and unregister game.
-            end_game(context, msg, false, None, is_kou, &color).await?;
-            return Ok(());
+            result = None;
         }
-
-        // If the result is none, that means the game is aborted. Clean up and unregister game.
-        if result.is_none() {
-            end_game(context, msg, false, None, is_kou, &color).await?;
-            return Ok(());
-        }
-        // Otherwise, show final results.
-        end_game(context, msg, true, result.as_ref(), is_kou, &color).await?;
     }
+    else {
+        // Otherwise clean up and unregister game.
+        end_game(context, msg, false, None, is_kou, &color).await?;
+        return Ok(());
+    }
+
+    // If the result is none, that means the game is aborted. Clean up and unregister game.
+    if result.is_none() {
+        end_game(context, msg, false, None, is_kou, &color).await?;
+        return Ok(());
+    }
+    // Otherwise, show final results.
+    end_game(context, msg, true, result.as_ref(), is_kou, &color).await?;
+    drop(persistence_lock);
     Ok(())
 }
 
@@ -115,15 +124,17 @@ async fn build_embed(context: &Context, msg: &Message, title: &str, description:
 
 /// Handles player joining.
 async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool) -> (bool, Option<Vec<User>>) {
-
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.lock().await;
     // Add the current channel to ongoing quizzes.
-    unsafe {
-        let ongoing_quizzes = PERSISTENCE_STORAGE
-            .ongoing_quizzes
-            .as_mut()
-            .unwrap();
-        let _ = ongoing_quizzes.insert(msg.channel_id.0);
-    }
+    let ongoing_quizzes = persistence_lock
+        .ongoing_quizzes
+        .as_mut()
+        .unwrap();
+    let _ = ongoing_quizzes.insert(msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
 
     let http = &context.http;
     // Build welcoming messages and allow users to join.
@@ -220,7 +231,7 @@ async fn join_game(context: &Context, msg: &Message, color: &Color, is_kou: bool
 }
 
 /// The main game loop.
-async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool, players: &Vec<User>) -> std::result::Result<HashMap<u64, u8>, CommandError> {
+async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool, players: &Vec<User>, persistence: &MutexGuard<'_, PersistenceStorage>) -> std::result::Result<HashMap<u64, u8>, CommandError> {
     let http = &context.http;
     let mut score_board = HashMap::<u64, u8>::new();
     let mut current_round = 1_u8;
@@ -235,14 +246,15 @@ async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool
         .guild_id(msg.guild_id.as_ref().unwrap().0)
         .filter(move |m| player_ids.contains(&m.author.id.0))
         .await;
-    unsafe {
-        // Get quiz questions from persistence storage and shuffle it.
-        let persistence = &PERSISTENCE_STORAGE;
-        let questions = persistence.quiz_questions.as_ref().unwrap();
-        quiz_questions = questions.to_vec();
+
+    // Get quiz questions from persistence storage and shuffle it.
+    let questions = persistence.quiz_questions.as_ref().unwrap();
+    quiz_questions = questions.to_vec();
+    {
         let mut rng = thread_rng();
         quiz_questions.shuffle(&mut rng);
     }
+
     while current_round <= max_rounds {
         // Get a question.
         let current_question = quiz_questions.pop();
@@ -359,14 +371,18 @@ async fn progress(context: &Context, msg: &Message, max_rounds: u8, is_kou: bool
 }
 
 async fn end_game(context: &Context, msg: &Message, show_scoreboard: bool, result: Option<&HashMap<u64, u8>>, is_kou: bool, color: &Color) -> CommandResult {
-    unsafe {
-        // Remove the game from ongoing quizzes.
-        let ongoing_quizzes = PERSISTENCE_STORAGE
-            .ongoing_quizzes
-            .as_mut()
-            .unwrap();
-        ongoing_quizzes.remove(&msg.channel_id.0);
-    }
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.lock().await;
+    // Remove the game from ongoing quizzes.
+    let ongoing_quizzes = persistence_lock
+        .ongoing_quizzes
+        .as_mut()
+        .unwrap();
+    ongoing_quizzes.remove(&msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
+
     // Build up the scoreboard.
     if show_scoreboard {
         let score_board = result.unwrap();

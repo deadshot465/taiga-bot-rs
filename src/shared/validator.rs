@@ -1,8 +1,9 @@
 use regex::Regex;
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
-use crate::shared::CommandStrings;
+use crate::{PersistenceService, InterfaceStorage};
+use std::sync::Arc;
+use tokio::sync::MutexGuard;
 
 pub enum TextError {
     NoMessage, LengthTooLong, WrongCharacterSet, None
@@ -16,38 +17,39 @@ lazy_static! {
     static ref NON_ASCII_AND_JAPANESE_REGEX: Regex = Regex::new(r"[^\x00-\x7F\u4e00-\u9fbf\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u3000-\u303f\u2018-\u2019]").unwrap();
 }
 
-pub async fn validate_dialog(context: &Context, msg: &Message, background: &String, character: &String, text: &String) -> Result<(), String> {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.dialog;
+pub async fn validate_dialog(context: &Context, msg: &Message, background: &String, character: &String, text: &String, interface: &MutexGuard<'_, InterfaceStorage>) -> Result<(), String> {
+    let lock = context.data.read().await;
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    drop(lock);
+    let interface_strings = interface.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.dialog;
+    let persistence_lock = _persistence.lock().await;
+    let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
+    let characters = persistence_lock.dialog_characters.as_ref().unwrap();
+    let ref background_strings = persistence_lock.background_strings;
+    let ref character_strings = persistence_lock.character_strings;
 
-        let backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
-        let characters = PERSISTENCE_STORAGE.dialog_characters.as_ref().unwrap();
-        let ref background_strings = PERSISTENCE_STORAGE.background_strings;
-        let ref character_strings = PERSISTENCE_STORAGE.character_strings;
-
-        if !backgrounds.contains(background) {
-            let message = interface_string.errors["background_not_found"]
-                .as_str()
-                .replace("{background}", background)
-                .replace("{backgrounds}", background_strings);
-            msg.channel_id
-                .say(&context.http, message.as_str()).await.unwrap();
-            return Err("Background not found.".to_string());
-        }
-
-        if !characters.contains(character) {
-            let message = interface_string.errors["character_not_found"]
-                .as_str()
-                .replace("{character}", character)
-                .replace("{characters}", character_strings);
-            msg.channel_id
-                .say(&context.http, message).await.unwrap();
-            return Err("Character not found.".to_string());
-        }
+    if !backgrounds.contains(background) {
+        let message = interface_string.errors["background_not_found"]
+            .as_str()
+            .replace("{background}", background)
+            .replace("{backgrounds}", background_strings);
+        msg.channel_id
+            .say(&context.http, message.as_str()).await.unwrap();
+        return Err("Background not found.".to_string());
     }
+
+    if !characters.contains(character) {
+        let message = interface_string.errors["character_not_found"]
+            .as_str()
+            .replace("{character}", character)
+            .replace("{characters}", character_strings);
+        msg.channel_id
+            .say(&context.http, message).await.unwrap();
+        return Err("Character not found.".to_string());
+    }
+    drop(persistence_lock);
 
     let text_validation = validate_text(&text);
 

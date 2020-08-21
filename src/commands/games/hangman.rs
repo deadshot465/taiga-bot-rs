@@ -5,7 +5,7 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use tokio::time::Duration;
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
+use crate::{PersistenceService, InterfaceService};
 use serenity::utils::Color;
 
 #[command]
@@ -14,11 +14,15 @@ use serenity::utils::Color;
 #[example = ""]
 #[bucket = "games"]
 pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
-    unsafe {
-        if !INTERFACE_SERVICE.is_kou {
-            msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
-            return Ok(());
-        }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let interface_lock = interface.lock().await;
+    let is_kou = interface_lock.is_kou;
+    drop(interface_lock);
+    drop(data);
+    if !is_kou {
+        msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
+        return Ok(());
     }
 
     // Get member so we can get the user's nickname instead of the user's real name
@@ -39,8 +43,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     let name: &String;
     if let Some(n) = nick_name {
         name = n;
-    }
-    else {
+    } else {
         name = &msg.author.name;
     }
     msg.reply(http, &format!("Hello {}! We are going to play hangman!", name))
@@ -50,15 +53,21 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     tokio::time::delay_for(Duration::from_secs(2)).await;
 
     // Set the desired word
-    let actual_word: &String;
-    unsafe {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence_lock = persistence.lock().await;
+    let actual_word: String;
+    {
         let mut rng = thread_rng();
-        actual_word = PERSISTENCE_STORAGE.game_words
+        actual_word = persistence_lock.game_words
             .as_ref()
             .unwrap()
             .choose(&mut rng)
-            .unwrap();
+            .unwrap()
+            .clone();
     }
+    drop(persistence_lock);
+    drop(data);
 
     // Set max number of failed attempts to be 10
     let mut attempts: i32 = 10;

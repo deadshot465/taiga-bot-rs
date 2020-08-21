@@ -3,8 +3,8 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::shared::CommandStrings;
-use crate::{INTERFACE_SERVICE, search_user};
+use crate::{search_user, InterfaceService};
+use std::sync::Arc;
 
 #[command]
 #[aliases("pfp")]
@@ -12,12 +12,13 @@ use crate::{INTERFACE_SERVICE, search_user};
 #[usage = "or avatar <username>"]
 #[example = "Kou"]
 async fn avatar(context: &Context, msg: &Message, args: Args) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.avatar;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.avatar;
 
     let query = args.remains();
     let username: String;
@@ -63,5 +64,6 @@ async fn avatar(context: &Context, msg: &Message, args: Args) -> CommandResult {
         e.image(url.as_ref().unwrap());
         e
     })).await?;
+    drop(interface_lock);
     Ok(())
 }

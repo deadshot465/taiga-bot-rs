@@ -12,7 +12,11 @@ use serenity::{
     }},
     http::Http,
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, avatar::AVATAR_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*, games::*, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, AUTHENTICATION_SERVICE, PERSISTENCE_STORAGE, INTERFACE_SERVICE, Handler, before, message_received, unknown_command, dispatch_error};
+use taiga_bot_rs::{about::ABOUT_COMMAND, avatar::AVATAR_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*, games::*, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, Handler, before, message_received, unknown_command, dispatch_error, PersistenceService, PersistenceStorage, InterfaceService, InterfaceStorage, AuthenticationService, Authentication};
+use serenity::prelude::TypeMapKey;
+use serenity::framework::standard::CommandGroup;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[group]
 #[only_in("guilds")]
@@ -48,6 +52,11 @@ struct Say;
 #[commands(avatar, cvt, enlarge, image, pick, remind)]
 struct Utilities;
 
+struct CommandGroupCollection;
+impl TypeMapKey for CommandGroupCollection {
+    type Value = Vec<&'static CommandGroup>;
+}
+
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
@@ -61,16 +70,6 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let app_info = http.get_current_application_info().await?;
     let mut owners = HashSet::new();
     owners.insert(app_info.owner.id.clone());
-
-    unsafe {
-        AUTHENTICATION_SERVICE.login().await?;
-        INTERFACE_SERVICE.load(if args.contains(&"kou".to_string()) {
-            true
-        } else {
-            false
-        })?;
-        let _ = PERSISTENCE_STORAGE.load().await?;
-    }
 
     let prefix = env::var("PREFIX").unwrap();
 
@@ -105,6 +104,31 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             )
         .await
         .expect("Error creating client");
+
+    {
+        let mut data = client.data.write().await;
+        let interface = Arc::new(Mutex::new(InterfaceStorage::new()));
+        let mut lock = interface.lock().await;
+        let is_kou = if args.contains(&"kou".to_string()) {
+            true
+        } else {
+            false
+        };
+        lock.load(is_kou).expect("Failed to load interface.");
+        drop(lock);
+        data.insert::<InterfaceService>(interface);
+        data.insert::<PersistenceService>(Arc::new(Mutex::new(PersistenceStorage::new(is_kou).await)));
+        data.insert::<AuthenticationService>(Arc::new(Mutex::new(Authentication::new().await)));
+
+        let mut command_groups: Vec<&CommandGroup> = vec![];
+        command_groups.push(&ADMIN_GROUP);
+        command_groups.push(&FUN_GROUP);
+        command_groups.push(&GAMES_GROUP);
+        command_groups.push(&INFORMATION_GROUP);
+        command_groups.push(&SAY_GROUP);
+        command_groups.push(&UTILITIES_GROUP);
+        data.insert::<CommandGroupCollection>(command_groups);
+    }
 
     if let Err(reason) = client.start().await {
         error!("An error occurred while running the client: {:?}", reason);

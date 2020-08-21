@@ -3,12 +3,13 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args, CommandError};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::shared::{CommandStrings, SpecializedInfo};
-use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE, TextError, validate_text, AUTHENTICATION_SERVICE, SpecializedDialog, AvailableSpecializedOptions};
+use crate::shared::SpecializedInfo;
+use crate::{TextError, validate_text, SpecializedDialog, AvailableSpecializedOptions, InterfaceService, PersistenceService, AuthenticationService};
 use std::time::Duration;
 use rand::{thread_rng, Rng};
 use std::borrow::Borrow;
 use serenity::utils::Color;
+use std::sync::Arc;
 
 #[command]
 #[aliases("hiro")]
@@ -218,17 +219,20 @@ pub async fn huntersay(context: &Context, msg: &Message, mut args: Args) -> Comm
 }
 
 async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool) -> Result<Vec<u8>, CommandError> {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.say[character];
-    }
+    let lock = context.data.read().await;
+    let interface = lock.get::<InterfaceService>().unwrap();
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let authentication = lock.get::<AuthenticationService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    let _interface = Arc::clone(interface);
+    let _authentication = Arc::clone(authentication);
+    drop(lock);
+    let interface_lock = _interface.lock().await;
+    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.say[character];
+    let persistence_lock = _persistence.lock().await;
 
-    let backgrounds: &Vec<String>;
-    unsafe {
-        backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
-    }
+    let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
     msg.reply(&context.http, "Please specify a background in 10 seconds, or specify nothing or anything to use a random background.")
         .await?;
     let background: String;
@@ -247,11 +251,8 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         background = backgrounds[thread_rng().gen_range(0, backgrounds.len())].clone();
     }
 
-    let character_available_options: &SpecializedInfo;
-    unsafe {
-        let options = PERSISTENCE_STORAGE.specialized_info.as_ref().unwrap();
-        character_available_options = &options[character];
-    }
+    let options = persistence_lock.specialized_info.as_ref().unwrap();
+    let character_available_options = &options[character];
 
     msg.reply(&context.http, "Please specify a pose number in 10 seconds.")
         .await?;
@@ -327,29 +328,29 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
         else {
             text = t.content.clone();
             let client = reqwest::Client::new();
-            unsafe {
-                AUTHENTICATION_SERVICE.login().await.unwrap();
-                let request_data = SpecializedDialog {
-                    background,
-                    character: None,
-                    clothes: cloth,
-                    face,
-                    is_hidden_character: is_hidden,
-                    pose: pose.as_str().parse::<u8>().unwrap(),
-                    text
-                };
+            let mut authentication_lock = _authentication.lock().await;
+            authentication_lock.login().await.unwrap();
+            let request_data = SpecializedDialog {
+                background,
+                character: None,
+                clothes: cloth,
+                face,
+                is_hidden_character: is_hidden,
+                pose: pose.as_str().parse::<u8>().unwrap(),
+                text
+            };
 
-                let response = client.post(format!("https://tetsukizone.com/api/dialog/{}", character).as_str())
-                    .header("Accept", "application/json")
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", format!("Bearer {}", AUTHENTICATION_SERVICE.token.as_str()))
-                    .json(&request_data)
-                    .send()
-                    .await?;
+            let response = client.post(format!("https://tetsukizone.com/api/dialog/{}", character).as_str())
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .header("Authorization", format!("Bearer {}", authentication_lock.token.as_str()))
+                .json(&request_data)
+                .send()
+                .await?;
+            drop(authentication_lock);
 
-                let data = response.bytes().await?;
-                return Ok(data.to_vec());
-            }
+            let data = response.bytes().await?;
+            return Ok(data.to_vec());
         }
     }
     else {
@@ -361,26 +362,32 @@ async fn say(context: &Context, msg: &Message, character: &str, is_hidden: bool)
 }
 
 async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandResult {
+    let lock = context.data.read().await;
+    let interface = lock.get::<InterfaceService>().unwrap();
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    let interface_lock = interface.lock().await;
+    let is_kou = interface_lock.is_kou;
+    drop(interface_lock);
+    drop(lock);
+    let persistence_lock = _persistence.lock().await;
+
     let character_available_options: &SpecializedInfo;
     let available_backgrounds: &Vec<String>;
-    unsafe {
-        let options = PERSISTENCE_STORAGE.specialized_info.as_ref().unwrap();
-        character_available_options = &options[character];
-        available_backgrounds = PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap();
-    }
+    let options = persistence_lock.specialized_info.as_ref().unwrap();
+    character_available_options = &options[character];
+    available_backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
 
     let member = msg.member(&context.cache).await.unwrap();
     let color = u32::from_str_radix("ff6600", 16).unwrap();
 
-    unsafe {
-        if INTERFACE_SERVICE.is_kou {
-            msg.channel_id.say(&context.http, "Check your DM <:KouConfident:705182851754360912>")
-                .await?;
-        }
-        else {
-            msg.channel_id.say(&context.http, "Check your DM <:chibitaiga:697893400891883531>")
-                .await?;
-        }
+    if is_kou {
+        msg.channel_id.say(&context.http, "Check your DM <:KouConfident:705182851754360912>")
+            .await?;
+    }
+    else {
+        msg.channel_id.say(&context.http, "Check your DM <:chibitaiga:697893400891883531>")
+            .await?;
     }
 
     msg.author.direct_message(&context.http, |m| m
@@ -452,6 +459,6 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
             }
             e
         })).await?;
-
+    drop(persistence_lock);
     Ok(())
 }

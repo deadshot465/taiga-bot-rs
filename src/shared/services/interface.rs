@@ -1,11 +1,13 @@
 use crate::shared::InterfaceStrings;
 use std::borrow::Borrow;
+use serenity::prelude::TypeMapKey;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-pub static mut INTERFACE_SERVICE: InterfaceStorage = InterfaceStorage {
-    interface_strings: None,
-    is_kou: false,
-    prefix: String::new()
-};
+pub struct InterfaceService;
+impl TypeMapKey for InterfaceService {
+    type Value = Arc<Mutex<InterfaceStorage>>;
+}
 
 const TAIGA_STRING_PATH: &'static str = "./persistence/interfaceStringsTaiga.json";
 const KOU_STRING_PATH: &'static str = "./persistence/interfaceStringsKou.json";
@@ -17,6 +19,14 @@ pub struct InterfaceStorage {
 }
 
 impl InterfaceStorage {
+    pub fn new() -> Self {
+        InterfaceStorage {
+            interface_strings: None,
+            is_kou: false,
+            prefix: String::new()
+        }
+    }
+
     pub fn load(&mut self, kou: bool) -> Result<(), Box<dyn std::error::Error>> {
 
         if self.interface_strings.is_some() {
