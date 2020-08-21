@@ -31,13 +31,13 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
     let _interface = Arc::clone(interface);
     let _persistence = Arc::clone(persistence);
     drop(lock);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.emote;
 
     if args.is_empty() {
         let color = u32::from_str_radix("93B986", 16).unwrap();
-        let persistence_lock = _persistence.lock().await;
+        let persistence_lock = _persistence.read().await;
         msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
             e.thumbnail("https://cdn.discordapp.com/emojis/730239295155077251.png");
             e.title("Registered Emotes");
@@ -112,7 +112,7 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
             };
             let link = String::from(EMOTE_BASE_LINK) + &id.to_string() + file_extension;
             let emote_entity = Emote::new(name.as_str(), id, link.as_str(), emote.as_str());
-            let mut persistence_lock = _persistence.lock().await;
+            let mut persistence_lock = _persistence.write().await;
             let config = persistence_lock.config.as_mut().unwrap();
             config.emotes.push(emote_entity);
             persistence_lock.write();
@@ -120,7 +120,7 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
             msg.channel_id.say(&context.http, "Successfully added the emote!").await?;
         },
         "deregister" => {
-            let mut persistence_lock = _persistence.lock().await;
+            let mut persistence_lock = _persistence.write().await;
             let config = persistence_lock.config.as_mut().unwrap();
             let mut index: usize = 0;
             for emote in config.emotes.iter().enumerate() {

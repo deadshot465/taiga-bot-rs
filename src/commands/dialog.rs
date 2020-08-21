@@ -21,7 +21,7 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     drop(lock);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.dialog;
 
@@ -33,7 +33,7 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
     let first_arg = args.single::<String>().unwrap();
     let background: String;
     let character: String;
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let characters = persistence_lock.dialog_characters.as_ref().unwrap();
     let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
     if characters.contains(&first_arg) {

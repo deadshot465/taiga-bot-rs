@@ -3,7 +3,7 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::{PersistenceService, InterfaceStorage};
 use std::sync::Arc;
-use tokio::sync::MutexGuard;
+use tokio::sync::{MutexGuard, RwLockReadGuard};
 
 pub enum TextError {
     NoMessage, LengthTooLong, WrongCharacterSet, None
@@ -17,14 +17,14 @@ lazy_static! {
     static ref NON_ASCII_AND_JAPANESE_REGEX: Regex = Regex::new(r"[^\x00-\x7F\u4e00-\u9fbf\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u3000-\u303f\u2018-\u2019]").unwrap();
 }
 
-pub async fn validate_dialog(context: &Context, msg: &Message, background: &String, character: &String, text: &String, interface: &MutexGuard<'_, InterfaceStorage>) -> Result<(), String> {
+pub async fn validate_dialog(context: &Context, msg: &Message, background: &String, character: &String, text: &String, interface: &RwLockReadGuard<'_, InterfaceStorage>) -> Result<(), String> {
     let lock = context.data.read().await;
     let persistence = lock.get::<PersistenceService>().unwrap();
     let _persistence = Arc::clone(persistence);
     drop(lock);
     let interface_strings = interface.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.dialog;
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
     let characters = persistence_lock.dialog_characters.as_ref().unwrap();
     let ref background_strings = persistence_lock.background_strings;

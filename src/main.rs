@@ -16,7 +16,7 @@ use taiga_bot_rs::{about::ABOUT_COMMAND, avatar::AVATAR_COMMAND, comic::COMIC_CO
 use serenity::prelude::TypeMapKey;
 use serenity::framework::standard::CommandGroup;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard};
 
 #[group]
 #[only_in("guilds")]
@@ -107,8 +107,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut data = client.data.write().await;
-        let interface = Arc::new(Mutex::new(InterfaceStorage::new()));
-        let mut lock = interface.lock().await;
+        let interface = Arc::new(RwLock::new(InterfaceStorage::new()));
+        let mut lock = interface.write().await;
         let is_kou = if args.contains(&"kou".to_string()) {
             true
         } else {
@@ -117,7 +117,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         lock.load(is_kou).expect("Failed to load interface.");
         drop(lock);
         data.insert::<InterfaceService>(interface);
-        data.insert::<PersistenceService>(Arc::new(Mutex::new(PersistenceStorage::new(is_kou).await)));
+        data.insert::<PersistenceService>(Arc::new(RwLock::new(PersistenceStorage::new(is_kou).await)));
         data.insert::<AuthenticationService>(Arc::new(Mutex::new(Authentication::new().await)));
 
         let mut command_groups: Vec<&CommandGroup> = vec![];

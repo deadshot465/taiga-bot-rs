@@ -48,10 +48,10 @@ async fn handle_self_mentions(context: &Context, msg: &Message) {
         .expect("Failed to retrieve persistence service.");
     let interface = lock.get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
-    let persistence_lock = persistence.lock().await;
+    let persistence_lock = persistence.read().await;
     let random_messages = persistence_lock.random_messages.as_ref().unwrap();
     let messages = random_messages.iter()
         .find(|m| {
@@ -87,9 +87,9 @@ async fn handle_reactions(context: &Context, msg: &Message) {
     let interface = lock.get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
     let _persistence = Arc::clone(persistence);
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let random_messages = persistence_lock.random_messages.as_ref().unwrap();
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     drop(lock);
@@ -141,13 +141,14 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     let interface = lock.get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
     let _persistence = Arc::clone(persistence);
-    let mut persistence_lock = _persistence.lock().await;
-    let interface_lock = interface.lock().await;
+    let persistence_lock = _persistence.read().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     drop(lock);
     if persistence_lock.channel_settings.as_ref().unwrap()
         .ignored_channels.contains(&msg.channel_id.0) {
+        drop(persistence_lock);
         return;
     }
     if msg.author.bot {
@@ -205,6 +206,8 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
                 .await
                 .expect("Failed to reply to the user.");
         }
+        drop(persistence_lock);
+        let mut persistence_lock = _persistence.write().await;
         let user_id = msg.author.id.0.to_string();
         let user_records = persistence_lock.user_records
             .as_mut()
@@ -213,8 +216,11 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
             .or_insert(UserRecords::new());
         let reply_count = &mut user_records.replies;
         *reply_count += 1;
+        drop(persistence_lock);
     }
-    drop(persistence_lock);
+    else {
+        drop(persistence_lock);
+    }
 }
 
 async fn handle_replies(context: &Context, msg: &Message) {
@@ -224,8 +230,8 @@ async fn handle_replies(context: &Context, msg: &Message) {
     let interface = lock.get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
     let _persistence = Arc::clone(persistence);
-    let persistence_lock = _persistence.lock().await;
-    let interface_lock = interface.lock().await;
+    let persistence_lock = _persistence.read().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     drop(lock);
@@ -365,8 +371,8 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     drop(lock);
-    let persistence_lock = _persistence.lock().await;
-    let interface_lock = _interface.lock().await;
+    let persistence_lock = _persistence.read().await;
+    let interface_lock = _interface.read().await;
     let config = persistence_lock.config.as_ref().unwrap();
     let emote_exist = config.emotes.iter()
         .find(|e| e.name == cmd);
@@ -425,14 +431,14 @@ pub async fn message_received(context: &Context, msg: &Message) {
     handle_replies(context, msg).await;
     handle_user_replies(context, msg).await;
 
-    let lock = context.data.write().await;
+    let lock = context.data.read().await;
     let persistence = lock.get::<PersistenceService>().unwrap();
     let interface = lock.get::<InterfaceService>().unwrap();
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     drop(lock);
-    let mut persistence_lock = _persistence.lock().await;
-    let interface_lock = _interface.lock().await;
+    let mut persistence_lock = _persistence.write().await;
+    let interface_lock = _interface.read().await;
 
     // Update last modified time of persistence storage and write data every 5 minutes.
     let last_modified_time = persistence_lock.last_modified_time.as_ref().unwrap();
@@ -486,7 +492,7 @@ pub async fn before(context: &Context, msg: &Message, command_name: &str) -> boo
     let persistence = lock.get::<PersistenceService>().unwrap();
     let _persistence = Arc::clone(persistence);
     drop(lock);
-    let persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     let channel = msg.channel(&context.cache).await.unwrap();
     let guild_channel = channel.guild();
     let enabled_channels = &persistence_lock.channel_settings.as_ref().unwrap().enabled_channels;
@@ -523,7 +529,7 @@ pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchErr
         DispatchError::Ratelimited(time) => {
             let lock = context.data.read().await;
             let interface = lock.get::<InterfaceService>().unwrap();
-            let interface_lock = interface.lock().await;
+            let interface_lock = interface.read().await;
             let error_msg = interface_lock
                 .interface_strings
                 .as_ref()
@@ -563,7 +569,7 @@ impl EventHandler for Handler {
     async fn ready(&self, context: Context, ready: Ready) {
         let lock = context.data.read().await;
         let interface = lock.get::<InterfaceService>().unwrap();
-        let interface_lock = interface.lock().await;
+        let interface_lock = interface.read().await;
         let presences = interface_lock
             .interface_strings
             .as_ref()
@@ -580,7 +586,7 @@ impl EventHandler for Handler {
 async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
     let lock = context.data.read().await;
     let interface = lock.get::<InterfaceService>().unwrap();
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     let greetings = interface_lock.interface_strings
         .as_ref()
         .unwrap()

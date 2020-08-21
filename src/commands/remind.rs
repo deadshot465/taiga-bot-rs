@@ -30,7 +30,7 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     drop(lock);
-    let interface_lock = _interface.lock().await;
+    let interface_lock = _interface.read().await;
     let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
     let interface_string = &interface_strings.remind;
 
@@ -79,7 +79,7 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());
             }
-            let mut persistence_lock = _persistence.lock().await;
+            let mut persistence_lock = _persistence.write().await;
             let reminders = persistence_lock.reminders.as_mut().unwrap();
             let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
             match unit.as_ref().unwrap().as_str() {
@@ -152,7 +152,7 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());
             }
-            let mut persistence_lock = _persistence.lock().await;
+            let mut persistence_lock = _persistence.write().await;
             let reminders = persistence_lock.reminders.as_mut().unwrap();
             let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
             (*entry).datetime = datetime.unwrap();

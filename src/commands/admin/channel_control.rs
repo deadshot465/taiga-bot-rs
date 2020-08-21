@@ -100,7 +100,7 @@ async fn process(context: &Context, msg: &Message, channels: Vec<u64>, process_t
     let persistence = data.get::<PersistenceService>().unwrap();
     let _persistence = Arc::clone(persistence);
     drop(data);
-    let mut persistence_lock = _persistence.lock().await;
+    let mut persistence_lock = _persistence.write().await;
     let channel_settings = persistence_lock.channel_settings.as_mut().unwrap();
     for chn in channels.iter() {
         match process_type {

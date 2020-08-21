@@ -31,13 +31,13 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
     let interface = data.get::<InterfaceService>().unwrap();
     let persistence = data.get::<PersistenceService>().unwrap();
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
     let is_kou = interface_lock.is_kou;
     let _persistence = Arc::clone(persistence);
     drop(interface_lock);
     drop(data);
-    let mut persistence_lock = _persistence.lock().await;
+    let persistence_lock = _persistence.read().await;
     if !is_kou {
         msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
         return Ok(());
@@ -53,28 +53,33 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
         msg.channel_id.say(http, "A game is already running!").await?;
         return Ok(());
     }
+    drop(persistence_lock);
 
     let color_value = u32::from_str_radix("306998", 16).unwrap();
     let color = Color::new(color_value);
-    let (game_started, players) = join_game(context, msg, color, &mut persistence_lock)
+    let (game_started, players) = join_game(context, msg, color)
         .await;
     // If game starts, wait for game result.
     if game_started {
         let _ = progress(context, msg, players.unwrap(), color).await;
     }
-    end_game(context, msg, &mut persistence_lock).await;
-    drop(persistence_lock);
+    end_game(context, msg).await;
     Ok(())
 }
 
 /// Handles player joining.
-async fn join_game(context: &Context, msg: &Message, color: Color, persistence: &mut MutexGuard<'_, PersistenceStorage>) -> (bool, Option<Vec<User>>) {
+async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Option<Vec<User>>) {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.write().await;
     // Add the current channel to ongoing quizzes.
-    let ongoing_tictactoes = persistence
+    let ongoing_tictactoes = persistence_lock
         .ongoing_tictactoes
         .as_mut()
         .unwrap();
     let _ = ongoing_tictactoes.insert(msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
 
     let http = &context.http;
     // Build welcoming messages and allow users to join.
@@ -391,10 +396,15 @@ fn check_result(board: &Vec<Vec<&str>>) -> TicTacToeResult {
     TicTacToeResult::Draw
 }
 
-async fn end_game(context: &Context, msg: &Message, persistence: &mut MutexGuard<'_, PersistenceStorage>) {
-    let ongoing_tictactoes = persistence
+async fn end_game(context: &Context, msg: &Message) {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.write().await;
+    let ongoing_tictactoes = persistence_lock
         .ongoing_tictactoes
         .as_mut()
         .unwrap();
     ongoing_tictactoes.remove(&msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
 }

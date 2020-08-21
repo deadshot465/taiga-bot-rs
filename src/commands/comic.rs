@@ -80,7 +80,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
 
-            let persistence_lock = _persistence.lock().await;
+            let persistence_lock = _persistence.read().await;
             let character = available_specializations[specialization];
             let background = m.get(2).unwrap().as_str();
             if !(persistence_lock.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
@@ -162,7 +162,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
 
-            let persistence_lock = _persistence.lock().await;
+            let persistence_lock = _persistence.read().await;
             let background = m.get(2).unwrap().as_str();
             if !(persistence_lock.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
                 msg.channel_id.say(http, "One of the commands contains a background that is not available.")

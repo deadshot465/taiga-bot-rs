@@ -31,7 +31,7 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
     let color: u32;
     let data = context.data.read().await;
     let interface = data.get::<InterfaceService>().unwrap();
-    let interface_lock = interface.lock().await;
+    let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     drop(data);
