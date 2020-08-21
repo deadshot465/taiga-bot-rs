@@ -4,8 +4,8 @@ use serenity::framework::standard::{macros::{
 }, CommandResult};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::shared::CommandStrings;
-use crate::INTERFACE_SERVICE;
+use crate::InterfaceService;
+use std::sync::Arc;
 
 const EMOTE_BASE_LINK: &'static str = "https://cdn.discordapp.com/emojis/";
 
@@ -23,18 +23,20 @@ lazy_static! {
 #[example = "<emote>"]
 #[bucket = "utilities"]
 pub async fn enlarge(context: &Context, msg: &Message) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.enlarge;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.enlarge;
 
     if !EMOTE_ID_REGEX.is_match(msg.content.as_str()) {
         let message = interface_string.errors["no_emote"].as_str();
         msg.channel_id.say(&context.http, message).await?;
         return Ok(());
     }
+    drop(interface_lock);
     let splits: Vec<&str> = msg.content.split(' ').collect();
     let mut emote_links: Vec<String> = vec![];
 

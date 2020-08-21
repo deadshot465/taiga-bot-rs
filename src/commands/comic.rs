@@ -5,10 +5,11 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::str;
-use crate::{PERSISTENCE_STORAGE, SpecializedInfo, validate_text, TextError, SpecializedDialog, get_comic};
+use crate::{SpecializedInfo, validate_text, TextError, SpecializedDialog, get_comic, PersistenceService};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use crate::shared::structures::dialog::{Comic, Dialog};
+use std::sync::Arc;
 
 lazy_static! {
     static ref SPECIAL_DIALOG_REGEX: Regex = Regex::new(r"([a-z]+)\s{1}(\w+)\s{1}(\d{1})\s{1}([\w]+)\s{1}([\w]+)\s{1}(.*)").unwrap();
@@ -22,13 +23,10 @@ lazy_static! {
 #[example = ""]
 #[bucket = "fun"]
 pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
-    /*let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.comic;
-    }*/
-
+    let lock = context.data.read().await;
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _persistence = Arc::clone(persistence);
+    drop(lock);
     let http = &context.http;
     let mut available_specializations = HashMap::new();
     available_specializations.insert("hirosay", "hiro");
@@ -82,22 +80,19 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
 
+            let persistence_lock = _persistence.lock().await;
             let character = available_specializations[specialization];
             let background = m.get(2).unwrap().as_str();
-            unsafe {
-                if !(PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
-                    msg.channel_id.say(http, "One of the commands contains a background that is not available.")
-                        .await?;
-                    return Ok(());
-                }
+            if !(persistence_lock.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
+                msg.channel_id.say(http, "One of the commands contains a background that is not available.")
+                    .await?;
+                return Ok(());
             }
 
             let pose = m.get(3).unwrap().as_str();
             let character_available_options: &SpecializedInfo;
-            unsafe {
-                let options = PERSISTENCE_STORAGE.specialized_info.as_ref().unwrap();
-                character_available_options = &options[character];
-            }
+            let options = persistence_lock.specialized_info.as_ref().unwrap();
+            character_available_options = &options[character];
             if !character_available_options.poses.contains_key(&pose.to_string()) {
                 msg.channel_id.say(http, "One of the commands contains an invalid pose.")
                     .await?;
@@ -140,6 +135,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                     _ => ()
                 }
             }
+            drop(persistence_lock);
 
             let request_data = SpecializedDialog {
                 background: background.trim().to_lowercase(),
@@ -166,22 +162,19 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
 
+            let persistence_lock = _persistence.lock().await;
             let background = m.get(2).unwrap().as_str();
-            unsafe {
-                if !(PERSISTENCE_STORAGE.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
-                    msg.channel_id.say(http, "One of the commands contains a background that is not available.")
-                        .await?;
-                    return Ok(());
-                }
+            if !(persistence_lock.dialog_backgrounds.as_ref().unwrap().contains(&background.to_string())) {
+                msg.channel_id.say(http, "One of the commands contains a background that is not available.")
+                    .await?;
+                return Ok(());
             }
 
             let character = m.get(3).unwrap().as_str();
-            unsafe {
-                if !(PERSISTENCE_STORAGE.dialog_characters.as_ref().unwrap().contains(&character.to_string())) {
-                    msg.channel_id.say(http, "One of the dialog commands contains an invalid character.")
-                        .await?;
-                    return Ok(());
-                }
+            if !(persistence_lock.dialog_characters.as_ref().unwrap().contains(&character.to_string())) {
+                msg.channel_id.say(http, "One of the dialog commands contains an invalid character.")
+                    .await?;
+                return Ok(());
             }
 
             let text = m.get(4).unwrap().as_str();
@@ -206,6 +199,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
                     _ => ()
                 }
             }
+            drop(persistence_lock);
             images.push(Comic::Dialog(Dialog {
                 background: background.trim().to_lowercase(),
                 character: character.trim().to_lowercase(),
@@ -219,7 +213,7 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
         }
     }
 
-    let bytes = get_comic(images).await.unwrap();
+    let bytes = get_comic(images, context).await.unwrap();
     let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
     msg.channel_id.send_files(&context.http, files, |m| m.content("Here you go~")).await?;
 

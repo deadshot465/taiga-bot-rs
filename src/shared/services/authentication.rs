@@ -2,12 +2,14 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
+use serenity::prelude::TypeMapKey;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-pub static mut AUTHENTICATION_SERVICE: Authentication = Authentication{
-    token: String::new(),
-    user_details: None,
-    expiry: None
-};
+pub struct AuthenticationService;
+impl TypeMapKey for AuthenticationService {
+    type Value = Arc<Mutex<Authentication>>;
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct Authentication {
@@ -28,18 +30,26 @@ pub struct UserDetails {
 }
 
 impl Authentication {
+    pub async fn new() -> Self {
+        let mut entity = Authentication {
+            token: String::new(),
+            user_details: None,
+            expiry: None
+        };
+        entity.login().await.expect("Failed to authenticate with the server.");
+        entity
+    }
+
     pub async fn login(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        unsafe {
-            if AUTHENTICATION_SERVICE.expiry.is_some() {
-                let expiry_date = AUTHENTICATION_SERVICE
-                    .expiry
-                    .as_ref()
-                    .unwrap()
-                    .parse::<DateTime<Utc>>()
-                    .unwrap();
-                if expiry_date > Utc::now() {
-                    return Ok(());
-                }
+        if self.expiry.is_some() {
+            let expiry_date = self
+                .expiry
+                .as_ref()
+                .unwrap()
+                .parse::<DateTime<Utc>>()
+                .unwrap();
+            if expiry_date > Utc::now() {
+                return Ok(());
             }
         }
 
@@ -54,11 +64,7 @@ impl Authentication {
             .await?;
 
         let resp: Authentication = response.json().await?;
-
-        unsafe {
-            AUTHENTICATION_SERVICE = resp;
-        }
-
+        *self = resp;
         Ok(())
     }
 }

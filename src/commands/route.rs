@@ -5,7 +5,7 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::{PERSISTENCE_STORAGE, UserRecords};
+use crate::{UserRecords, PersistenceService};
 use crate::shared::Character;
 use std::collections::HashMap;
 
@@ -36,7 +36,7 @@ const KOU_GIFS: [&str; 5] = [
 #[example = ""]
 #[bucket = "information"]
 pub async fn route(context: &Context, msg: &Message) -> CommandResult {
-    let route = get_route().await;
+    let route = get_route(context).await;
     let footer = format!("Play {}'s route next. All bois are best bois.", get_first_name(route.name.as_str()));
     let color = u32::from_str_radix(&route.color.as_str(), 16).unwrap() as i32;
     let mut ending = ENDINGS[thread_rng().gen_range(0, ENDINGS.len())];
@@ -69,34 +69,38 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
                 get_emote_url(route.emote_id.as_str())
             })
             .title(format!("Next: {}, {} Ending", &route.name, ending)))).await?;
-    unsafe {
-        let user_records = PERSISTENCE_STORAGE.user_records.as_mut().unwrap();
-        let user_record = user_records.entry(msg.author.id.0.to_string())
-            .or_insert(UserRecords::new());
-        let r = user_record.route.entry(route.name.clone())
-            .or_insert(HashMap::new());
-        *r.entry(format!("{} Ending", ending))
-            .or_insert(0) += 1;
-    }
+
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.lock().await;
+    let user_records = persistence_lock.user_records.as_mut().unwrap();
+    let user_record = user_records.entry(msg.author.id.0.to_string())
+        .or_insert(UserRecords::new());
+    let r = user_record.route.entry(route.name.clone())
+        .or_insert(HashMap::new());
+    *r.entry(format!("{} Ending", ending))
+        .or_insert(0) += 1;
+    drop(persistence_lock);
 
     Ok(())
 }
 
-async fn get_route() -> &'static Character {
+async fn get_route(context: &Context) -> Character {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence_lock = persistence.lock().await;
     let res = thread_rng().gen_range(0, 100);
-    unsafe {
-        let routes = PERSISTENCE_STORAGE.routes.as_ref().unwrap();
-        match res {
-            x if x >= 0 && x <= 14 => &routes[0],
-            x if x >= 15 && x <= 19 => &routes[1],
-            x if x >= 20 && x <= 22 => &routes[7],
-            x if x >= 23 && x <= 38 => &routes[2],
-            x if x >= 39 && x <= 53 => &routes[3],
-            x if x >= 54 && x <= 68 => &routes[4],
-            x if x >= 69 && x <= 83 => &routes[5],
-            x if x >= 84 && x <= 99 => &routes[6],
-            _ => &routes[0]
-        }
+    let routes = persistence_lock.routes.as_ref().unwrap();
+    match res {
+        x if x >= 0 && x <= 14 => routes[0].clone(),
+        x if x >= 15 && x <= 19 => routes[1].clone(),
+        x if x >= 20 && x <= 22 => routes[7].clone(),
+        x if x >= 23 && x <= 38 => routes[2].clone(),
+        x if x >= 39 && x <= 53 => routes[3].clone(),
+        x if x >= 54 && x <= 68 => routes[4].clone(),
+        x if x >= 69 && x <= 83 => routes[5].clone(),
+        x if x >= 84 && x <= 99 => routes[6].clone(),
+        _ => routes[0].clone()
     }
 }
 

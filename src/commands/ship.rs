@@ -6,7 +6,7 @@ use serenity::model::channel::Message;
 use crate::shared::{search_user, ShipMessage};
 use serenity::model::guild::Member;
 use std::borrow::{Borrow, Cow};
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE};
+use crate::{PersistenceService, InterfaceService};
 
 const KOU_EMOTE_URL: &'static str = "https://cdn.discordapp.com/emojis/700119260394946620.png";
 const HIRO_EMOTE_URL: &'static str = "https://cdn.discordapp.com/emojis/704022326412443658.png";
@@ -58,7 +58,15 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         return Ok(());
     }
 
-    let (score, message) = calculate_score(target1, target2.unwrap()).await;
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let interface = data.get::<InterfaceService>().unwrap();
+    let persistence_lock = persistence.lock().await;
+    let interface_lock = interface.lock().await;
+    let is_kou = interface_lock.is_kou;
+    drop(interface_lock);
+    let ship_messages = persistence_lock.ship_messages.as_ref().unwrap();
+    let (score, message) = calculate_score(target1, target2.unwrap(), is_kou, ship_messages).await;
     let img_url1 = target1.user.avatar_url().unwrap_or_default();
     let img_url2 = target2.unwrap().user.avatar_url().unwrap_or_default();
 
@@ -74,6 +82,8 @@ pub async fn ship(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let name2 = target2.unwrap().nick.clone().unwrap_or(target2.unwrap().user.name.clone());
     let build_message = message.replace("{name}", name1.as_str())
         .replace("{name2}", name2.as_str());
+    drop(persistence_lock);
+    drop(data);
     let files: Vec<(&[u8], &str)> = vec![(response.borrow(), "result.png")];
 
     msg.channel_id.send_files(&context.http, files, |m| m
@@ -135,7 +145,7 @@ fn find_next_user<'a>(first_user: &'a Member, seconds: &'a [Member]) -> Option<&
     None
 }
 
-async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) -> (u64, Cow<'a, str>) {
+async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member, is_kou: bool, ship_messages: &'a Vec<ShipMessage>) -> (u64, Cow<'a, str>) {
     let first_id = first_user.user.id.0;
     let second_id = second_user.user.id.0;
     let t_id = std::env::var("T_ID").unwrap();
@@ -143,27 +153,22 @@ async fn calculate_score<'a>(first_user: &'a Member, second_user: &'a Member) ->
     let t_id = t_id.parse::<u64>().unwrap();
     let k_id = k_id.parse::<u64>().unwrap();
 
-    unsafe {
-        if first_id == second_id {
-            (100_u64, Cow::Borrowed("You're a perfect match... for yourself!"))
-        }
-        else if ((first_id == t_id && second_id == k_id) || (first_id == k_id && second_id == t_id)) && INTERFACE_SERVICE.is_kou {
-            (u64::MAX, Cow::Borrowed("Oops...You found us..."))
-        }
-        else {
-            let score = ((first_id + second_id) / 7 % 100) as u64;
-            (score, Cow::Owned(find_message(score).await.clone()))
-        }
+    if first_id == second_id {
+        (100_u64, Cow::Borrowed("You're a perfect match... for yourself!"))
+    }
+    else if ((first_id == t_id && second_id == k_id) || (first_id == k_id && second_id == t_id)) && is_kou {
+        (u64::MAX, Cow::Borrowed("Oops...You found us..."))
+    }
+    else {
+        let score = ((first_id + second_id) / 7 % 100) as u64;
+        (score, Cow::Owned(find_message(score, ship_messages).await))
     }
 }
 
-async fn find_message(score: u64) -> &'static String {
-    unsafe {
-        let ship_messages = PERSISTENCE_STORAGE.ship_messages.as_ref().unwrap();
-        let ref msg = ship_messages
-            .iter()
-            .filter(|m| score <= m.max_score as u64)
-            .collect::<Vec<&ShipMessage>>();
-        &msg[0].message
-    }
+async fn find_message(score: u64, ship_messages: &Vec<ShipMessage>) -> String {
+    let ref msg = ship_messages
+        .iter()
+        .filter(|m| score <= m.max_score as u64)
+        .collect::<Vec<&ShipMessage>>();
+    msg[0].message.clone()
 }

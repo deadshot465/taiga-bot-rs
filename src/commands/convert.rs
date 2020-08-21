@@ -4,8 +4,8 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::shared::{CommandStrings, ConversionTable};
-use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE};
+use crate::{InterfaceService, PersistenceService};
+use std::sync::Arc;
 
 const VALID_UNITS: [&'static str; 10] = [
     "km", "m", "cm", "in", "ft", "mi", "au", "c", "f", "k"
@@ -30,14 +30,16 @@ lazy_static! {
 #[example = "km 1024m"]
 #[bucket = "utilities"]
 pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let interface_string: &CommandStrings;
-    let prefix: &String;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.cvt;
-        prefix = &interface_service.prefix;
-    }
+    let lock = context.data.read().await;
+    let interface = lock.get::<InterfaceService>().unwrap();
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    let _persistence = Arc::clone(persistence);
+    drop(lock);
+    let interface_lock = _interface.lock().await;
+    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.cvt;
+    let prefix = &interface_lock.prefix;
 
     let raw_target_unit = args.single::<String>();
     let raw_source_string = args.single::<String>();
@@ -100,10 +102,8 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
         return Ok(());
     }
 
-    let conversion_table: &ConversionTable;
-    unsafe {
-        conversion_table = &PERSISTENCE_STORAGE.conversion_table.as_ref().unwrap();
-    }
+    let persistence_lock = _persistence.lock().await;
+    let conversion_table = persistence_lock.conversion_table.as_ref().unwrap();
 
     let mut result;
     match target_unit.as_str() {
@@ -138,6 +138,7 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
             result = conversion_table.length[&target_unit][source_unit] * amount;
         }
     }
+    drop(persistence_lock);
 
     result = ((result * 100000_f64).round()) / 100000_f64;
 
@@ -146,5 +147,6 @@ pub async fn cvt(context: &Context, msg: &Message, mut args: Args) -> CommandRes
         .replace("{amount}", &result.to_string())
         .replace("{target}", &target_unit);
     msg.channel_id.say(&context.http, &result_message).await?;
+    drop(interface_lock);
     Ok(())
 }

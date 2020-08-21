@@ -5,9 +5,9 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::env;
-use crate::shared::CommandStrings;
-use crate::INTERFACE_SERVICE;
+use crate::InterfaceService;
 use chrono::prelude::*;
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 struct TimeData {
@@ -57,12 +57,13 @@ struct TimezoneResponse {
 #[example = "Hong Kong"]
 #[bucket = "information"]
 pub async fn time(context: &Context, msg: &Message, args: Args) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.time;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.time;
 
     if args.is_empty() || args.len() == 0 {
         let error_msg = interface_string.errors["length_too_short"].as_str();
@@ -107,7 +108,7 @@ pub async fn time(context: &Context, msg: &Message, args: Args) -> CommandResult
             .say(&context.http, format!("Parsing time failed: {:?}", err).as_str())
             .await?;
     }
-
+    drop(interface_lock);
     Ok(())
 }
 

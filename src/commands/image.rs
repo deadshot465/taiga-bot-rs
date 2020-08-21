@@ -3,9 +3,9 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::shared::CommandStrings;
-use crate::{INTERFACE_SERVICE, get_image};
+use crate::{get_image, InterfaceService};
 use std::borrow::Borrow;
+use std::sync::Arc;
 
 #[command]
 #[aliases("img")]
@@ -15,12 +15,13 @@ use std::borrow::Borrow;
 #[example = "dog"]
 #[bucket = "utilities"]
 pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.image;
-    }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface.image;
 
     let keyword = args.single::<String>();
     let result: Vec<u8>;
@@ -30,24 +31,30 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
     else {
         let error_msg = interface_string.errors["length_too_short"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
-        unsafe {
-            if INTERFACE_SERVICE.is_kou {
-                return Ok(());
-            }
-            else {
-                result = get_image("burger").await?;
-            }
+        let data = context.data.read().await;
+        let interface = data.get::<InterfaceService>().unwrap();
+        let interface_lock = interface.lock().await;
+        let is_kou = interface_lock.is_kou;
+        drop(interface_lock);
+        drop(data);
+        if is_kou {
+            return Ok(());
+        }
+        else {
+            result = get_image("burger").await?;
         }
     }
 
     if result.len() == 0 {
         let error_msg = interface_string.errors["no_result"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
+        drop(interface_lock);
         Ok(())
     }
     else {
         let result_msg = interface_string.result.as_str()
             .replace("{keyword}", keyword.unwrap().as_str());
+        drop(interface_lock);
         let files: Vec<(&[u8], &str)> = vec![(result.borrow(), "image.jpg")];
         msg.channel_id.send_files(&context.http, files, |f| f.content(&result_msg)).await?;
         Ok(())

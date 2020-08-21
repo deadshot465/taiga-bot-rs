@@ -5,8 +5,10 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::{PERSISTENCE_STORAGE, INTERFACE_SERVICE, UserRecords};
-use crate::shared::{Character, CommandStrings};
+use crate::{UserRecords, InterfaceService, PersistenceService, PersistenceStorage};
+use crate::shared::Character;
+use std::sync::Arc;
+use tokio::sync::MutexGuard;
 
 #[command]
 #[aliases("v")]
@@ -15,13 +17,18 @@ use crate::shared::{Character, CommandStrings};
 #[example = ""]
 #[bucket = "information"]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.valentine;
-    }
-    let valentine = get_valentine().await;
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    let _persistence = Arc::clone(persistence);
+    drop(data);
+    let interface_lock = _interface.lock().await;
+    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.valentine;
+    let persistence_lock = _persistence.lock().await;
+    let valentine = get_valentine(&persistence_lock).await;
+    drop(persistence_lock);
     let is_keitaro = get_first_name(valentine.name.as_str()) == "Keitaro";
     let prefix_suffix = if is_keitaro {
         "~~"
@@ -66,22 +73,20 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         })
     }).await?;
 
-    unsafe {
-        let user_records = PERSISTENCE_STORAGE.user_records.as_mut().unwrap();
-        let user_record = user_records.entry(msg.author.id.0.to_string())
-            .or_insert(UserRecords::new());
-        *user_record.valentine.entry(valentine.name.clone())
-            .or_insert(0) += 1;
-    }
-
+    let mut persistence_lock = _persistence.lock().await;
+    let user_records = persistence_lock.user_records.as_mut().unwrap();
+    let user_record = user_records.entry(msg.author.id.0.to_string())
+        .or_insert(UserRecords::new());
+    *user_record.valentine.entry(valentine.name.clone())
+        .or_insert(0) += 1;
+    drop(persistence_lock);
+    drop(interface_lock);
     Ok(())
 }
 
-async fn get_valentine() -> &'static Character {
-    unsafe {
-        let valentines = PERSISTENCE_STORAGE.valentines.as_ref().unwrap();
-        &valentines[thread_rng().gen_range(0, valentines.len())]
-    }
+async fn get_valentine(persistence: &MutexGuard<'_, PersistenceStorage>) -> Character {
+    let valentines = persistence.valentines.as_ref().unwrap();
+    valentines[thread_rng().gen_range(0, valentines.len())].clone()
 }
 
 fn get_first_name(name: &str) -> &str {

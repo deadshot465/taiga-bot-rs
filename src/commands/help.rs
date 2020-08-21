@@ -6,7 +6,7 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use std::collections::{HashSet, HashMap};
 use serenity::model::id::UserId;
-use crate::INTERFACE_SERVICE;
+use crate::InterfaceService;
 use serenity::utils::Color;
 
 #[help]
@@ -29,13 +29,17 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
 
     let member = msg.member(&context.cache).await.unwrap();
     let color: u32;
-    unsafe {
-        if INTERFACE_SERVICE.is_kou {
-            color = u32::from_str_radix("a4d0da", 16).unwrap();
-        }
-        else {
-            color = u32::from_str_radix("e81615", 16).unwrap();
-        }
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let interface_lock = interface.lock().await;
+    let is_kou = interface_lock.is_kou;
+    drop(interface_lock);
+    drop(data);
+    if is_kou {
+        color = u32::from_str_radix("a4d0da", 16).unwrap();
+    }
+    else {
+        color = u32::from_str_radix("e81615", 16).unwrap();
     }
 
     if args.is_empty() {

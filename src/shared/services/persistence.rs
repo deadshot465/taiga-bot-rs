@@ -1,9 +1,12 @@
 use chrono::{DateTime, Utc};
-use crate::{RandomMessage, INTERFACE_SERVICE, Reminder, UserReply, Config, QuizQuestion};
+use crate::{RandomMessage, Reminder, UserReply, Config, QuizQuestion};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+use serenity::prelude::TypeMapKey;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"
@@ -16,31 +19,10 @@ const CONFIG_PATH: &'static str = "./persistence/config.json";
 const TAIGA_QUIZ_PATH: &'static str = "./persistence/game/quiz_taiga.json";
 const KOU_QUIZ_PATH: &'static str = "./persistence/game/quiz_kou.json";
 
-pub static mut PERSISTENCE_STORAGE: PersistenceStorage = PersistenceStorage {
-    routes: None,
-    valentines: None,
-    is_loaded: false,
-    dialog_backgrounds: None,
-    dialog_characters: None,
-    background_strings: String::new(),
-    character_strings: String::new(),
-    oracles: None,
-    ship_messages: None,
-    conversion_table: None,
-    user_records: None,
-    specialized_info: None,
-    channel_settings: None,
-    random_messages: None,
-    last_modified_time: None,
-    presence_timer: None,
-    reminders: None,
-    user_replies: None,
-    game_words: None,
-    config: None,
-    quiz_questions: None,
-    ongoing_quizzes: None,
-    ongoing_tictactoes: None
-};
+pub struct PersistenceService;
+impl TypeMapKey for PersistenceService {
+    type Value = Arc<Mutex<PersistenceStorage>>;
+}
 
 pub struct PersistenceStorage {
     pub routes: Option<Vec<Character>>,
@@ -69,7 +51,37 @@ pub struct PersistenceStorage {
 }
 
 impl PersistenceStorage {
-    pub async fn load(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn new(is_kou: bool) -> Self {
+        let mut entity = PersistenceStorage {
+            routes: None,
+            valentines: None,
+            is_loaded: false,
+            dialog_backgrounds: None,
+            dialog_characters: None,
+            background_strings: String::new(),
+            character_strings: String::new(),
+            oracles: None,
+            ship_messages: None,
+            conversion_table: None,
+            user_records: None,
+            specialized_info: None,
+            channel_settings: None,
+            random_messages: None,
+            last_modified_time: None,
+            presence_timer: None,
+            reminders: None,
+            user_replies: None,
+            game_words: None,
+            config: None,
+            quiz_questions: None,
+            ongoing_quizzes: None,
+            ongoing_tictactoes: None
+        };
+        entity.load(is_kou).await.expect("Failed to initialize persistence storage.");
+        entity
+    }
+
+    pub async fn load(&mut self, is_kou: bool) -> Result<(), Box<dyn std::error::Error>> {
         if self.is_loaded {
             return Ok(());
         }
@@ -86,13 +98,11 @@ impl PersistenceStorage {
         let raw_words = std::fs::read("./persistence/game/words.json")?;
         let raw_config = std::fs::read(CONFIG_PATH)?;
         let raw_quiz_questions: Vec<u8>;
-        unsafe {
-            if INTERFACE_SERVICE.is_kou {
-                raw_quiz_questions = std::fs::read(KOU_QUIZ_PATH)?;
-            }
-            else {
-                raw_quiz_questions = std::fs::read(TAIGA_QUIZ_PATH)?;
-            }
+        if is_kou {
+            raw_quiz_questions = std::fs::read(KOU_QUIZ_PATH)?;
+        }
+        else {
+            raw_quiz_questions = std::fs::read(TAIGA_QUIZ_PATH)?;
         }
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
@@ -137,7 +147,7 @@ impl PersistenceStorage {
             self.reminders = Some(HashMap::new());
         }
 
-        self.load_dialog_data().await?;
+        self.load_dialog_data(is_kou).await?;
         self.load_specialized_info().await?;
         self.is_loaded = true;
         self.last_modified_time = Some(Utc::now());
@@ -145,7 +155,7 @@ impl PersistenceStorage {
         Ok(())
     }
 
-    async fn load_dialog_data(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn load_dialog_data(&mut self, is_kou: bool) -> Result<(), Box<dyn std::error::Error>> {
         let response = reqwest::get("https://tetsukizone.com/api/dialog")
             .await?
             .json::<HashMap<String, Vec<String>>>()
@@ -155,13 +165,12 @@ impl PersistenceStorage {
         self.dialog_characters = Some(dialog_characters);
         self.dialog_backgrounds = Some(dialog_backgrounds);
 
-        unsafe {
-            if INTERFACE_SERVICE.is_kou {
-                let characters = self.dialog_characters.as_mut().unwrap();
-                characters.push("kou".to_string());
-                characters.push("kou2".to_string());
-            }
+        if is_kou {
+            let characters = self.dialog_characters.as_mut().unwrap();
+            characters.push("kou".to_string());
+            characters.push("kou2".to_string());
         }
+
         self.background_strings = self.dialog_backgrounds.as_ref().unwrap().join(", ");
         self.character_strings = self.dialog_characters.as_ref().unwrap().join(", ");
         Ok(())

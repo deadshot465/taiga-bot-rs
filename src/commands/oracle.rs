@@ -5,7 +5,7 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use serenity::utils::Color;
-use crate::PERSISTENCE_STORAGE;
+use crate::{PersistenceService, Oracle};
 
 const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026164994049.png?v=1";
 
@@ -16,27 +16,33 @@ const THUMBNAIL_URL: &'static str = "https://cdn.discordapp.com/emojis/701918026
 #[example = ""]
 #[bucket = "information"]
 pub async fn oracle(context: &Context, msg: &Message) -> CommandResult {
-    unsafe {
-        let oracles = PERSISTENCE_STORAGE.oracles.as_ref().unwrap();
-        let ref oracle = oracles[thread_rng().gen_range(0, oracles.len())];
-        let color = u32::from_str_radix("ff0000", 16)?;
-
-        msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
-            e.author(|author| {
-                if let Some(url) = msg.author.avatar_url().as_ref() {
-                    author.icon_url(url.as_str());
-                }
-                author.name(msg.author.name.as_str())
-            })
-                .color(Color::from(color))
-                .field("No", oracle.no, true)
-                .field("Meaning", oracle.meaning.as_str(), true)
-                .footer(|f| f.text("Wish you good luck!"))
-                .description(oracle.content.as_str())
-                .thumbnail(THUMBNAIL_URL)
-                .title(oracle.fortune.as_str())
-        })).await?;
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence_lock = persistence.lock().await;
+    let oracles = persistence_lock.oracles.as_ref().unwrap();
+    let oracle: Oracle;
+    {
+        let mut rng = thread_rng();
+        oracle = oracles.choose(&mut rng).unwrap().clone();
     }
+    drop(persistence_lock);
+    drop(data);
+    let color = u32::from_str_radix("ff0000", 16)?;
 
+    msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
+        e.author(|author| {
+            if let Some(url) = msg.author.avatar_url().as_ref() {
+                author.icon_url(url.as_str());
+            }
+            author.name(msg.author.name.as_str())
+        })
+            .color(Color::from(color))
+            .field("No", oracle.no, true)
+            .field("Meaning", oracle.meaning.as_str(), true)
+            .footer(|f| f.text("Wish you good luck!"))
+            .description(oracle.content.as_str())
+            .thumbnail(THUMBNAIL_URL)
+            .title(oracle.fortune.as_str())
+    })).await?;
     Ok(())
 }

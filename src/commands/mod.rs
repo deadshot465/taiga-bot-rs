@@ -7,6 +7,7 @@ pub mod dialog;
 pub mod enlarge;
 pub mod emote;
 pub mod games;
+pub mod guide;
 pub mod help;
 pub mod image;
 pub mod meal;

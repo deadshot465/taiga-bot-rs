@@ -6,11 +6,12 @@ use serenity::model::{
 use serenity::framework::standard::{macros::{
     command
 }, CommandResult, CommandError};
-use crate::{INTERFACE_SERVICE, PERSISTENCE_STORAGE};
+use crate::{PersistenceService, InterfaceService};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
+use std::sync::Arc;
 
 enum TicTacToeResult {
     GameNotOver, CircleWin, CrossWin, Draw
@@ -26,46 +27,57 @@ const CROSS: &'static str = "×";
 #[example = ""]
 #[bucket = "games"]
 async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
-    unsafe {
-        if !INTERFACE_SERVICE.is_kou {
-            msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
-            return Ok(());
-        }
-
-        let http = &context.http;
-
-        let ongoing_tictactoes = PERSISTENCE_STORAGE
-            .ongoing_tictactoes
-            .as_ref()
-            .expect("Failed to acquire ongoing tic-tac-toes.");
-        if ongoing_tictactoes.contains(&msg.channel_id.0) {
-            msg.channel_id.say(http, "A game is already running!").await?;
-            return Ok(());
-        }
-
-        let color_value = u32::from_str_radix("306998", 16).unwrap();
-        let color = Color::new(color_value);
-        let (game_started, players) = join_game(context, msg, color)
-            .await;
-        // If game starts, wait for game result.
-        if game_started {
-            let _ = progress(context, msg, players.unwrap(), color).await;
-        }
-        end_game(msg);
+    let data = context.data.read().await;
+    let interface = data.get::<InterfaceService>().unwrap();
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let interface_lock = interface.lock().await;
+    // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
+    let is_kou = interface_lock.is_kou;
+    let _persistence = Arc::clone(persistence);
+    drop(interface_lock);
+    drop(data);
+    let persistence_lock = _persistence.lock().await;
+    if !is_kou {
+        msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
+        return Ok(());
     }
+
+    let http = &context.http;
+
+    let ongoing_tictactoes = persistence_lock
+        .ongoing_tictactoes
+        .as_ref()
+        .expect("Failed to acquire ongoing tic-tac-toes.");
+    if ongoing_tictactoes.contains(&msg.channel_id.0) {
+        msg.channel_id.say(http, "A game is already running!").await?;
+        return Ok(());
+    }
+
+    let color_value = u32::from_str_radix("306998", 16).unwrap();
+    let color = Color::new(color_value);
+    let (game_started, players) = join_game(context, msg, color)
+        .await;
+    // If game starts, wait for game result.
+    if game_started {
+        let _ = progress(context, msg, players.unwrap(), color).await;
+    }
+    end_game(context, msg).await;
     Ok(())
 }
 
 /// Handles player joining.
 async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Option<Vec<User>>) {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.lock().await;
     // Add the current channel to ongoing quizzes.
-    unsafe {
-        let ongoing_tictactoes = PERSISTENCE_STORAGE
-            .ongoing_tictactoes
-            .as_mut()
-            .unwrap();
-        let _ = ongoing_tictactoes.insert(msg.channel_id.0);
-    }
+    let ongoing_tictactoes = persistence_lock
+        .ongoing_tictactoes
+        .as_mut()
+        .unwrap();
+    let _ = ongoing_tictactoes.insert(msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
 
     let http = &context.http;
     // Build welcoming messages and allow users to join.
@@ -381,12 +393,15 @@ fn check_result(board: &Vec<Vec<&str>>) -> TicTacToeResult {
     TicTacToeResult::Draw
 }
 
-fn end_game(msg: &Message) {
-    unsafe {
-        let ongoing_tictactoes = PERSISTENCE_STORAGE
-            .ongoing_tictactoes
-            .as_mut()
-            .unwrap();
-        ongoing_tictactoes.remove(&msg.channel_id.0);
-    }
+async fn end_game(context: &Context, msg: &Message) {
+    let data = context.data.read().await;
+    let persistence = data.get::<PersistenceService>().unwrap();
+    let mut persistence_lock = persistence.lock().await;
+    let ongoing_tictactoes = persistence_lock
+        .ongoing_tictactoes
+        .as_mut()
+        .unwrap();
+    ongoing_tictactoes.remove(&msg.channel_id.0);
+    drop(persistence_lock);
+    drop(data);
 }

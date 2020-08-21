@@ -4,8 +4,9 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args};
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::{CommandStrings, INTERFACE_SERVICE, Emote, PERSISTENCE_STORAGE};
+use crate::{Emote, PersistenceService, InterfaceService};
 use serenity::utils::Color;
+use std::sync::Arc;
 
 lazy_static! {
     static ref NAME_REGEX: Regex = Regex::new(r"\w").unwrap();
@@ -24,29 +25,31 @@ const EMOTE_BASE_LINK: &'static str = "https://cdn.discordapp.com/emojis/";
 #[bucket = "fun"]
 pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     // Get interface strings.
-    let interface_string: &CommandStrings;
-    unsafe {
-        let ref interface_service = INTERFACE_SERVICE;
-        let interface = interface_service.interface_strings.as_ref().unwrap();
-        interface_string = &interface.emote;
-    }
+    let lock = context.data.read().await;
+    let interface = lock.get::<InterfaceService>().unwrap();
+    let persistence = lock.get::<PersistenceService>().unwrap();
+    let _interface = Arc::clone(interface);
+    let _persistence = Arc::clone(persistence);
+    drop(lock);
+    let interface_lock = _interface.lock().await;
+    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_string = &interface_strings.emote;
 
     if args.is_empty() {
         let color = u32::from_str_radix("93B986", 16).unwrap();
+        let persistence_lock = _persistence.lock().await;
         msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
             e.thumbnail("https://cdn.discordapp.com/emojis/730239295155077251.png");
             e.title("Registered Emotes");
             e.description("The following is a list of currently registered emotes.");
             e.color(Color::new(color));
-
-            unsafe {
-                let config = PERSISTENCE_STORAGE.config.as_ref().unwrap();
-                let emotes = &config.emotes;
-                let emote_names = emotes.iter()
-                    .map(|e| format!("`{}`, ", e.name.as_str()))
-                    .collect::<String>();
-                e.field("Emotes", &emote_names.trim()[0..emote_names.len() - 2], false);
-            }
+            let config = persistence_lock.config.as_ref().unwrap();
+            let emotes = &config.emotes;
+            let emote_names = emotes.iter()
+                .map(|e| format!("`{}`, ", e.name.as_str()))
+                .collect::<String>();
+            e.field("Emotes", &emote_names.trim()[0..emote_names.len() - 2], false);
+            drop(persistence_lock);
             e
         })).await?;
         return Ok(());
@@ -80,58 +83,56 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
 
     match cmd.as_str() {
         "register" => {
-            unsafe {
-                if emote.is_err() {
-                    msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
-                        .await?;
-                    return Ok(())
-                }
-                let emote = emote.unwrap();
-                let emote_regex = &*EMOTE_REGEX;
-                // If it's not an emote, abort.
-                if !emote_regex.is_match(&emote) {
-                    msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
-                        .await?;
-                    return Ok(())
-                }
-                let id_regex = &*EMOTE_ID_REGEX;
-                let id = id_regex.captures(&emote)
-                    .unwrap()
-                    .get(2)
-                    .unwrap()
-                    .as_str()
-                    .parse::<u64>()
-                    .unwrap();
-                let file_extension = if (&*EMOTE_IS_ANIMATED_REGEX).is_match(&emote) {
-                    ".gif"
-                }
-                else {
-                    ".png"
-                };
-                let link = String::from(EMOTE_BASE_LINK) + &id.to_string() + file_extension;
-                let emote_entity = Emote::new(name.as_str(), id, link.as_str(), emote.as_str());
-                let persistence = &mut PERSISTENCE_STORAGE;
-                let config = persistence.config.as_mut().unwrap();
-                config.emotes.push(emote_entity);
-                persistence.write();
-                msg.channel_id.say(&context.http, "Successfully added the emote!").await?;
+            if emote.is_err() {
+                msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
+                    .await?;
+                return Ok(())
             }
+            let emote = emote.unwrap();
+            let emote_regex = &*EMOTE_REGEX;
+            // If it's not an emote, abort.
+            if !emote_regex.is_match(&emote) {
+                msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
+                    .await?;
+                return Ok(())
+            }
+            let id_regex = &*EMOTE_ID_REGEX;
+            let id = id_regex.captures(&emote)
+                .unwrap()
+                .get(2)
+                .unwrap()
+                .as_str()
+                .parse::<u64>()
+                .unwrap();
+            let file_extension = if (&*EMOTE_IS_ANIMATED_REGEX).is_match(&emote) {
+                ".gif"
+            }
+            else {
+                ".png"
+            };
+            let link = String::from(EMOTE_BASE_LINK) + &id.to_string() + file_extension;
+            let emote_entity = Emote::new(name.as_str(), id, link.as_str(), emote.as_str());
+            let mut persistence_lock = _persistence.lock().await;
+            let config = persistence_lock.config.as_mut().unwrap();
+            config.emotes.push(emote_entity);
+            persistence_lock.write();
+            drop(persistence_lock);
+            msg.channel_id.say(&context.http, "Successfully added the emote!").await?;
         },
         "deregister" => {
-            unsafe {
-                let persistence = &mut PERSISTENCE_STORAGE;
-                let config = persistence.config.as_mut().unwrap();
-                let mut index: usize = 0;
-                for emote in config.emotes.iter().enumerate() {
-                    if emote.1.name.as_str() == name.as_str() {
-                        index = emote.0;
-                        break;
-                    }
+            let mut persistence_lock = _persistence.lock().await;
+            let config = persistence_lock.config.as_mut().unwrap();
+            let mut index: usize = 0;
+            for emote in config.emotes.iter().enumerate() {
+                if emote.1.name.as_str() == name.as_str() {
+                    index = emote.0;
+                    break;
                 }
-                config.emotes.remove(index);
-                persistence.write();
-                msg.channel_id.say(&context.http, "Successfully removed the emote!").await?;
             }
+            config.emotes.remove(index);
+            persistence_lock.write();
+            drop(persistence_lock);
+            msg.channel_id.say(&context.http, "Successfully removed the emote!").await?;
         },
         _ => ()
     }
