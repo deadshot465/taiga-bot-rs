@@ -6,7 +6,7 @@ use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"

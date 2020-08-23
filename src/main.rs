@@ -12,33 +12,35 @@ use serenity::{
     }},
     http::Http,
 };
-use taiga_bot_rs::{about::ABOUT_COMMAND, avatar::AVATAR_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*, games::*, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, Handler, before, message_received, unknown_command, dispatch_error, PersistenceService, PersistenceStorage, InterfaceService, InterfaceStorage, AuthenticationService, Authentication};
-use serenity::prelude::TypeMapKey;
+use taiga_bot_rs::{about::ABOUT_COMMAND, avatar::AVATAR_COMMAND, comic::COMIC_COMMAND, convert::CVT_COMMAND, dialog::DIALOG_COMMAND, enlarge::ENLARGE_COMMAND, emote::*, games::*, guide::GUIDE_COMMAND, help::CUSTOM_HELP, image::IMAGE_COMMAND, meal::MEAL_COMMAND, oracle::ORACLE_COMMAND, owoify::OWOIFY_COMMAND, pick::PICK_COMMAND, ping::PING_COMMAND, remind::REMIND_COMMAND, route::ROUTE_COMMAND, say::*, ship::SHIP_COMMAND, stats::STATS_COMMAND, time::TIME_COMMAND, valentine::VALENTINE_COMMAND, admin::channel_control::*, Handler, before, message_received, unknown_command, dispatch_error, PersistenceService, PersistenceStorage, InterfaceService, InterfaceStorage, AuthenticationService, Authentication, CommandGroupCollection};
 use serenity::framework::standard::CommandGroup;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard};
+use tokio::sync::{Mutex, RwLock};
 
 #[group]
+#[description = "Administrative commands. Can only be used by Administrators."]
 #[only_in("guilds")]
 #[required_permissions("ADMINISTRATOR")]
 #[commands(allow, disable, enable, ignore, purge)]
 struct Admin;
 
 #[group]
+#[description = "Fun commands that would probably make your day."]
 #[only_in("guilds")]
 #[commands(comic, dialog, emote, owoify, ship)]
 struct Fun;
 
 #[group]
-#[description = "Play a small game with Kou."]
+#[description = "Play small games with Taiga, Kou, or your friends."]
 #[prefixes("games")]
 #[only_in("guilds")]
 #[commands(quiz, hangman, tictactoe)]
 struct Games;
 
 #[group]
+#[description = "Informative commands that will show information, suggestions, or query results."]
 #[only_in("guilds")]
-#[commands(about, meal, oracle, ping, route, stats, time, valentine)]
+#[commands(about, guide, meal, oracle, ping, route, stats, time, valentine)]
 struct Information;
 
 #[group]
@@ -49,13 +51,9 @@ struct Information;
 struct Say;
 
 #[group]
+#[description = "Utility functions that basically serve as tools."]
 #[commands(avatar, cvt, enlarge, image, pick, remind)]
 struct Utilities;
-
-struct CommandGroupCollection;
-impl TypeMapKey for CommandGroupCollection {
-    type Value = Vec<&'static CommandGroup>;
-}
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {

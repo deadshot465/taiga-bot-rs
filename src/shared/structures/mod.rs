@@ -1,5 +1,6 @@
 pub mod channel_settings;
 pub mod character;
+pub mod command_group_collection;
 pub mod config;
 pub mod interface_strings;
 pub mod oracle;
@@ -13,6 +14,7 @@ pub mod user_reply;
 pub mod quiz_question;
 pub use channel_settings::ChannelSettings;
 pub use character::Character;
+pub use command_group_collection::CommandGroupCollection;
 pub use config::*;
 pub use interface_strings::*;
 pub use oracle::Oracle;

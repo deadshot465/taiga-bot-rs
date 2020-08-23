@@ -6,13 +6,12 @@ use serenity::model::{
 use serenity::framework::standard::{macros::{
     command
 }, CommandResult, CommandError};
-use crate::{PersistenceService, InterfaceService, PersistenceStorage};
+use crate::{PersistenceService, InterfaceService};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
 use std::sync::Arc;
-use tokio::sync::MutexGuard;
 
 enum TicTacToeResult {
     GameNotOver, CircleWin, CrossWin, Draw

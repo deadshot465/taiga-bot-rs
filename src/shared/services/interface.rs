@@ -2,7 +2,7 @@ use crate::shared::InterfaceStrings;
 use std::borrow::Borrow;
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 pub struct InterfaceService;
 impl TypeMapKey for InterfaceService {
