@@ -6,7 +6,7 @@ use serenity::model::{
 use serenity::framework::standard::{macros::{
     command
 }, CommandResult, CommandError};
-use crate::{PersistenceService, InterfaceService};
+use crate::PersistenceService;
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::collector::MessageCollectorBuilder;
@@ -22,25 +22,16 @@ const CIRCLE: &'static str = "○";
 const CROSS: &'static str = "×";
 
 #[command]
-#[description = "Play a tic-tac-toe game with another person."]
+#[description = "Play a tic-tac-toe game with another person. This command has to be prefixed with `games`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "games"]
 async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
-    let interface = data.get::<InterfaceService>().unwrap();
     let persistence = data.get::<PersistenceService>().unwrap();
-    let interface_lock = interface.read().await;
-    // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
-    let is_kou = interface_lock.is_kou;
     let _persistence = Arc::clone(persistence);
-    drop(interface_lock);
     drop(data);
     let persistence_lock = _persistence.read().await;
-    if !is_kou {
-        msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
-        return Ok(());
-    }
 
     let http = &context.http;
 

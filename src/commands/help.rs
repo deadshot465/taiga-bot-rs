@@ -81,7 +81,46 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
         Ok(())
     }
     else {
-        help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
-        Ok(())
+        let mut _args = args.clone();
+        let mut arg = _args.single::<String>().unwrap();
+        arg = arg.to_lowercase();
+        let mut chars = arg.chars().collect::<Vec<_>>();
+        chars[0] = chars[0].to_uppercase().nth(0).unwrap();
+        let arg = chars.into_iter().collect::<String>();
+        if group_names.contains(&arg.as_str()) {
+            let commands = *group_commands.get(&arg.as_str())
+                .expect("Failed to get group of commands.");
+            let group = *groups.iter()
+                .find(|g| g.name == arg.as_str()).unwrap();
+            msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
+                e.author(|a| {
+                    a.name(member.nick.as_ref().unwrap_or(&member.user.name));
+                    if let Some(u) = member.user.avatar_url() {
+                        a.icon_url(&u);
+                    }
+                    a
+                });
+                e.title(group.name);
+                let mut description = String::new();
+                if let Some(d) = group.options.description {
+                    description += d;
+                }
+                description += "\n**Prefixes:** ";
+                let prefixes = group.options.prefixes.iter()
+                    .map(|p| format!("`{}`", *p))
+                    .collect::<Vec<_>>();
+                description += &prefixes.join(", ");
+                e.description(&description);
+                for cmd in commands {
+                    e.field(cmd.options.names[0], cmd.options.desc.unwrap_or_default(), false);
+                }
+                e
+            })).await?;
+            Ok(())
+        }
+        else {
+            help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
+            Ok(())
+        }
     }
 }

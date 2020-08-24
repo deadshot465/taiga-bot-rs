@@ -5,26 +5,15 @@ use serenity::framework::standard::{macros::{
 use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use tokio::time::Duration;
-use crate::{PersistenceService, InterfaceService};
+use crate::PersistenceService;
 use serenity::utils::Color;
 
 #[command]
-#[description = "Play a hangman game with Kou."]
+#[description = "Play a hangman game with Kou. This command has to be prefixed with `games`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "games"]
 pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
-    let data = context.data.read().await;
-    let interface = data.get::<InterfaceService>().unwrap();
-    let interface_lock = interface.read().await;
-    let is_kou = interface_lock.is_kou;
-    drop(interface_lock);
-    drop(data);
-    if !is_kou {
-        msg.reply(&context.http, "Sorry, this command is currently unavailable.").await?;
-        return Ok(());
-    }
-
     // Get member so we can get the user's nickname instead of the user's real name
     let member = context.cache
         .member(msg.guild_id.as_ref().unwrap(), &msg.author.id)

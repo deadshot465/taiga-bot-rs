@@ -38,6 +38,8 @@ pub async fn comic(context: &Context, msg: &Message) -> CommandResult {
     available_specializations.insert("kieransay", "kieran");
     available_specializations.insert("natsumisay", "natsumi");
     available_specializations.insert("huntersay", "hunter");
+    available_specializations.insert("eduardsay", "eduard");
+    available_specializations.insert("leesay", "lee");
 
     if msg.attachments.is_empty() || msg.attachments.len() == 0 {
         msg.channel_id.say(http, "The command has to be called with an attachment.")

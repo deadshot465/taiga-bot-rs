@@ -357,6 +357,42 @@
       },
       "infos": {},
       "result": "Here you go~!"
+    },
+    "eduard": {
+      "description": "Returns an image of Eduard saying anything you want",
+      "usage": "Run `eduardsay <background> <pose No.> <clothes> <face/expression> <message>` or `eduardsay <pose No.> <clothes> <face/expression> <message>` to give you an image of Eduard with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `eduardsay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `eduardsay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `eduardsay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "I heard that this Eduard is nothing but talkative...",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
+    },
+    "lee": {
+      "description": "Returns an image of Lee saying anything you want",
+      "usage": "Run `leesay <background> <pose No.> <clothes> <face/expression> <message>` or `leesay <pose No.> <clothes> <face/expression> <message>` to give you an image of Lee with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nRun `leesay help` to get detailed descriptions via DM.",
+      "errors": {
+        "length_too_short": "This command requires four arguments: `leesay [background] <pose No.> <clothes> <face/expression> <message>` ([] is optional). Run `leesay help` to get detailed descriptions via DM.",
+        "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
+        "no_message": "I think he's good at words...",
+        "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <a:KouShook:705621519153233950>",
+        "wrong_character_set": "I don't know how to do emotes, mentions, non-latin and non-Japanese characters.",
+        "cooldown": "I can't do so many things at the same time... <:KouCry:705054435826597928>",
+        "pose_not_exist": "I don't think he has such pose...",
+        "clothes_not_exist": "I don't think he has such cloth...",
+        "face_not_exist": "...Is that a face that only apparition would have? <:KouBrave:705182851397845193>",
+        "generic": "An error just happened. Guess I have to talk to Hanako. <:KouAngry:705054323050020896> - {json}"
+      },
+      "infos": {},
+      "result": "Here you go~!"
     }
   },
   "ship": {

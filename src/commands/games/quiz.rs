@@ -27,7 +27,7 @@ const KOU_RESPONSES: [&'static str; 5] = [
 ];
 
 #[command]
-#[description = "Play a fun quiz with your friends. Optionally specify rounds (default 7)."]
+#[description = "Play a fun quiz with your friends. Optionally specify rounds (default 7). This command has to be prefixed with `games`."]
 #[usage = "10"]
 #[example = "10"]
 #[bucket = "games"]
