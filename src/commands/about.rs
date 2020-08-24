@@ -33,7 +33,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
                 "It was also inspired by dunste123#0129's Hiro. \n" +
                 "Join Yuuto's dev team and start developing on the [project website](http://iamdeja.github.io/yuuto-docs/). \n\n" +
                 "Taiga version 3.0 was made and developed by: \n" +
-                "**Tetsuki Syu#1250**, **Arch#0226**, **Kirito#9286** \n" +
+                "**Tetsuki Syu#1250**, **Kirito#9286**, **Arch#0226** \n" +
                 "Yuuto version 2.0 was made and developed by: \n" +
                 "**Arch#0226**, **dunste123#0129**, **Tai Chi#4634**, **zsotroav#8941** \n" +
                 "Taiga version 3.0 and Yuuto's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
@@ -60,7 +60,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
                 "It was also inspired and based on [Taiga](https://www.github.com/deadshot465/TaigaBotCS) and inspired by the [Yuuto project](http://iamdeja.github.io/yuuto-docs/) \n" +
                 "It was also a dedication and a tribute to my most important person. \n\n" +
                 "Kou version 2.0 was made and developed by: \n" +
-                "**Tetsuki Syu#1250**, **Arch#0226**, **Kirito#9286** \n" +
+                "**Tetsuki Syu#1250**, **Kirito#9286**, **Arch#0226** \n" +
                 "Taiga version 3.0 and Taiga's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
                 "Japanese oracle co-translated with: \n**Kirito#9286** \n" +
                 "Hangman, Quiz, and Tic-tac-toe minigames co-written with: \n**Kirito#9286** \n" +

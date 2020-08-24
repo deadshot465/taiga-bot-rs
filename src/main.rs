@@ -47,7 +47,7 @@ struct Information;
 #[description = "Returns an image of various characters saying anything you want."]
 #[prefixes("say")]
 #[only_in("guilds")]
-#[commands(hirosay, huntersay, mhirosay, taigasay, keitarosay, yoichisay, yurisay, kieransay, natsumisay)]
+#[commands(eduardsay, hirosay, huntersay, leesay, mhirosay, taigasay, keitarosay, yoichisay, yurisay, kieransay, natsumisay)]
 struct Say;
 
 #[group]
