@@ -6,10 +6,10 @@ use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
-const VALID_SPECIALIZED_CHARACTERS: [&'static str; 8] = [
-    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter"
+const VALID_SPECIALIZED_CHARACTERS: [&'static str; 10] = [
+    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter", "eduard", "lee"
 ];
 
 const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
@@ -47,7 +47,8 @@ pub struct PersistenceStorage {
     pub config: Option<Config>,
     pub quiz_questions: Option<Vec<QuizQuestion>>,
     pub ongoing_quizzes: Option<HashSet<u64>>,
-    pub ongoing_tictactoes: Option<HashSet<u64>>
+    pub ongoing_tictactoes: Option<HashSet<u64>>,
+    pub guide_text: String
 }
 
 impl PersistenceStorage {
@@ -75,7 +76,8 @@ impl PersistenceStorage {
             config: None,
             quiz_questions: None,
             ongoing_quizzes: None,
-            ongoing_tictactoes: None
+            ongoing_tictactoes: None,
+            guide_text: String::new()
         };
         entity.load(is_kou).await.expect("Failed to initialize persistence storage.");
         entity
@@ -97,12 +99,15 @@ impl PersistenceStorage {
         let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
         let raw_words = std::fs::read("./persistence/game/words.json")?;
         let raw_config = std::fs::read(CONFIG_PATH)?;
+
         let raw_quiz_questions: Vec<u8>;
         if is_kou {
             raw_quiz_questions = std::fs::read(KOU_QUIZ_PATH)?;
+            self.guide_text = std::fs::read_to_string("./persistence/kou_intro.txt")?;
         }
         else {
             raw_quiz_questions = std::fs::read(TAIGA_QUIZ_PATH)?;
+            self.guide_text = std::fs::read_to_string("./persistence/taiga_intro.txt")?;
         }
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;

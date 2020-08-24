@@ -8,7 +8,7 @@ use crate::{InterfaceService, PersistenceService, PersistenceStorage};
 use serenity::utils::Color;
 use std::borrow::BorrowMut;
 use std::sync::Arc;
-use tokio::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 #[command]
 #[description = "This command will show your records with several commands."]

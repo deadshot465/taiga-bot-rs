@@ -13,13 +13,15 @@ use serenity::{
     model::prelude::*,
     prelude::*
 };
-use crate::{get_image, get_dialog, UserRecords, Emote, PersistenceService, InterfaceService};
+use crate::{get_image, get_dialog, UserRecords, Emote, PersistenceService, InterfaceService, CommandGroupCollection};
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use chrono::{Utc, Local, Duration};
 use serenity::framework::standard::DispatchError;
 use std::sync::Arc;
+use crate::commands::guide::build_embed;
+use serenity::utils::Color;
 
 const ADMIN_COMMANDS: [&'static str; 7] = [
     "allow", "cvt", "convert", "disable", "enable", "ignore", "purge"
@@ -123,7 +125,10 @@ async fn handle_reactions(context: &Context, msg: &Message) {
                     id: EmojiId(emote_id),
                     name: Some(emote_name.to_string())
                 };
-                msg.react(&context.http, reaction_type).await.expect("Failed to react.");
+                let res = msg.react(&context.http, reaction_type).await;
+                if let Err(e) = res {
+                    eprintln!("Failed to react: {}", e.to_string());
+                }
             }
             else {
                 let reaction_type = ReactionType::Unicode(reaction.to_string());
@@ -397,32 +402,39 @@ pub async fn message_received(context: &Context, msg: &Message) {
     if msg.author.id.0 == bot_user.id.0 {
         return;
     }
-    let mut member = context
-        .cache
-        .member(msg.guild_id.clone().expect("Failed to get guild id from message."), UserId(msg.author.id.0))
-        .await
-        .expect("Failed to get member from cache.");
-
-    if msg.channel_id.0 == 722824790972563547_u64 {
-        let has_role: bool = msg.author
-            .has_role(&context.http, msg.guild_id.clone().expect("Failed to get guild id from message."), RoleId(736534226945572884))
+    let channel = msg.channel(&context.cache).await;
+    if channel.is_none() {
+        return;
+    }
+    let private_channel = channel.unwrap().private();
+    if private_channel.is_none() {
+        let mut member = context
+            .cache
+            .member(msg.guild_id.clone().expect("Failed to get guild id from message."), UserId(msg.author.id.0))
             .await
-            .expect("Failed to check if user has required role.");
-        if msg.content.as_str() == "I agree with the rule and Kou is the best boi." && !has_role {
-            member.add_role(&context.http, RoleId(736534226945572884)).await
-                .expect("Failed to add a role to the user.");
-            greeting(context, msg.guild_id.as_ref().unwrap(), &member).await;
-            msg.delete(&context.http).await
-                .expect("Failed to delete the message.");
-        }
-        else if !has_role {
-            msg.delete(&context.http).await
-                .expect("Failed to delete the message.");
-            let _msg = msg.reply(&context.http, "Your answer is incorrect. Please try again.")
-                .await;
-            tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
-            _msg.unwrap().delete(&context.http).await
-                .expect("Failed to delete the message.");
+            .expect("Failed to get member from cache.");
+
+        if msg.channel_id.0 == 722824790972563547_u64 {
+            let has_role: bool = msg.author
+                .has_role(&context.http, msg.guild_id.clone().expect("Failed to get guild id from message."), RoleId(736534226945572884))
+                .await
+                .expect("Failed to check if user has required role.");
+            if msg.content.as_str() == "I agree with the rule and Kou is the best boi." && !has_role {
+                member.add_role(&context.http, RoleId(736534226945572884)).await
+                    .expect("Failed to add a role to the user.");
+                greeting(context, msg.guild_id.as_ref().unwrap(), &member).await;
+                msg.delete(&context.http).await
+                    .expect("Failed to delete the message.");
+            }
+            else if !has_role {
+                msg.delete(&context.http).await
+                    .expect("Failed to delete the message.");
+                let _msg = msg.reply(&context.http, "Your answer is incorrect. Please try again.")
+                    .await;
+                tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
+                _msg.unwrap().delete(&context.http).await
+                    .expect("Failed to delete the message.");
+            }
         }
     }
 
@@ -560,8 +572,10 @@ impl EventHandler for Handler {
             .member(&guild_id, &member.user.id)
             .await;
         if let Some(_member) = cached_member.as_mut() {
-            _member.add_role(&context.http, RoleId(696415232213385266)).await
-                .expect("Failed to add role to the new member.");
+            let res: serenity::Result<()> = _member.add_role(&context.http, RoleId(696415232213385266)).await;
+            if let Err(e) = res {
+                eprintln!("Failed to add role to the new member: {}", e.to_string());
+            }
         }
         greeting(&context, &guild_id, &member).await;
     }
@@ -584,16 +598,22 @@ impl EventHandler for Handler {
 }
 
 async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
-    let lock = context.data.read().await;
-    let interface = lock.get::<InterfaceService>().unwrap();
+    let data = context.data.read().await;
+    let command_groups = data.get::<CommandGroupCollection>().unwrap().to_vec();
+    let interface = data.get::<InterfaceService>().unwrap();
+    let persistence = data.get::<PersistenceService>().unwrap();
     let interface_lock = interface.read().await;
+    let persistence_lock = persistence.read().await;
+    let is_kou = interface_lock.is_kou;
+    let mut text = persistence_lock.guide_text.clone();
     let greetings = interface_lock.interface_strings
         .as_ref()
         .unwrap()
         .greetings
         .to_vec();
+    drop(persistence_lock);
     drop(interface_lock);
-    drop(lock);
+    drop(data);
     let greeting: String;
     {
         let mut rng = thread_rng();
@@ -614,7 +634,20 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
         if let Some(c) = guild {
             c.say(&context.http, &greeting).await
                 .expect("Failed to greet the newly added member.");
-            return;
+            break;
         }
     }
+
+    text = text.replace("{user}", &member.user.mention());
+    let guild_name = guild_id.name(&context.cache).await.unwrap_or_default();
+    text = text.replace("{guildName}", &guild_name);
+    let color_code = u32::from_str_radix(if is_kou {
+        "a4d0da"
+    } else {
+        "e81615"
+    }, 16).unwrap();
+    let color = Color::new(color_code);
+
+    build_embed(context, member, &command_groups, color, text.as_str(), is_kou, guild_name.as_str()).await
+        .expect("Failed to send DM to the newcomer.");
 }

@@ -4,7 +4,7 @@ use serenity::framework::standard::{macros::{
 }, CommandResult, Args, CommandError};
 use serenity::prelude::*;
 use serenity::model::channel::{Message, ReactionType};
-use crate::{QuizQuestion, InterfaceService, PersistenceService, PersistenceStorage};
+use crate::{QuizQuestion, InterfaceService, PersistenceService};
 use serenity::utils::Color;
 use chrono::{Utc, Duration};
 use serenity::model::user::User;
@@ -14,7 +14,6 @@ use serenity::collector::MessageCollectorBuilder;
 use serenity::futures::StreamExt;
 use serenity::model::guild::Member;
 use std::sync::Arc;
-use tokio::sync::MutexGuard;
 
 const TAIGA_RESPONSES: [&'static str; 5] = [
     "Nice one!", "That's my sidekick!", "Guess you're not an amateur after all! <:TaigaSmug:702210822310723614>",
@@ -28,7 +27,7 @@ const KOU_RESPONSES: [&'static str; 5] = [
 ];
 
 #[command]
-#[description = "Play a fun quiz with your friends. Optionally specify rounds (default 7)."]
+#[description = "Play a fun quiz with your friends. Optionally specify rounds (default 7). This command has to be prefixed with `games`."]
 #[usage = "10"]
 #[example = "10"]
 #[bucket = "games"]

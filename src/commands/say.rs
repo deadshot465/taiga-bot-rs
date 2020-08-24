@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 #[command]
 #[aliases("hiro")]
-#[description = "Returns an image of Hiro saying anything you want."]
+#[description = "Returns an image of Hiro saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -36,7 +36,7 @@ pub async fn hirosay(context: &Context, msg: &Message, mut args: Args) -> Comman
 
 #[command]
 #[aliases("mhiro", "maturehiro", "maturehirosay")]
-#[description = "Returns an image of mature Hiro saying anything you want."]
+#[description = "Returns an image of mature Hiro saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -59,7 +59,7 @@ pub async fn mhirosay(context: &Context, msg: &Message, mut args: Args) -> Comma
 
 #[command]
 #[aliases("taiga")]
-#[description = "Returns an image of Taiga saying anything you want."]
+#[description = "Returns an image of Taiga saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -82,7 +82,7 @@ pub async fn taigasay(context: &Context, msg: &Message, mut args: Args) -> Comma
 
 #[command]
 #[aliases("keitaro")]
-#[description = "Returns an image of Keitaro saying anything you want."]
+#[description = "Returns an image of Keitaro saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -105,7 +105,7 @@ pub async fn keitarosay(context: &Context, msg: &Message, mut args: Args) -> Com
 
 #[command]
 #[aliases("yoichi")]
-#[description = "Returns an image of Yoichi saying anything you want."]
+#[description = "Returns an image of Yoichi saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -128,7 +128,7 @@ pub async fn yoichisay(context: &Context, msg: &Message, mut args: Args) -> Comm
 
 #[command]
 #[aliases("yuri")]
-#[description = "Returns an image of Yuri saying anything you want."]
+#[description = "Returns an image of Yuri saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -151,7 +151,7 @@ pub async fn yurisay(context: &Context, msg: &Message, mut args: Args) -> Comman
 
 #[command]
 #[aliases("kieran")]
-#[description = "Returns an image of Kieran saying anything you want."]
+#[description = "Returns an image of Kieran saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -174,7 +174,7 @@ pub async fn kieransay(context: &Context, msg: &Message, mut args: Args) -> Comm
 
 #[command]
 #[aliases("natsumi")]
-#[description = "Returns an image of Natsumi saying anything you want."]
+#[description = "Returns an image of Natsumi saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -197,7 +197,7 @@ pub async fn natsumisay(context: &Context, msg: &Message, mut args: Args) -> Com
 
 #[command]
 #[aliases("hunter")]
-#[description = "Returns an image of Hunter saying anything you want."]
+#[description = "Returns an image of Hunter saying anything you want. This command needs to be prefixed by `say`."]
 #[usage = ""]
 #[example = ""]
 #[bucket = "say"]
@@ -210,6 +210,52 @@ pub async fn huntersay(context: &Context, msg: &Message, mut args: Args) -> Comm
         }
     }
     let result = say(context, msg, "hunter", false).await?;
+    if result.len() > 0 {
+        let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
+        msg.channel_id.send_files(&context.http, file, |f| f.content("Here you go~"))
+            .await?;
+    }
+    Ok(())
+}
+
+#[command]
+#[aliases("eduard")]
+#[description = "Returns an image of Eduard saying anything you want. This command needs to be prefixed by `say`."]
+#[usage = ""]
+#[example = ""]
+#[bucket = "say"]
+pub async fn eduardsay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "eduard").await?;
+            return Ok(());
+        }
+    }
+    let result = say(context, msg, "eduard", false).await?;
+    if result.len() > 0 {
+        let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
+        msg.channel_id.send_files(&context.http, file, |f| f.content("Here you go~"))
+            .await?;
+    }
+    Ok(())
+}
+
+#[command]
+#[aliases("lee")]
+#[description = "Returns an image of Lee saying anything you want. This command needs to be prefixed by `say`."]
+#[usage = ""]
+#[example = ""]
+#[bucket = "say"]
+pub async fn leesay(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let arg = args.single::<String>();
+    if let Ok(s) = arg {
+        if s.to_lowercase() == "help" {
+            say_help(context, msg, "lee").await?;
+            return Ok(());
+        }
+    }
+    let result = say(context, msg, "lee", false).await?;
     if result.len() > 0 {
         let file: Vec<(&[u8], &str)> = vec![(result.borrow(), "result.png")];
         msg.channel_id.send_files(&context.http, file, |f| f.content("Here you go~"))

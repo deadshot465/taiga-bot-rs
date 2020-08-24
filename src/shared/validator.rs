@@ -3,7 +3,7 @@ use serenity::prelude::Context;
 use serenity::model::channel::Message;
 use crate::{PersistenceService, InterfaceStorage};
 use std::sync::Arc;
-use tokio::sync::{MutexGuard, RwLockReadGuard};
+use tokio::sync::RwLockReadGuard;
 
 pub enum TextError {
     NoMessage, LengthTooLong, WrongCharacterSet, None

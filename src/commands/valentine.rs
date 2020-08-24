@@ -8,7 +8,7 @@ use serenity::utils::Color;
 use crate::{UserRecords, InterfaceService, PersistenceService, PersistenceStorage};
 use crate::shared::Character;
 use std::sync::Arc;
-use tokio::sync::{MutexGuard, RwLockReadGuard};
+use tokio::sync::RwLockReadGuard;
 
 #[command]
 #[aliases("v")]
