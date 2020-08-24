@@ -83,6 +83,10 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
     else {
         let mut _args = args.clone();
         let mut arg = _args.single::<String>().unwrap();
+        if _args.remaining() > 0 {
+            help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
+            return Ok(());
+        }
         arg = arg.to_lowercase();
         let mut chars = arg.chars().collect::<Vec<_>>();
         chars[0] = chars[0].to_uppercase().nth(0).unwrap();
@@ -100,6 +104,7 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
                     }
                     a
                 });
+                e.color(Color::from(color));
                 e.title(group.name);
                 let mut description = String::new();
                 if let Some(d) = group.options.description {
