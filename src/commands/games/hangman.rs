@@ -96,7 +96,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
 
             // Ask the user to input letters
             let input = &msg.author.await_reply(&context)
-                .timeout(Duration::from_secs(15))
+                .timeout(Duration::from_secs(60))
                 .await;
             // Check if the user replies. If not, abort the game.
             if input.is_none() {
