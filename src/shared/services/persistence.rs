@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use crate::{RandomMessage, Reminder, UserReply, Config, QuizQuestion};
+use crate::{RandomMessage, Reminder, UserReply, Config, QuizQuestion, AuthenticationService};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
 use std::borrow::Borrow;
@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use serenity::client::Context;
 
 const VALID_SPECIALIZED_CHARACTERS: [&'static str; 10] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter", "eduard", "lee"
@@ -223,6 +224,31 @@ impl PersistenceStorage {
         let io_res = std::fs::write(CONFIG_PATH, serialized_config_data);
         if let Err(e) = io_res {
             log::error!("Error when writing config: {:?}", e);
+        }
+    }
+
+    pub async fn update_credits(&self, context: &Context, user_id: u64, channel_id: u64, amount: i16, action: &str) {
+        let context_data = context.data.read().await;
+        let authentication = context_data.get::<AuthenticationService>().unwrap();
+        let mut authentication_lock = authentication.lock().await;
+        authentication_lock.login().await;
+        let token = authentication_lock.token.clone();
+        drop(authentication_lock);
+        drop(context_data);
+
+        let client = reqwest::Client::new();
+        let response = client.patch(&format!("https://tetsukizone.com/api/credit/{}/{}", user_id, action))
+            .json(&serde_json::json!({
+                "Credit": amount,
+                "ChannelId": channel_id.to_string()
+            }))
+            .header("Content-Type", "application/json")
+            .header("Authorization", format!("Bearer {}", token.as_str()))
+            .send()
+            .await;
+
+        if let Err(e) = response.as_ref() {
+            eprintln!("Error when sending patch request to the server: {}", e.to_string())
         }
     }
 }

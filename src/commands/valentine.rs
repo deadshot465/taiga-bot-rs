@@ -79,6 +79,19 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         .or_insert(UserRecords::new());
     *user_record.valentine.entry(valentine.name.clone())
         .or_insert(0) += 1;
+
+    match valentine.name.as_str() {
+        "Taiga Akatora" => {
+            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
+                .await;
+        },
+        "Minamoto Kou" => {
+            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
+                .await;
+        }
+        _ => ()
+    }
+
     drop(persistence_lock);
     drop(interface_lock);
     Ok(())

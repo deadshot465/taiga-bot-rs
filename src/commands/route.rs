@@ -80,8 +80,20 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
         .or_insert(HashMap::new());
     *r.entry(format!("{} Ending", ending))
         .or_insert(0) += 1;
-    drop(persistence_lock);
 
+    match route.name.as_str() {
+        "Taiga Akatora" => {
+            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 2, "plus")
+                .await;
+        },
+        "Minamoto Kou" => {
+            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
+                .await;
+        }
+        _ => ()
+    }
+
+    drop(persistence_lock);
     Ok(())
 }
 
