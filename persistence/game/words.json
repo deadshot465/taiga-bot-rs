@@ -348,5 +348,6 @@
   "ABORT",
   "LEAK",
   "MEMORY",
-  "ACCESS"
+  "ACCESS",
+  "CANADA"
 ]
