@@ -549,7 +549,8 @@ pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchErr
                 .cool_down.clone();
             drop(interface_lock);
             drop(lock);
-            let error_msg = error_msg.replace("{timeLeft}", &time.to_string());
+            let seconds = time.as_secs().to_string();
+            let error_msg = error_msg.replace("{timeLeft}", seconds.as_str());
             msg.reply(http, &error_msg).await
                 .expect("Failed to show cool down message.");
         },
