@@ -567,16 +567,6 @@ impl EventHandler for Handler {
         if guild_id.0 == KOU_SERVER_ID {
             return;
         }
-        let mut cached_member = context
-            .cache
-            .member(&guild_id, &member.user.id)
-            .await;
-        if let Some(_member) = cached_member.as_mut() {
-            let res: serenity::Result<()> = _member.add_role(&context.http, RoleId(696415232213385266)).await;
-            if let Err(e) = res {
-                eprintln!("Failed to add role to the new member: {}", e.to_string());
-            }
-        }
         greeting(&context, &guild_id, &member).await;
     }
 
