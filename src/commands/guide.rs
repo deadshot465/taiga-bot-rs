@@ -47,7 +47,7 @@ async fn guide(context: &Context, msg: &Message) -> CommandResult {
     } else {
         "e81615"
     }, 16).unwrap();
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     build_embed(context, &member, &command_groups, Color::new(color_code), text.as_str(), is_kou, guild_name.as_str())
         .await?;
     Ok(())

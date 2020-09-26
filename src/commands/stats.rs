@@ -90,7 +90,7 @@ async fn show_route(context: &Context, msg: &Message, user_id: &str, persistence
         .collect();
     character_names.sort();
 
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let user_name = if let Some(s) = member.nick.as_ref() {
         s
     } else {
@@ -136,7 +136,7 @@ async fn show_valentine(context: &Context, msg: &Message, user_id: &str, persist
         .collect::<Vec<(&str, u16)>>();
     character_names.sort_by(|i, j| (*j).1.cmp(&(*i).1));
 
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let user_name = if let Some(s) = member.nick.as_ref() {
         s
     } else {
@@ -169,7 +169,7 @@ async fn show_replies(context: &Context, msg: &Message, user_id: &str, persisten
         .as_ref()
         .unwrap();
     let replies = &user_records[user_id].replies;
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let user_name = if let Some(s) = member.nick.as_ref() {
         s
     } else {
@@ -207,7 +207,7 @@ async fn show_all(context: &Context, msg: &Message, user_id: &str, persistence: 
     route_names.sort();
     valentine_names.sort_by(|i, j| (*j).1.cmp(&(*i).1));
 
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let user_name = if let Some(s) = member.nick.as_ref() {
         s
     } else {
