@@ -295,5 +295,41 @@
     "animal": "Dog",
     "emote_id": "705080422278627388",
     "age": 14
+  },
+  {
+    "birthday": "April 4",
+    "color": "b21c3e",
+    "name": "Rex",
+    "description": "Rex is a techie who specializes in technology, gaming and puzzles. He also likes turtle, which might explain the patterns on his hat and his t-shirt. Little is known about him other than he's kinda secretive, but it seems that while he's a natural problem solver, cooking is not something he's interested in solving or researching.",
+    "animal": "Turtle",
+    "emote_id": "761777941314273310",
+    "age": 22
+  },
+  {
+    "birthday": "December 17",
+    "color": "c461db",
+    "name": "Orlando Knight",
+    "description": "Orlando is a friendly and generous person who enjoys attractions and fame. Thanks to his natural heterochromia iridum and charisma, he's almost always the main focus among the people. He also enjoys leisure activities such as movies and anything chocolate.",
+    "animal": "Dinosaur",
+    "emote_id": "761776458737254410",
+    "age": 21
+  },
+  {
+    "birthday": "July 3",
+    "color": "1d5a47",
+    "name": "Lief Tealwood",
+    "description": "Lief is an otherworldly, easy-going person who is kind and affectionate. He doesn't seem to care about social norms very much and is more likely to choose whatever he's comfortable with. He also likes nature such as animals and trees, and purity and pristineness.",
+    "animal": "Dog",
+    "emote_id": "761779462580600852",
+    "age": 21
+  },
+  {
+    "birthday": "November 11",
+    "color": "84b43e",
+    "name": "Marco Bentham",
+    "description": "Marco is a humble and calm person. He might look cowardly and sometimes his badmouthing might be really annoying, but once you get along with him, he's a very reliable and responsible person. He also likes online shopping and anything related to fashion.",
+    "animal": "Unknown",
+    "emote_id": "761778296609964112",
+    "age": 22
   }
 ]
