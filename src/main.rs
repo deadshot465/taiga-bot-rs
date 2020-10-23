@@ -1,5 +1,6 @@
 extern crate taiga_bot_rs;
-use log::{error};
+use env_logger::Builder;
+use log::{error, LevelFilter};
 use std::collections::HashSet;
 use std::env;
 use serenity::{
@@ -56,9 +57,12 @@ struct Say;
 struct Utilities;
 
 #[tokio::main]
-async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+async fn main() -> anyhow::Result<()> {
     dotenv::dotenv().ok();
-    env_logger::init();
+    Builder::new()
+        .filter(None, LevelFilter::Warn)
+        .default_format()
+        .init();
     let args = env::args().collect::<Vec<String>>();
     let args = args.iter()
         .map(|s| s.to_lowercase())
@@ -115,7 +119,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         lock.load(is_kou).expect("Failed to load interface.");
         drop(lock);
         data.insert::<InterfaceService>(interface);
-        data.insert::<PersistenceService>(Arc::new(RwLock::new(PersistenceStorage::new(is_kou).await)));
+        data.insert::<PersistenceService>(Arc::new(RwLock::new(PersistenceStorage::new(is_kou).await?)));
         data.insert::<AuthenticationService>(Arc::new(Mutex::new(Authentication::new().await)));
 
         let mut command_groups: Vec<&CommandGroup> = vec![];

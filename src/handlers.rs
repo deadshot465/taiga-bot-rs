@@ -13,7 +13,7 @@ use serenity::{
     model::prelude::*,
     prelude::*
 };
-use crate::{get_image, get_dialog, UserRecords, Emote, PersistenceService, InterfaceService, CommandGroupCollection};
+use crate::{get_image, get_dialog, UserRecords, Emote, PersistenceService, InterfaceService, CommandGroupCollection, search_user};
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -366,18 +366,89 @@ async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
     }
 }
 
+async fn smite_command(context: &Context, msg: &Message)
+{
+    let valid_users = [
+        263348633280315395,
+        677249244842950684,
+        617978701962805249,
+        457393417287368706,
+        297195101753573380,
+        215526684797960192,
+    ];
+    if !valid_users.contains(&msg.author.id.0) {
+        return;
+    }
+    let cmd = "/smite ";
+    let user_query = &msg.content[cmd.len()..];
+    let guild = msg.guild(&context.cache).await;
+    if let Some(found_guild) = guild {
+        let user = search_user(context, &found_guild, user_query)
+            .await;
+        match user {
+            Ok(mut found_user) => {
+                let user = &mut found_user[0];
+                let due_time = Local::now() + chrono::Duration::days(1);
+                let context_data = context.data.read().await;
+                let persistence = context_data.get::<PersistenceService>()
+                    .expect("Failed to get persistence service.");
+                let persistence = persistence.clone();
+                drop(context_data);
+                let mut persistence_lock = persistence.write().await;
+                let gif: String;
+                {
+                    let mut rng = thread_rng();
+                    gif = persistence_lock.smite_links
+                        .choose(&mut rng)
+                        .expect("Failed to get smite gif link.")
+                        .clone();
+                }
+                let entry = persistence_lock.smote_users
+                    .entry(user.user.id.0)
+                    .or_insert(Local::now());
+                *entry = due_time;
+                persistence_lock.write();
+                drop(persistence_lock);
+                drop(persistence);
+                let role_ids = [
+                    766023350287335465,
+                    769101869489979422
+                ];
+                for role_id in role_ids.iter() {
+                    let result: serenity::Result<()> = user
+                        .add_role(&context.http, RoleId::from(*role_id))
+                        .await;
+                    if result.is_ok() {
+                        break;
+                    }
+                }
+                msg.channel_id
+                    .say(&context.http, &format!("SMITE! {}", &gif))
+                    .await
+                    .expect("Failed to send message to the channel.");
+            },
+            Err(e) => {
+                msg.channel_id
+                    .say(&context.http, &format!("Error when searching for user: {}", e.to_string()))
+                    .await
+                    .expect("Failed to send message to the channel.");
+            }
+        }
+    }
+}
+
 #[hook]
 pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
-    let lock = context.data.read().await;
-    let persistence = lock.get::<PersistenceService>()
+    let data_lock = context.data.read().await;
+    let persistence = data_lock.get::<PersistenceService>()
         .expect("Failed to retrieve persistence service.");
-    let interface = lock.get::<InterfaceService>()
+    let interface = data_lock.get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
-    let _persistence = Arc::clone(persistence);
-    let _interface = Arc::clone(interface);
-    drop(lock);
-    let persistence_lock = _persistence.read().await;
-    let interface_lock = _interface.read().await;
+    let persistence_clone = Arc::clone(persistence);
+    let interface_clone = Arc::clone(interface);
+    drop(data_lock);
+    let persistence_lock = persistence_clone.read().await;
+    let interface_lock = interface_clone.read().await;
     let config = persistence_lock.config.as_ref().unwrap();
     let emote_exist = config.emotes.iter()
         .find(|e| e.name == cmd);
@@ -386,6 +457,7 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
         return;
     }
     drop(persistence_lock);
+
     let failed_messages: &Vec<String>;
     failed_messages = &interface_lock.interface_strings.as_ref().unwrap()
         .failed_messages;
@@ -399,6 +471,7 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
 #[hook]
 pub async fn message_received(context: &Context, msg: &Message) {
     let bot_user = context.cache.current_user().await;
+    let guild = msg.guild(&context.cache).await;
     if msg.author.id.0 == bot_user.id.0 {
         return;
     }
@@ -408,11 +481,14 @@ pub async fn message_received(context: &Context, msg: &Message) {
     }
     let private_channel = channel.unwrap().private();
     if private_channel.is_none() {
-        let mut member = context
-            .cache
-            .member(msg.guild_id.clone().expect("Failed to get guild id from message."), UserId(msg.author.id.0))
-            .await
+        let mut guild = guild
+            .clone()
+            .expect("Failed to get guild from cache.");
+        let member = guild
+            .members
+            .get_mut(&UserId::from(msg.author.id.0))
             .expect("Failed to get member from cache.");
+        let mut member = member.clone();
 
         if msg.channel_id.0 == 722824790972563547_u64 {
             let has_role: bool = msg.author
@@ -443,14 +519,20 @@ pub async fn message_received(context: &Context, msg: &Message) {
     handle_replies(context, msg).await;
     handle_user_replies(context, msg).await;
 
-    let lock = context.data.read().await;
-    let persistence = lock.get::<PersistenceService>().unwrap();
-    let interface = lock.get::<InterfaceService>().unwrap();
-    let _persistence = Arc::clone(persistence);
-    let _interface = Arc::clone(interface);
-    drop(lock);
-    let mut persistence_lock = _persistence.write().await;
-    let interface_lock = _interface.read().await;
+    if msg.content.starts_with("/smite") {
+        smite_command(context, msg).await;
+    }
+
+    let context_data = context.data.read().await;
+    let persistence = context_data.get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
+    let interface = context_data.get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence_clone = Arc::clone(persistence);
+    let interface_clone = Arc::clone(interface);
+    drop(context_data);
+    let mut persistence_lock = persistence_clone.write().await;
+    let interface_lock = interface_clone.read().await;
 
     // Update last modified time of persistence storage and write data every 5 minutes.
     let last_modified_time = persistence_lock.last_modified_time.as_ref().unwrap();
@@ -473,6 +555,7 @@ pub async fn message_received(context: &Context, msg: &Message) {
     }
     drop(interface_lock);
 
+    let mut is_persistence_changed = false;
     let reminders = persistence_lock.reminders.as_mut().unwrap();
     let mut user_id_to_remove = HashSet::new();
     // Remind users
@@ -493,8 +576,34 @@ pub async fn message_received(context: &Context, msg: &Message) {
     }
     for id in user_id_to_remove.iter() {
         reminders.remove(id);
+        is_persistence_changed = true;
     }
-    persistence_lock.write();
+
+    // Revoke Smote role
+    let smote_users = &mut persistence_lock.smote_users;
+    let mut smote_users_to_remove = HashSet::new();
+    for (user_id, due_time) in smote_users.iter_mut() {
+        if Local::now() > *due_time {
+            smote_users_to_remove.insert(*user_id);
+        }
+    }
+    for id in smote_users_to_remove.iter() {
+        let mut guild = guild
+            .clone()
+            .expect("Failed to get guild from cache.");
+        let member = guild
+            .members
+            .get_mut(&UserId::from(msg.author.id.0))
+            .expect("Failed to get member from cache.");
+        member.remove_role(&context.http, RoleId::from(*id))
+            .await
+            .expect("Failed to remove role from the member.");
+        smote_users.remove(id);
+        is_persistence_changed = true;
+    }
+    if is_persistence_changed {
+        persistence_lock.write();
+    }
     drop(persistence_lock);
 }
 

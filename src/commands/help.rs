@@ -27,7 +27,7 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
         .map(|g| group_commands.insert(g.name, g.options.commands))
         .collect::<Vec<Option<&[&Command]>>>();
 
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let color: u32;
     let data = context.data.read().await;
     let interface = data.get::<InterfaceService>().unwrap();

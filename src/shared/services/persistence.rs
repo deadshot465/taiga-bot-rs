@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Local};
 use crate::{RandomMessage, Reminder, UserReply, Config, QuizQuestion, AuthenticationService};
 use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
@@ -17,6 +17,7 @@ const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
 const CHANNEL_SETTINGS_PATH: &'static str = "./persistence/channelSettings.json";
 const REMINDER_PATH: &'static str = "./persistence/reminders.json";
 const CONFIG_PATH: &'static str = "./persistence/config.json";
+const SMOTE_USER_PATH: &'static str = "./persistence/smite.json";
 const TAIGA_QUIZ_PATH: &'static str = "./persistence/game/quiz_taiga.json";
 const KOU_QUIZ_PATH: &'static str = "./persistence/game/quiz_kou.json";
 
@@ -49,11 +50,19 @@ pub struct PersistenceStorage {
     pub quiz_questions: Option<Vec<QuizQuestion>>,
     pub ongoing_quizzes: Option<HashSet<u64>>,
     pub ongoing_tictactoes: Option<HashSet<u64>>,
+    pub smite_links: Vec<String>,
+    pub smote_users: HashMap<u64, DateTime<Local>>,
     pub guide_text: String
 }
 
 impl PersistenceStorage {
-    pub async fn new(is_kou: bool) -> Self {
+    pub async fn new(is_kou: bool) -> anyhow::Result<Self> {
+        use std::fs;
+        let raw_smite_links = fs::read("./persistence/gif/smite_links.json")?;
+        let raw_smote_users = fs::read(SMOTE_USER_PATH)?;
+        let smite_links: Vec<String> = serde_json::from_slice(raw_smite_links.as_slice())?;
+        let smote_users: HashMap<u64, DateTime<Local>> = serde_json::from_slice(raw_smote_users.as_slice())?;
+
         let mut entity = PersistenceStorage {
             routes: None,
             valentines: None,
@@ -78,37 +87,41 @@ impl PersistenceStorage {
             quiz_questions: None,
             ongoing_quizzes: None,
             ongoing_tictactoes: None,
-            guide_text: String::new()
+            guide_text: String::new(),
+            smite_links,
+            smote_users,
         };
         entity.load(is_kou).await.expect("Failed to initialize persistence storage.");
-        entity
+        Ok(entity)
     }
 
     pub async fn load(&mut self, is_kou: bool) -> Result<(), Box<dyn std::error::Error>> {
         if self.is_loaded {
             return Ok(());
         }
-        let raw_routes = std::fs::read("./persistence/routes.json")?;
-        let raw_valentines = std::fs::read("./persistence/valentines.json")?;
-        let raw_oracles = std::fs::read("./persistence/oracles.json")?;
-        let raw_ship_messages = std::fs::read("./persistence/shipMessages.json")?;
-        let raw_conversion_table = std::fs::read("./persistence/convert.json")?;
-        let raw_user_records = std::fs::read(USER_RECORDS_PATH)?;
-        let raw_channel_settings = std::fs::read(CHANNEL_SETTINGS_PATH)?;
-        let raw_random_messages = std::fs::read("./persistence/messages.json")?;
-        let raw_reminders = std::fs::read(REMINDER_PATH)?;
-        let raw_user_replies = std::fs::read("./persistence/userReplies.json")?;
-        let raw_words = std::fs::read("./persistence/game/words.json")?;
-        let raw_config = std::fs::read(CONFIG_PATH)?;
+
+        use std::fs;
+        let raw_routes = fs::read("./persistence/routes.json")?;
+        let raw_valentines = fs::read("./persistence/valentines.json")?;
+        let raw_oracles = fs::read("./persistence/oracles.json")?;
+        let raw_ship_messages = fs::read("./persistence/shipMessages.json")?;
+        let raw_conversion_table = fs::read("./persistence/convert.json")?;
+        let raw_user_records = fs::read(USER_RECORDS_PATH)?;
+        let raw_channel_settings = fs::read(CHANNEL_SETTINGS_PATH)?;
+        let raw_random_messages = fs::read("./persistence/messages.json")?;
+        let raw_reminders = fs::read(REMINDER_PATH)?;
+        let raw_user_replies = fs::read("./persistence/userReplies.json")?;
+        let raw_words = fs::read("./persistence/game/words.json")?;
+        let raw_config = fs::read(CONFIG_PATH)?;
 
         let raw_quiz_questions: Vec<u8>;
         if is_kou {
-            raw_quiz_questions = std::fs::read(KOU_QUIZ_PATH)?;
-            self.guide_text = std::fs::read_to_string("./persistence/kou_intro.txt")?;
+            raw_quiz_questions = fs::read(KOU_QUIZ_PATH)?;
+            self.guide_text = fs::read_to_string("./persistence/kou_intro.txt")?;
         }
         else {
-            raw_quiz_questions = std::fs::read(TAIGA_QUIZ_PATH)?;
-            self.guide_text = std::fs::read_to_string("./persistence/taiga_intro.txt")?;
+            raw_quiz_questions = fs::read(TAIGA_QUIZ_PATH)?;
+            self.guide_text = fs::read_to_string("./persistence/taiga_intro.txt")?;
         }
 
         let routes: Vec<Character> = serde_json::from_slice(raw_routes.borrow())?;
@@ -225,13 +238,21 @@ impl PersistenceStorage {
         if let Err(e) = io_res {
             log::error!("Error when writing config: {:?}", e);
         }
+
+        let serialized_smote_users = serde_json::to_vec_pretty(&self.smote_users)
+            .expect("Failed to serialize smote users to bytes.");
+        let io_res = std::fs::write(SMOTE_USER_PATH, serialized_smote_users.as_slice());
+        if let Err(e) = io_res {
+            log::error!("Error when writing config: {:?}", e);
+        }
     }
 
     pub async fn update_credits(&self, context: &Context, user_id: u64, channel_id: u64, amount: i16, action: &str) {
         let context_data = context.data.read().await;
         let authentication = context_data.get::<AuthenticationService>().unwrap();
         let mut authentication_lock = authentication.lock().await;
-        authentication_lock.login().await;
+        authentication_lock.login().await
+            .expect("Failed to login authentication service.");
         let token = authentication_lock.token.clone();
         drop(authentication_lock);
         drop(context_data);

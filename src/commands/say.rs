@@ -431,7 +431,7 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
     character_available_options = &options[character];
     available_backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
 
-    let member = msg.member(&context.cache).await.unwrap();
+    let member = msg.member(&context.http).await.unwrap();
     let color = u32::from_str_radix("ff6600", 16).unwrap();
 
     if is_kou {
