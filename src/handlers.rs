@@ -408,7 +408,15 @@ async fn smite_command(context: &Context, msg: &Message) {
         match user {
             Ok(mut found_user) => {
                 let mut user = &mut found_user[0];
-                if user.user.id.0 == msg.author.id.0 {
+                if user.user.id.0
+                    == context
+                        .http
+                        .get_current_application_info()
+                        .await
+                        .expect("Failed to get current application's info.")
+                        .id
+                        .0
+                {
                     user = found_guild
                         .members
                         .get_mut(&msg.author.id)
