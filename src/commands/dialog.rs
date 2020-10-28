@@ -1,11 +1,9 @@
-use rand::prelude::*;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult, Args};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
-use crate::{get_dialog, InterfaceService, PersistenceService};
 use crate::shared::validate_dialog;
+use crate::{get_dialog, InterfaceService, PersistenceService};
+use rand::prelude::*;
+use serenity::framework::standard::{macros::command, Args, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 use std::borrow::Borrow;
 use std::sync::Arc;
 
@@ -27,7 +25,11 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
 
     if args.is_empty() || args.len() < 2 {
         msg.channel_id
-            .say(&context.http, interface_string.errors["length_too_short"].as_str()).await?;
+            .say(
+                &context.http,
+                interface_string.errors["length_too_short"].as_str(),
+            )
+            .await?;
         return Ok(());
     }
     let first_arg = args.single::<String>().unwrap();
@@ -40,8 +42,7 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         let mut rng = thread_rng();
         background = backgrounds.choose(&mut rng).unwrap().clone();
         character = first_arg;
-    }
-    else {
+    } else {
         background = first_arg;
         character = args.single::<String>().unwrap();
     }
@@ -53,16 +54,30 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         return Ok(());
     }
     let text_content = String::from(text.unwrap());
-    let validation_result = validate_dialog(context, msg, &background, &character, &text_content, &interface_lock);
+    let validation_result = validate_dialog(
+        context,
+        msg,
+        background.as_str(),
+        character.as_str(),
+        text_content.as_str(),
+        &interface_lock,
+    );
     if let Err(e) = validation_result.await {
         eprintln!("An error occurred when validating the dialog: {}", e);
         return Ok(());
     }
-    let bytes = get_dialog(background.as_str(), character.as_str(), text_content.as_str(), context)
-        .await
-        .unwrap();
+    let bytes = get_dialog(
+        background.as_str(),
+        character.as_str(),
+        text_content.as_str(),
+        context,
+    )
+    .await
+    .unwrap();
     let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
-    msg.channel_id.send_files(&context.http, files, |m| m.content("Here you go~")).await?;
+    msg.channel_id
+        .send_files(&context.http, files, |m| m.content("Here you go~"))
+        .await?;
     drop(interface_lock);
     Ok(())
 }

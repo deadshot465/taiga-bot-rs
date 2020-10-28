@@ -1,9 +1,7 @@
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
 use crate::InterfaceService;
+use serenity::framework::standard::{macros::command, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 
 #[command]
 #[aliases("credits", "bot")]
@@ -45,8 +43,7 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
             .footer(|f| f.text("Taiga Bot: Release 3.0 | 2020-08-24 | For my most important person."))
             .thumbnail("https://cdn.discordapp.com/emojis/448579316171669545.png")))
             .await?;
-    }
-    else {
+    } else {
         let color_code = u32::from_str_radix("a4d0da", 16).unwrap();
         let description = "Kou was inspired by the anime/manga Jibaku Shōnen Hanako-kun (a.k.a. Toilet-Bound Hanako-kun). \n"
             .to_string();

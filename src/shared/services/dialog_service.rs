@@ -1,9 +1,14 @@
-use std::collections::HashMap;
-use crate::AuthenticationService;
 use crate::shared::structures::dialog::Comic;
+use crate::AuthenticationService;
 use serenity::client::Context;
+use std::collections::HashMap;
 
-pub async fn get_dialog(background: &str, character: &str, text: &str, context: &Context) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub async fn get_dialog(
+    background: &str,
+    character: &str,
+    text: &str,
+    context: &Context,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let mut request_data = HashMap::new();
     request_data.insert("Background", background);
     request_data.insert("Character", character);
@@ -15,10 +20,14 @@ pub async fn get_dialog(background: &str, character: &str, text: &str, context: 
     let mut authentication_lock = authentication.lock().await;
     authentication_lock.login().await.unwrap();
     authentication_lock.login().await.unwrap();
-    let response = client.post("https://tetsukizone.com/api/dialog")
+    let response = client
+        .post("https://tetsukizone.com/api/dialog")
         .json(&request_data)
         .header("Content-Type", "application/json")
-        .header("Authorization", format!("Bearer {}", authentication_lock.token.as_str()))
+        .header(
+            "Authorization",
+            format!("Bearer {}", authentication_lock.token.as_str()),
+        )
         .send()
         .await
         .unwrap();
@@ -28,13 +37,15 @@ pub async fn get_dialog(background: &str, character: &str, text: &str, context: 
     let bytes = response.bytes().await;
     if let Ok(res) = bytes {
         Ok(res.to_vec())
-    }
-    else {
+    } else {
         Ok(vec![])
     }
 }
 
-pub async fn get_comic(comic_data: Vec<Comic>, context: &Context) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub async fn get_comic(
+    comic_data: Vec<Comic>,
+    context: &Context,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let mut dummy = HashMap::new();
     dummy.insert("Hello", "world");
@@ -44,10 +55,14 @@ pub async fn get_comic(comic_data: Vec<Comic>, context: &Context) -> Result<Vec<
     let mut authentication_lock = authentication.lock().await;
     authentication_lock.login().await.unwrap();
 
-    let response = client.post("https://tetsukizone.com/api/comic")
+    let response = client
+        .post("https://tetsukizone.com/api/comic")
         .json(&comic_data)
         .header("Content-Type", "application/json")
-        .header("Authorization", format!("Bearer {}", authentication_lock.token.as_str()))
+        .header(
+            "Authorization",
+            format!("Bearer {}", authentication_lock.token.as_str()),
+        )
         .send()
         .await
         .unwrap();
@@ -57,8 +72,7 @@ pub async fn get_comic(comic_data: Vec<Comic>, context: &Context) -> Result<Vec<
     let bytes = response.bytes().await;
     if let Ok(res) = bytes {
         Ok(res.to_vec())
-    }
-    else {
+    } else {
         Ok(vec![])
     }
 }

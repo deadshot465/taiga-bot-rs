@@ -5,12 +5,12 @@ pub struct Emote {
     pub name: String,
     pub id: u64,
     pub link: String,
-    pub raw: String
+    pub raw: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
-    pub emotes: Vec<Emote>
+    pub emotes: Vec<Emote>,
 }
 
 impl Emote {
@@ -19,7 +19,7 @@ impl Emote {
             name: String::from(name),
             id,
             link: String::from(link),
-            raw: String::from(raw)
+            raw: String::from(raw),
         }
     }
 }

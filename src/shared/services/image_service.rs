@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 use serenity::framework::standard::CommandError;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -8,19 +8,19 @@ struct Url {
     pub full: String,
     pub regular: String,
     pub small: String,
-    pub thumb: String
+    pub thumb: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Query {
-    pub urls: Url
+    pub urls: Url,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct SearchResult {
     pub total: u32,
     pub total_pages: u32,
-    pub results: Vec<Query>
+    pub results: Vec<Query>,
 }
 
 const ITEM_PER_PAGE: u8 = 10;
@@ -28,7 +28,14 @@ const ITEM_PER_PAGE: u8 = 10;
 pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
     let token = std::env::var("UNSPLASH_TOKEN").unwrap();
     let client = reqwest::Client::new();
-    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page=1", &token, keyword).as_str())
+    let response = client
+        .get(
+            format!(
+                "https://api.unsplash.com/search/photos?client_id={}&query={}&page=1",
+                &token, keyword
+            )
+            .as_str(),
+        )
         .send()
         .await?;
     let data: SearchResult = response.json().await?;
@@ -41,7 +48,14 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
     // Limit to the first 25% pages.
     let upper_page_limit = ((total_pages as f32) * 0.25_f32).ceil();
     let random_page_number = thread_rng().gen_range(0_u32, (upper_page_limit as u32) + 1_u32);
-    let response = client.get(format!("https://api.unsplash.com/search/photos?client_id={}&query={}&page={}", &token, keyword, random_page_number).as_str())
+    let response = client
+        .get(
+            format!(
+                "https://api.unsplash.com/search/photos?client_id={}&query={}&page={}",
+                &token, keyword, random_page_number
+            )
+            .as_str(),
+        )
         .send()
         .await?;
     let data: SearchResult = response.json().await?;
@@ -51,14 +65,14 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
         let mut rng = thread_rng();
         item_no = if random_page_number == total_pages {
             rng.gen_range(0_usize, modulo as usize)
-        }
-        else {
+        } else {
             rng.gen_range(0_usize, ITEM_PER_PAGE as usize)
         };
     }
     let link = &data.results[item_no].urls.regular;
 
-    let response = client.get(link.as_str())
+    let response = client
+        .get(link.as_str())
         .header("Accept", "image/jpeg")
         .header("Content-Type", "image/jpeg")
         .send()

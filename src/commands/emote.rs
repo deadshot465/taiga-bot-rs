@@ -1,10 +1,8 @@
+use crate::{Emote, InterfaceService, PersistenceService};
 use regex::Regex;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult, Args};
-use serenity::prelude::Context;
+use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::channel::Message;
-use crate::{Emote, PersistenceService, InterfaceService};
+use serenity::prelude::Context;
 use serenity::utils::Color;
 use std::sync::Arc;
 
@@ -15,8 +13,8 @@ lazy_static! {
     static ref EMOTE_IS_ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();
 }
 
-const VALID_COMMANDS: [&'static str; 2] = ["register", "deregister"];
-const EMOTE_BASE_LINK: &'static str = "https://cdn.discordapp.com/emojis/";
+const VALID_COMMANDS: [&str; 2] = ["register", "deregister"];
+const EMOTE_BASE_LINK: &str = "https://cdn.discordapp.com/emojis/";
 
 #[command]
 #[description = "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected."]
@@ -38,20 +36,29 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
     if args.is_empty() {
         let color = u32::from_str_radix("93B986", 16).unwrap();
         let persistence_lock = _persistence.read().await;
-        msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
-            e.thumbnail("https://cdn.discordapp.com/emojis/730239295155077251.png");
-            e.title("Registered Emotes");
-            e.description("The following is a list of currently registered emotes.");
-            e.color(Color::new(color));
-            let config = persistence_lock.config.as_ref().unwrap();
-            let emotes = &config.emotes;
-            let emote_names = emotes.iter()
-                .map(|e| format!("`{}`, ", e.name.as_str()))
-                .collect::<String>();
-            e.field("Emotes", &emote_names.trim()[0..emote_names.len() - 2], false);
-            drop(persistence_lock);
-            e
-        })).await?;
+        msg.channel_id
+            .send_message(&context.http, |m| {
+                m.embed(|e| {
+                    e.thumbnail("https://cdn.discordapp.com/emojis/730239295155077251.png");
+                    e.title("Registered Emotes");
+                    e.description("The following is a list of currently registered emotes.");
+                    e.color(Color::new(color));
+                    let config = persistence_lock.config.as_ref().unwrap();
+                    let emotes = &config.emotes;
+                    let emote_names = emotes
+                        .iter()
+                        .map(|e| format!("`{}`, ", e.name.as_str()))
+                        .collect::<String>();
+                    e.field(
+                        "Emotes",
+                        &emote_names.trim()[0..emote_names.len() - 2],
+                        false,
+                    );
+                    drop(persistence_lock);
+                    e
+                })
+            })
+            .await?;
         return Ok(());
     }
 
@@ -60,44 +67,65 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
     let emote = args.single::<String>();
     // If the command lacks any single argument, abort.
     if cmd.is_err() || name.is_err() {
-        msg.channel_id.say(&context.http, interface_string.errors["length_too_short"].as_str())
+        msg.channel_id
+            .say(
+                &context.http,
+                interface_string.errors["length_too_short"].as_str(),
+            )
             .await?;
-        return Ok(())
+        return Ok(());
     }
     // Unwrap the value by shadowing the variable.
     let cmd = cmd.unwrap().to_lowercase();
     // If the command is neither `register` nor `deregister,` abort.
     if !VALID_COMMANDS.contains(&cmd.as_str()) {
-        msg.channel_id.say(&context.http, interface_string.errors["unsupported_operation"].as_str())
+        msg.channel_id
+            .say(
+                &context.http,
+                interface_string.errors["unsupported_operation"].as_str(),
+            )
             .await?;
-        return Ok(())
+        return Ok(());
     }
     let name = name.unwrap().to_lowercase();
     let name_regex = &*NAME_REGEX;
     // If the name is invalid, abort.
     if !name_regex.is_match(&name) {
-        msg.channel_id.say(&context.http, interface_string.errors["invalid_name"].as_str())
+        msg.channel_id
+            .say(
+                &context.http,
+                interface_string.errors["invalid_name"].as_str(),
+            )
             .await?;
-        return Ok(())
+        return Ok(());
     }
 
     match cmd.as_str() {
         "register" => {
             if emote.is_err() {
-                msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
+                msg.channel_id
+                    .say(
+                        &context.http,
+                        interface_string.errors["invalid_emote"].as_str(),
+                    )
                     .await?;
-                return Ok(())
+                return Ok(());
             }
             let emote = emote.unwrap();
             let emote_regex = &*EMOTE_REGEX;
             // If it's not an emote, abort.
             if !emote_regex.is_match(&emote) {
-                msg.channel_id.say(&context.http, interface_string.errors["invalid_emote"].as_str())
+                msg.channel_id
+                    .say(
+                        &context.http,
+                        interface_string.errors["invalid_emote"].as_str(),
+                    )
                     .await?;
-                return Ok(())
+                return Ok(());
             }
             let id_regex = &*EMOTE_ID_REGEX;
-            let id = id_regex.captures(&emote)
+            let id = id_regex
+                .captures(&emote)
                 .unwrap()
                 .get(2)
                 .unwrap()
@@ -106,8 +134,7 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
                 .unwrap();
             let file_extension = if (&*EMOTE_IS_ANIMATED_REGEX).is_match(&emote) {
                 ".gif"
-            }
-            else {
+            } else {
                 ".png"
             };
             let link = String::from(EMOTE_BASE_LINK) + &id.to_string() + file_extension;
@@ -117,8 +144,10 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
             config.emotes.push(emote_entity);
             persistence_lock.write();
             drop(persistence_lock);
-            msg.channel_id.say(&context.http, "Successfully added the emote!").await?;
-        },
+            msg.channel_id
+                .say(&context.http, "Successfully added the emote!")
+                .await?;
+        }
         "deregister" => {
             let mut persistence_lock = _persistence.write().await;
             let config = persistence_lock.config.as_mut().unwrap();
@@ -132,9 +161,11 @@ pub async fn emote(context: &Context, msg: &Message, mut args: Args) -> CommandR
             config.emotes.remove(index);
             persistence_lock.write();
             drop(persistence_lock);
-            msg.channel_id.say(&context.http, "Successfully removed the emote!").await?;
-        },
-        _ => ()
+            msg.channel_id
+                .say(&context.http, "Successfully removed the emote!")
+                .await?;
+        }
+        _ => (),
     }
     Ok(())
 }

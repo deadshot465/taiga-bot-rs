@@ -1,6 +1,6 @@
 pub mod hangman;
-pub mod tictactoe;
 pub mod quiz;
+pub mod tictactoe;
 pub use hangman::*;
-pub use tictactoe::*;
 pub use quiz::*;
+pub use tictactoe::*;

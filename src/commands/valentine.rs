@@ -1,12 +1,10 @@
-use rand::prelude::*;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
-use serenity::utils::Color;
-use crate::{UserRecords, InterfaceService, PersistenceService, PersistenceStorage};
 use crate::shared::Character;
+use crate::{InterfaceService, PersistenceService, PersistenceStorage, UserRecords};
+use rand::prelude::*;
+use serenity::framework::standard::{macros::command, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
+use serenity::utils::Color;
 use std::sync::Arc;
 use tokio::sync::RwLockReadGuard;
 
@@ -30,23 +28,24 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     let valentine = get_valentine(&persistence_lock).await;
     drop(persistence_lock);
     let is_keitaro = get_first_name(valentine.name.as_str()) == "Keitaro";
-    let prefix_suffix = if is_keitaro {
-        "~~"
-    }
-    else {
-        ""
-    };
+    let prefix_suffix = if is_keitaro { "~~" } else { "" };
 
     let footer = if is_keitaro {
-        interface_string.infos["keitaro_footer"].clone()
+        interface_string.infos["keitaro_footer"]
+            .clone()
             .replace("{firstName}", get_first_name(valentine.name.as_str()))
-    }
-    else {
-        interface_string.infos["normal_footer"].clone()
+    } else {
+        interface_string.infos["normal_footer"]
+            .clone()
             .replace("{firstName}", get_first_name(valentine.name.as_str()))
     };
 
-    let valentine_name = format!("{}Your valentine is {}{}", prefix_suffix, valentine.name.as_str(), prefix_suffix);
+    let valentine_name = format!(
+        "{}Your valentine is {}{}",
+        prefix_suffix,
+        valentine.name.as_str(),
+        prefix_suffix
+    );
     let color = u32::from_str_radix(&valentine.color.as_str(), 16).unwrap() as i32;
 
     if is_keitaro {
@@ -54,42 +53,54 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         msg.channel_id.say(&context.http, message).await?;
     }
 
-    msg.channel_id.send_message(&context.http, |m| {
-        m.embed(|e| {
-            e.author(|a| {
-                if let Some(url) = msg.author.avatar_url().as_ref() {
-                    a.icon_url(url);
-                }
-                a.name(&msg.author.name)
-            })
+    msg.channel_id
+        .send_message(&context.http, |m| {
+            m.embed(|e| {
+                e.author(|a| {
+                    if let Some(url) = msg.author.avatar_url().as_ref() {
+                        a.icon_url(url);
+                    }
+                    a.name(&msg.author.name)
+                })
                 .color(Color::from(color))
-                .description(format!("{}{}{}", prefix_suffix, valentine.description.as_str(), prefix_suffix))
+                .description(format!(
+                    "{}{}{}",
+                    prefix_suffix,
+                    valentine.description.as_str(),
+                    prefix_suffix
+                ))
                 .field("Age", valentine.age, true)
                 .field("Birthday", valentine.birthday.as_str(), true)
                 .field("Animal Motif", valentine.animal.as_str(), true)
                 .footer(|f| f.text(&footer))
                 .thumbnail(get_emote_url(valentine.emote_id.as_str()))
                 .title(valentine_name.as_str())
+            })
         })
-    }).await?;
+        .await?;
 
     let mut persistence_lock = _persistence.write().await;
     let user_records = persistence_lock.user_records.as_mut().unwrap();
-    let user_record = user_records.entry(msg.author.id.0.to_string())
-        .or_insert(UserRecords::new());
-    *user_record.valentine.entry(valentine.name.clone())
+    let user_record = user_records
+        .entry(msg.author.id.0.to_string())
+        .or_insert_with(UserRecords::new);
+    *user_record
+        .valentine
+        .entry(valentine.name.clone())
         .or_insert(0) += 1;
 
     match valentine.name.as_str() {
         "Taiga Akatora" => {
-            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
-                .await;
-        },
-        "Minamoto Kou" => {
-            persistence_lock.update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
+            persistence_lock
+                .update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
                 .await;
         }
-        _ => ()
+        "Minamoto Kou" => {
+            persistence_lock
+                .update_credits(context, msg.author.id.0, msg.channel_id.0, 10, "plus")
+                .await;
+        }
+        _ => (),
     }
 
     drop(persistence_lock);

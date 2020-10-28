@@ -1,25 +1,27 @@
-use chrono::{DateTime, Utc, Local};
-use crate::{RandomMessage, Reminder, UserReply, Config, QuizQuestion, AuthenticationService};
-use crate::shared::{Character, Oracle, ShipMessage, ConversionTable, UserRecords, SpecializedInfo};
 use crate::shared::structures::ChannelSettings;
+use crate::shared::{
+    Character, ConversionTable, Oracle, ShipMessage, SpecializedInfo, UserRecords,
+};
+use crate::{AuthenticationService, Config, QuizQuestion, RandomMessage, Reminder, UserReply};
+use chrono::{DateTime, Local, Utc};
+use serenity::client::Context;
+use serenity::prelude::TypeMapKey;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
-use serenity::prelude::TypeMapKey;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serenity::client::Context;
 
-const VALID_SPECIALIZED_CHARACTERS: [&'static str; 10] = [
-    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter", "eduard", "lee"
+const VALID_SPECIALIZED_CHARACTERS: [&str; 10] = [
+    "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter", "eduard", "lee",
 ];
 
-const USER_RECORDS_PATH: &'static str = "./persistence/userRecords.json";
-const CHANNEL_SETTINGS_PATH: &'static str = "./persistence/channelSettings.json";
-const REMINDER_PATH: &'static str = "./persistence/reminders.json";
-const CONFIG_PATH: &'static str = "./persistence/config.json";
-const SMOTE_USER_PATH: &'static str = "./persistence/smite.json";
-const TAIGA_QUIZ_PATH: &'static str = "./persistence/game/quiz_taiga.json";
-const KOU_QUIZ_PATH: &'static str = "./persistence/game/quiz_kou.json";
+const USER_RECORDS_PATH: &str = "./persistence/userRecords.json";
+const CHANNEL_SETTINGS_PATH: &str = "./persistence/channelSettings.json";
+const REMINDER_PATH: &str = "./persistence/reminders.json";
+const CONFIG_PATH: &str = "./persistence/config.json";
+const SMOTE_USER_PATH: &str = "./persistence/smite.json";
+const TAIGA_QUIZ_PATH: &str = "./persistence/game/quiz_taiga.json";
+const KOU_QUIZ_PATH: &str = "./persistence/game/quiz_kou.json";
 
 pub struct PersistenceService;
 impl TypeMapKey for PersistenceService {
@@ -52,7 +54,7 @@ pub struct PersistenceStorage {
     pub ongoing_tictactoes: Option<HashSet<u64>>,
     pub smite_links: Vec<String>,
     pub smote_users: HashMap<u64, DateTime<Local>>,
-    pub guide_text: String
+    pub guide_text: String,
 }
 
 impl PersistenceStorage {
@@ -61,7 +63,8 @@ impl PersistenceStorage {
         let raw_smite_links = fs::read("./persistence/gif/smite_links.json")?;
         let raw_smote_users = fs::read(SMOTE_USER_PATH)?;
         let smite_links: Vec<String> = serde_json::from_slice(raw_smite_links.as_slice())?;
-        let smote_users: HashMap<u64, DateTime<Local>> = serde_json::from_slice(raw_smote_users.as_slice())?;
+        let smote_users: HashMap<u64, DateTime<Local>> =
+            serde_json::from_slice(raw_smote_users.as_slice())?;
 
         let mut entity = PersistenceStorage {
             routes: None,
@@ -91,7 +94,10 @@ impl PersistenceStorage {
             smite_links,
             smote_users,
         };
-        entity.load(is_kou).await.expect("Failed to initialize persistence storage.");
+        entity
+            .load(is_kou)
+            .await
+            .expect("Failed to initialize persistence storage.");
         Ok(entity)
     }
 
@@ -118,8 +124,7 @@ impl PersistenceStorage {
         if is_kou {
             raw_quiz_questions = fs::read(KOU_QUIZ_PATH)?;
             self.guide_text = fs::read_to_string("./persistence/kou_intro.txt")?;
-        }
-        else {
+        } else {
             raw_quiz_questions = fs::read(TAIGA_QUIZ_PATH)?;
             self.guide_text = fs::read_to_string("./persistence/taiga_intro.txt")?;
         }
@@ -128,13 +133,17 @@ impl PersistenceStorage {
         let valentines: Vec<Character> = serde_json::from_slice(raw_valentines.borrow())?;
         let oracles: Vec<Oracle> = serde_json::from_slice(raw_oracles.borrow())?;
         let ship_messages: Vec<ShipMessage> = serde_json::from_slice(raw_ship_messages.borrow())?;
-        let conversion_table: ConversionTable = serde_json::from_slice(raw_conversion_table.borrow())?;
-        let user_records: HashMap<String, UserRecords> = serde_json::from_slice(raw_user_records.borrow())?;
-        let random_messages: Vec<RandomMessage> = serde_json::from_slice(raw_random_messages.borrow())?;
+        let conversion_table: ConversionTable =
+            serde_json::from_slice(raw_conversion_table.borrow())?;
+        let user_records: HashMap<String, UserRecords> =
+            serde_json::from_slice(raw_user_records.borrow())?;
+        let random_messages: Vec<RandomMessage> =
+            serde_json::from_slice(raw_random_messages.borrow())?;
         let user_replies: Vec<UserReply> = serde_json::from_slice(raw_user_replies.borrow())?;
         let game_words: Vec<String> = serde_json::from_slice(raw_words.borrow())?;
         let config: Config = serde_json::from_slice(raw_config.borrow())?;
-        let quiz_questions: Vec<QuizQuestion> = serde_json::from_slice(raw_quiz_questions.borrow())?;
+        let quiz_questions: Vec<QuizQuestion> =
+            serde_json::from_slice(raw_quiz_questions.borrow())?;
         self.routes = Some(routes);
         self.valentines = Some(valentines);
         self.oracles = Some(oracles);
@@ -150,19 +159,17 @@ impl PersistenceStorage {
         self.ongoing_tictactoes = Some(HashSet::new());
 
         if !raw_channel_settings.is_empty() {
-            let channel_settings: ChannelSettings = serde_json::from_slice(raw_channel_settings.borrow())?;
+            let channel_settings: ChannelSettings =
+                serde_json::from_slice(raw_channel_settings.borrow())?;
             self.channel_settings = Some(channel_settings);
-        }
-        else {
+        } else {
             self.channel_settings = Some(ChannelSettings::new());
         }
 
         if !raw_reminders.is_empty() {
-            let reminders: HashMap<u64, Reminder> = serde_json::from_slice(raw_reminders
-                .borrow())?;
+            let reminders: HashMap<u64, Reminder> = serde_json::from_slice(raw_reminders.borrow())?;
             self.reminders = Some(reminders);
-        }
-        else {
+        } else {
             self.reminders = Some(HashMap::new());
         }
 
@@ -200,7 +207,8 @@ impl PersistenceStorage {
         self.specialized_info = Some(HashMap::new());
         let specialized_info = self.specialized_info.as_mut().unwrap();
         for character in VALID_SPECIALIZED_CHARACTERS.iter() {
-            let response = client.get(format!("https://tetsukizone.com/api/dialog/{}", *character).as_str())
+            let response = client
+                .get(format!("https://tetsukizone.com/api/dialog/{}", *character).as_str())
                 .send()
                 .await?;
             let data: SpecializedInfo = response.json().await?;
@@ -211,28 +219,32 @@ impl PersistenceStorage {
 
     pub fn write(&self) {
         log::info!("Writing persistence data...");
-        let serialized_user_records: Vec<u8> = serde_json::to_vec_pretty(self.user_records.as_ref().unwrap()).unwrap();
+        let serialized_user_records: Vec<u8> =
+            serde_json::to_vec_pretty(self.user_records.as_ref().unwrap()).unwrap();
         let serialized_user_records_data: &[u8] = serialized_user_records.borrow();
         let io_res = std::fs::write(USER_RECORDS_PATH, serialized_user_records_data);
         if let Err(e) = io_res {
             log::error!("Error when writing user records: {:?}", e);
         }
 
-        let serialized_channel_settings: Vec<u8> = serde_json::to_vec_pretty(self.channel_settings.as_ref().unwrap()).unwrap();
+        let serialized_channel_settings: Vec<u8> =
+            serde_json::to_vec_pretty(self.channel_settings.as_ref().unwrap()).unwrap();
         let serialized_channel_settings_data: &[u8] = serialized_channel_settings.borrow();
         let io_res = std::fs::write(CHANNEL_SETTINGS_PATH, serialized_channel_settings_data);
         if let Err(e) = io_res {
             log::error!("Error when writing channel settings: {:?}", e);
         }
 
-        let serialized_reminders: Vec<u8> = serde_json::to_vec_pretty(self.reminders.as_ref().unwrap()).unwrap();
+        let serialized_reminders: Vec<u8> =
+            serde_json::to_vec_pretty(self.reminders.as_ref().unwrap()).unwrap();
         let serialized_reminders_data: &[u8] = serialized_reminders.borrow();
         let io_res = std::fs::write(REMINDER_PATH, serialized_reminders_data);
         if let Err(e) = io_res {
             log::error!("Error when writing reminders: {:?}", e);
         }
 
-        let serialized_config: Vec<u8> = serde_json::to_vec_pretty(self.config.as_ref().unwrap()).unwrap();
+        let serialized_config: Vec<u8> =
+            serde_json::to_vec_pretty(self.config.as_ref().unwrap()).unwrap();
         let serialized_config_data: &[u8] = serialized_config.borrow();
         let io_res = std::fs::write(CONFIG_PATH, serialized_config_data);
         if let Err(e) = io_res {
@@ -247,18 +259,31 @@ impl PersistenceStorage {
         }
     }
 
-    pub async fn update_credits(&self, context: &Context, user_id: u64, channel_id: u64, amount: i16, action: &str) {
+    pub async fn update_credits(
+        &self,
+        context: &Context,
+        user_id: u64,
+        channel_id: u64,
+        amount: i16,
+        action: &str,
+    ) {
         let context_data = context.data.read().await;
         let authentication = context_data.get::<AuthenticationService>().unwrap();
         let mut authentication_lock = authentication.lock().await;
-        authentication_lock.login().await
+        authentication_lock
+            .login()
+            .await
             .expect("Failed to login authentication service.");
         let token = authentication_lock.token.clone();
         drop(authentication_lock);
         drop(context_data);
 
         let client = reqwest::Client::new();
-        let response = client.patch(&format!("https://tetsukizone.com/api/credit/{}/{}", user_id, action))
+        let response = client
+            .patch(&format!(
+                "https://tetsukizone.com/api/credit/{}/{}",
+                user_id, action
+            ))
             .json(&serde_json::json!({
                 "Credit": amount,
                 "ChannelId": channel_id.to_string()
@@ -269,7 +294,10 @@ impl PersistenceStorage {
             .await;
 
         if let Err(e) = response.as_ref() {
-            eprintln!("Error when sending patch request to the server: {}", e.to_string())
+            eprintln!(
+                "Error when sending patch request to the server: {}",
+                e.to_string()
+            )
         }
     }
 }

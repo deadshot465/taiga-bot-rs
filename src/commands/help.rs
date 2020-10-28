@@ -1,29 +1,32 @@
-use serenity::framework::standard::macros::{
-    help
-};
-use serenity::framework::standard::{CommandResult, Args, help_commands, HelpOptions, CommandGroup, Command};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
-use std::collections::{HashSet, HashMap};
-use serenity::model::id::UserId;
 use crate::InterfaceService;
+use serenity::framework::standard::macros::help;
+use serenity::framework::standard::{
+    help_commands, Args, Command, CommandGroup, CommandResult, HelpOptions,
+};
+use serenity::model::channel::Message;
+use serenity::model::id::UserId;
+use serenity::prelude::Context;
 use serenity::utils::Color;
+use std::collections::{HashMap, HashSet};
 
 #[help]
 #[individual_command_tip = "Here is a list of all commands and their descriptions."]
 #[command_not_found_text = "Shit, `{}` failed."]
 #[embed_success_colour("Blitz_Blue")]
 #[max_levenshtein_distance(3)]
-pub async fn custom_help(context: &Context, msg: &Message, args: Args,
-                         help_options: &'static HelpOptions, groups: &[&'static CommandGroup],
-                         owners: HashSet<UserId>) -> CommandResult {
-
-    let mut group_names = groups.iter()
-        .map(|g| g.name)
-        .collect::<Vec<&'static str>>();
-    group_names.sort();
+pub async fn custom_help(
+    context: &Context,
+    msg: &Message,
+    args: Args,
+    help_options: &'static HelpOptions,
+    groups: &[&'static CommandGroup],
+    owners: HashSet<UserId>,
+) -> CommandResult {
+    let mut group_names = groups.iter().map(|g| g.name).collect::<Vec<&'static str>>();
+    group_names.sort_unstable();
     let mut group_commands = HashMap::new();
-    let _ = groups.iter()
+    let _ = groups
+        .iter()
         .map(|g| group_commands.insert(g.name, g.options.commands))
         .collect::<Vec<Option<&[&Command]>>>();
 
@@ -37,21 +40,19 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
     drop(data);
     if is_kou {
         color = u32::from_str_radix("a4d0da", 16).unwrap();
-    }
-    else {
+    } else {
         color = u32::from_str_radix("e81615", 16).unwrap();
     }
 
     if args.is_empty() {
-        msg.channel_id.send_message(&context.http, |m| m
-            .embed(|e| {
-                e
-                    .author(|a| {
+        msg.channel_id
+            .send_message(&context.http, |m| {
+                m.embed(|e| {
+                    e.author(|a| {
                         let name: String;
                         if let Some(nick) = member.nick.as_ref() {
                             name = nick.clone();
-                        }
-                        else {
+                        } else {
                             name = member.user.name.clone();
                         }
                         if let Some(url) = msg.author.avatar_url() {
@@ -61,26 +62,27 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
                     })
                     .description("Here is a list of all commands and their descriptions.");
 
-                let column_no = 0;
-                for group in group_names.iter() {
-                    let mut cmds = group_commands[*group].iter()
-                        .map(|c| c.options.names[0])
-                        .collect::<Vec<&'static str>>();
-                    cmds.sort();
-                    let cmds_strings: String = cmds.iter()
-                        .map(|c| format!("`{}` ", c))
-                        .collect();
-                    e.field(*group, &cmds_strings, if column_no != 0 && column_no % 3 == 0 {
-                        false
-                    } else {
-                        true
-                    });
-                }
-                e.color(Color::from(color))
-            })).await?;
+                    let column_no = 0;
+                    for group in group_names.iter() {
+                        let mut cmds = group_commands[*group]
+                            .iter()
+                            .map(|c| c.options.names[0])
+                            .collect::<Vec<&'static str>>();
+                        cmds.sort_unstable();
+                        let cmds_strings: String =
+                            cmds.iter().map(|c| format!("`{}` ", c)).collect();
+                        e.field(
+                            *group,
+                            &cmds_strings,
+                            !(column_no != 0 && column_no % 3 == 0),
+                        );
+                    }
+                    e.color(Color::from(color))
+                })
+            })
+            .await?;
         Ok(())
-    }
-    else {
+    } else {
         let mut _args = args.clone();
         let mut arg = _args.single::<String>().unwrap();
         if _args.remaining() > 0 {
@@ -89,41 +91,51 @@ pub async fn custom_help(context: &Context, msg: &Message, args: Args,
         }
         arg = arg.to_lowercase();
         let mut chars = arg.chars().collect::<Vec<_>>();
-        chars[0] = chars[0].to_uppercase().nth(0).unwrap();
+        chars[0] = chars[0].to_uppercase().next().unwrap();
         let arg = chars.into_iter().collect::<String>();
         if group_names.contains(&arg.as_str()) {
-            let commands = *group_commands.get(&arg.as_str())
+            let commands = *group_commands
+                .get(&arg.as_str())
                 .expect("Failed to get group of commands.");
-            let group = *groups.iter()
-                .find(|g| g.name == arg.as_str()).unwrap();
-            msg.channel_id.send_message(&context.http, |m| m.embed(|e| {
-                e.author(|a| {
-                    a.name(member.nick.as_ref().unwrap_or(&member.user.name));
-                    if let Some(u) = member.user.avatar_url() {
-                        a.icon_url(&u);
-                    }
-                    a
-                });
-                e.color(Color::from(color));
-                e.title(group.name);
-                let mut description = String::new();
-                if let Some(d) = group.options.description {
-                    description += d;
-                }
-                description += "\n**Prefixes:** ";
-                let prefixes = group.options.prefixes.iter()
-                    .map(|p| format!("`{}`", *p))
-                    .collect::<Vec<_>>();
-                description += &prefixes.join(", ");
-                e.description(&description);
-                for cmd in commands {
-                    e.field(cmd.options.names[0], cmd.options.desc.unwrap_or_default(), false);
-                }
-                e
-            })).await?;
+            let group = *groups.iter().find(|g| g.name == arg.as_str()).unwrap();
+            msg.channel_id
+                .send_message(&context.http, |m| {
+                    m.embed(|e| {
+                        e.author(|a| {
+                            a.name(member.nick.as_ref().unwrap_or(&member.user.name));
+                            if let Some(u) = member.user.avatar_url() {
+                                a.icon_url(&u);
+                            }
+                            a
+                        });
+                        e.color(Color::from(color));
+                        e.title(group.name);
+                        let mut description = String::new();
+                        if let Some(d) = group.options.description {
+                            description += d;
+                        }
+                        description += "\n**Prefixes:** ";
+                        let prefixes = group
+                            .options
+                            .prefixes
+                            .iter()
+                            .map(|p| format!("`{}`", *p))
+                            .collect::<Vec<_>>();
+                        description += &prefixes.join(", ");
+                        e.description(&description);
+                        for cmd in commands {
+                            e.field(
+                                cmd.options.names[0],
+                                cmd.options.desc.unwrap_or_default(),
+                                false,
+                            );
+                        }
+                        e
+                    })
+                })
+                .await?;
             Ok(())
-        }
-        else {
+        } else {
             help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
             Ok(())
         }

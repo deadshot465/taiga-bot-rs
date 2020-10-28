@@ -6,5 +6,5 @@ pub struct QuizQuestion {
     pub _type: String,
     pub question: String,
     pub answers: Vec<String>,
-    pub wrong: Vec<String>
+    pub wrong: Vec<String>,
 }

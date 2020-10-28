@@ -1,22 +1,16 @@
-use serenity::{
-    framework::standard::{
-        macros::{
-            command
-        }, CommandResult
-    },
-    model::channel::Message,
-    model::prelude::*,
-    prelude::*
-};
 use crate::{CommandGroupCollection, InterfaceService, PersistenceService};
 use serenity::framework::standard::CommandGroup;
 use serenity::utils::Color;
+use serenity::{
+    framework::standard::{macros::command, CommandResult},
+    model::channel::Message,
+    model::prelude::*,
+    prelude::*,
+};
 
-const GUIDE_ACTIONS: [&'static str; 3] = [
-    "prev", "next", "end"
-];
-const KOU_GOODBYE: &'static str = "Thanks for taking a guide with me! I hope you can enjoy your stay! <a:KouFascinated:705279783340212265>";
-const TAIGA_GOODBYE: &'static str = "Hope you like my guide! Make sure to say hello to other campers! <:chibitaiga:697893400891883531>";
+const GUIDE_ACTIONS: [&str; 3] = ["prev", "next", "end"];
+const KOU_GOODBYE: &str = "Thanks for taking a guide with me! I hope you can enjoy your stay! <a:KouFascinated:705279783340212265>";
+const TAIGA_GOODBYE: &str = "Hope you like my guide! Make sure to say hello to other campers! <:chibitaiga:697893400891883531>";
 
 #[command]
 #[description = "Start a step-by-step guide."]
@@ -36,26 +30,45 @@ async fn guide(context: &Context, msg: &Message) -> CommandResult {
     drop(interface_lock);
     drop(data);
 
-    let guild_name = msg.guild_id.as_ref().unwrap()
+    let guild_name = msg
+        .guild_id
+        .as_ref()
+        .unwrap()
         .name(&context.cache)
         .await
         .unwrap_or_default();
     text = text.replace("{user}", &msg.author.mention());
     text = text.replace("{guildName}", &guild_name);
-    let color_code = u32::from_str_radix(if is_kou {
-        "a4d0da"
-    } else {
-        "e81615"
-    }, 16).unwrap();
+    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16).unwrap();
     let member = msg.member(&context.http).await.unwrap();
-    build_embed(context, &member, &command_groups, Color::new(color_code), text.as_str(), is_kou, guild_name.as_str())
-        .await?;
+    build_embed(
+        context,
+        &member,
+        &command_groups,
+        Color::new(color_code),
+        text.as_str(),
+        is_kou,
+        guild_name.as_str(),
+    )
+    .await?;
     Ok(())
 }
 
-pub async fn build_embed(context: &Context, member: &Member, command_groups: &Vec<&CommandGroup>, color: Color, text: &str, is_kou: bool, guild_name: &str) -> CommandResult {
+pub async fn build_embed(
+    context: &Context,
+    member: &Member,
+    command_groups: &[&CommandGroup],
+    color: Color,
+    text: &str,
+    is_kou: bool,
+    guild_name: &str,
+) -> CommandResult {
     let http = &context.http;
-    let author = context.http.get_current_user().await.expect("Failed to get current user.");
+    let author = context
+        .http
+        .get_current_user()
+        .await
+        .expect("Failed to get current user.");
     let avatar_url = author.avatar_url();
     let title = format!("Welcome to {}!", guild_name);
     let group_count = command_groups.len();
@@ -69,72 +82,89 @@ pub async fn build_embed(context: &Context, member: &Member, command_groups: &Ve
     let next_reaction = ReactionType::Unicode("➡️".to_string());
     let end_reaction = ReactionType::Unicode("❌".to_string());
     */
-    let all_commands = command_groups.iter()
+    let all_commands = command_groups
+        .iter()
         .map(|c| c.options.commands)
         .collect::<Vec<_>>();
-    let all_commands = all_commands.into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
-    let command_names = all_commands.iter()
-        .map(|c| c.options.names[0])
-        .collect::<Vec<_>>();
-    let mut message: Message = member.user.dm(http, |m| m.embed(|e| {
-        e.author(|a| {
-            a.name(&author.name);
-            if let Some(u) = avatar_url.as_ref() {
-                a.icon_url(u);
-            }
-            a
-        });
-        e.color(color);
-        e.title(&title);
-        e.description(text);
-        let start_index = 0 + 3 * current_page;
-        let end_index = 3 + 3 * current_page;
-        for i in start_index..end_index {
-            let mut value = command_groups[i].options
-                .description.unwrap_or_default().to_string();
-            value += "\nList of commands: ";
-            let command_names = command_groups[i].options.commands.iter()
-                .map(|n| format!("`{}`", n.options.names[0]))
-                .collect::<Vec<String>>();
-            let concatenated: String = command_names.join(", ");
-            value += concatenated.as_str();
-            e.field(command_groups[i].name, &value, false);
-        }
-        e.footer(|f| f.text("Type `end` to end the guide!"));
-        e
-    })).await?;
+    let all_commands = all_commands.into_iter().flatten().collect::<Vec<_>>();
+    let mut message: Message = member
+        .user
+        .dm(http, |m| {
+            m.embed(|e| {
+                e.author(|a| {
+                    a.name(&author.name);
+                    if let Some(u) = avatar_url.as_ref() {
+                        a.icon_url(u);
+                    }
+                    a
+                });
+                e.color(color);
+                e.title(&title);
+                e.description(text);
+                let start_index = 3 * current_page;
+                let end_index = 3 + 3 * current_page;
+                for command_group in command_groups.iter().take(end_index).skip(start_index) {
+                    let mut value = command_group
+                        .options
+                        .description
+                        .unwrap_or_default()
+                        .to_string();
+                    value += "\nList of commands: ";
+                    let command_names = command_group
+                        .options
+                        .commands
+                        .iter()
+                        .map(|n| format!("`{}`", n.options.names[0]))
+                        .collect::<Vec<String>>();
+                    let concatenated: String = command_names.join(", ");
+                    value += concatenated.as_str();
+                    e.field(command_group.name, &value, false);
+                }
+                e.footer(|f| f.text("Type `end` to end the guide!"));
+                e
+            })
+        })
+        .await?;
 
     'outer: loop {
         let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(60 * 5));
-        message.edit(http, |m| m.embed(|e| {
-            e.author(|a| {
-                a.name(&author.name);
-                if let Some(u) = avatar_url.as_ref() {
-                    a.icon_url(u);
-                }
-                a
-            });
-            e.color(color);
-            e.title(&title);
-            e.description(text);
-            let start_index = 0 + 3 * current_page;
-            let end_index = 3 + 3 * current_page;
-            for i in start_index..end_index {
-                let mut value = command_groups[i].options
-                    .description.unwrap_or_default().to_string();
-                value += "\nList of commands: ";
-                let command_names = command_groups[i].options.commands.iter()
-                    .map(|n| format!("`{}`", n.options.names[0]))
-                    .collect::<Vec<String>>();
-                let concatenated: String = command_names.join(", ");
-                value += concatenated.as_str();
-                e.field(command_groups[i].name, &value, false);
-            }
-            e.footer(|f| f.text("Type `end` to end the guide!"));
-            e
-        })).await?;
+        message
+            .edit(http, |m| {
+                m.embed(|e| {
+                    e.author(|a| {
+                        a.name(&author.name);
+                        if let Some(u) = avatar_url.as_ref() {
+                            a.icon_url(u);
+                        }
+                        a
+                    });
+                    e.color(color);
+                    e.title(&title);
+                    e.description(text);
+                    let start_index = 3 * current_page;
+                    let end_index = 3 + 3 * current_page;
+                    for command_group in command_groups.iter().take(end_index).skip(start_index) {
+                        let mut value = command_group
+                            .options
+                            .description
+                            .unwrap_or_default()
+                            .to_string();
+                        value += "\nList of commands: ";
+                        let command_names = command_group
+                            .options
+                            .commands
+                            .iter()
+                            .map(|n| format!("`{}`", n.options.names[0]))
+                            .collect::<Vec<String>>();
+                        let concatenated: String = command_names.join(", ");
+                        value += concatenated.as_str();
+                        e.field(command_group.name, &value, false);
+                    }
+                    e.footer(|f| f.text("Type `end` to end the guide!"));
+                    e
+                })
+            })
+            .await?;
         /*
         if current_page != 0 {
             message.react(http, prev_reaction.clone()).await?;
@@ -159,7 +189,10 @@ pub async fn build_embed(context: &Context, member: &Member, command_groups: &Ve
                 .author_id(member.user.id.0) => {
                     if let Some(m) = maybe_v {
                         let lower_case: String = m.content.to_lowercase();
-                        if command_names.contains(&lower_case.as_str()) {
+                        if all_commands
+                        .iter()
+                        .map(|c| c.options.names[0])
+                        .any(|x| x.contains(&lower_case.as_str())) {
                             let _msg = message.channel_id.send_message(http, |m| m.embed(|e| {
                                 e.author(|a| {
                                     a.name(&author.name);
@@ -231,4 +264,3 @@ pub async fn build_embed(context: &Context, member: &Member, command_groups: &Ve
     }
     Ok(())
 }
-

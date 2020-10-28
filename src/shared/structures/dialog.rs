@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
 pub enum Comic {
-    Dialog(Dialog), SpecializedDialog(SpecializedDialog)
+    Dialog(Dialog),
+    SpecializedDialog(SpecializedDialog),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -13,7 +14,7 @@ pub struct Dialog {
     #[serde(rename = "Character")]
     pub character: String,
     #[serde(rename = "Text")]
-    pub text: String
+    pub text: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -31,5 +32,5 @@ pub struct SpecializedDialog {
     #[serde(rename = "Pose")]
     pub pose: u8,
     #[serde(rename = "Text")]
-    pub text: String
+    pub text: String,
 }

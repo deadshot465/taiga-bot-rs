@@ -8,5 +8,5 @@ pub struct Character {
     pub birthday: String,
     pub animal: String,
     pub color: String,
-    pub emote_id: String
+    pub emote_id: String,
 }

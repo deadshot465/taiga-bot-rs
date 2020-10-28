@@ -1,12 +1,10 @@
-use rand::prelude::*;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
-use tokio::time::Duration;
 use crate::PersistenceService;
+use rand::prelude::*;
+use serenity::framework::standard::{macros::command, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 use serenity::utils::Color;
+use tokio::time::Duration;
 
 #[command]
 #[description = "Play a hangman game with Kou. This command has to be prefixed with `games`."]
@@ -15,7 +13,8 @@ use serenity::utils::Color;
 #[bucket = "games"]
 pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     // Get member so we can get the user's nickname instead of the user's real name
-    let member = context.cache
+    let member = context
+        .cache
         .member(msg.guild_id.as_ref().unwrap(), &msg.author.id)
         .await;
     let http = &context.http;
@@ -35,8 +34,11 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     } else {
         name = &msg.author.name;
     }
-    msg.reply(http, &format!("Hello {}! We are going to play hangman!", name))
-        .await?;
+    msg.reply(
+        http,
+        &format!("Hello {}! We are going to play hangman!", name),
+    )
+    .await?;
 
     // Wait for 2 second
     tokio::time::delay_for(Duration::from_secs(2)).await;
@@ -48,7 +50,8 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     let actual_word: String;
     {
         let mut rng = thread_rng();
-        actual_word = persistence_lock.game_words
+        actual_word = persistence_lock
+            .game_words
             .as_ref()
             .unwrap()
             .choose(&mut rng)
@@ -62,8 +65,11 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     let mut attempts: i32 = 10;
 
     // Tell the length of word
-    msg.reply(http, &format!("There are {} letters in this word.", actual_word.len()))
-        .await?;
+    msg.reply(
+        http,
+        &format!("There are {} letters in this word.", actual_word.len()),
+    )
+    .await?;
     tokio::time::delay_for(Duration::from_secs(2)).await;
 
     // First print all letters to be "_"
@@ -95,12 +101,15 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             let notice = msg.reply(http, "Input a letter:").await?;
 
             // Ask the user to input letters
-            let input = &msg.author.await_reply(&context)
+            let input = &msg
+                .author
+                .await_reply(&context)
                 .timeout(Duration::from_secs(60))
                 .await;
             // Check if the user replies. If not, abort the game.
             if input.is_none() {
-                msg.reply(http, "No input is provided. Game aborted.").await?;
+                msg.reply(http, "No input is provided. Game aborted.")
+                    .await?;
                 notice.delete(http).await?;
                 return Ok(());
             }
@@ -126,8 +135,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
             if guesses.contains(letter) {
                 response.push(letter);
                 response.push(' ');
-            }
-            else {
+            } else {
                 response += "\\_ ";
                 failed += 1;
             }
@@ -143,9 +151,10 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
         for letter in guesses.chars() {
             previous_guesses.push(letter);
         }
-        previous_guesses.sort();
+        previous_guesses.sort_unstable();
         previous_guesses.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
-        let previous_guesses = previous_guesses.into_iter()
+        let previous_guesses = previous_guesses
+            .into_iter()
             .map(|c| format!("'{}', ", c))
             .collect::<String>();
 
@@ -166,15 +175,15 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
 
         // If all letters are printed, that means the player won
         if failed == 0 {
-            msg.reply(http,  "You got the correct answer!").await?;
+            msg.reply(http, "You got the correct answer!").await?;
             break;
-        }
-        else if attempts == 0 {
+        } else if attempts == 0 {
             // If no more attempts, the player lose
-            msg.reply(http,  "You lose!").await?;
+            msg.reply(http, "You lose!").await?;
             break;
         }
     }
-    msg.reply(http, &format!("The answer is {}", &actual_word)).await?;
+    msg.reply(http, &format!("The answer is {}", &actual_word))
+        .await?;
     Ok(())
 }

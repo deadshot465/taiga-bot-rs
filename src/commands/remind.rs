@@ -1,22 +1,13 @@
-use serenity::prelude::*;
+use crate::{InterfaceService, PersistenceService, Reminder};
+use chrono::{DateTime, Duration, Local, ParseResult, TimeZone};
+use serenity::framework::standard::{macros::command, Args, CommandResult};
 use serenity::model::channel::Message;
-use serenity::framework::standard::{
-    Args, CommandResult,
-    macros::{
-        command
-    }
-};
-use crate::{Reminder, InterfaceService, PersistenceService};
-use chrono::{DateTime, Duration, Local, TimeZone, ParseResult};
+use serenity::prelude::*;
 use std::sync::Arc;
 
-const PREPOSITIONS: [&'static str; 2] = [
-    "in", "on"
-];
+const PREPOSITIONS: [&str; 2] = ["in", "on"];
 
-const UNITS: [&'static str; 6] = [
-    "years", "months", "days", "hours", "minutes", "seconds"
-];
+const UNITS: [&str; 6] = ["years", "months", "days", "hours", "minutes", "seconds"];
 
 #[command]
 #[description = "Make Kou remind you in a specific time."]
@@ -41,11 +32,10 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
     }
 
     let prep = args.single::<String>().unwrap();
-    let units: String = UNITS.iter()
-        .map(|s| format!("{}, ", s))
-        .collect();
+    let units: String = UNITS.iter().map(|s| format!("{}, ", s)).collect();
     if !PREPOSITIONS.contains(&prep.as_str()) {
-        let error_msg = interface_string.errors["no_such_operation"].replace("{units}", &units[..units.len() - 2]);
+        let error_msg = interface_string.errors["no_such_operation"]
+            .replace("{units}", &units[..units.len() - 2]);
         msg.channel_id.say(&context.http, &error_msg).await?;
         return Ok(());
     }
@@ -55,20 +45,35 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
             let amount = args.single::<u32>();
             let unit = args.single::<String>();
             let message = args.remains();
-            if let Err(_) = &amount {
+            if amount.is_err() {
                 msg.channel_id.say(&context.http, "The amount of time you inputted is either incorrect, too big, or too small.")
                     .await?;
                 return Ok(());
             }
 
-            if let Err(_) = &unit {
-                msg.channel_id.say(&context.http, format!("The unit you inputted is incorrect. Available units are: `{}`", &units[..units.len() - 2]).as_str())
+            if unit.is_err() {
+                msg.channel_id
+                    .say(
+                        &context.http,
+                        format!(
+                            "The unit you inputted is incorrect. Available units are: `{}`",
+                            &units[..units.len() - 2]
+                        )
+                        .as_str(),
+                    )
                     .await?;
                 return Ok(());
-            }
-            else if let Ok(u) = &unit {
+            } else if let Ok(u) = &unit {
                 if !UNITS.contains(&u.as_str()) {
-                    msg.channel_id.say(&context.http, format!("The unit you inputted is incorrect. Available units are: `{}`", &units[..units.len() - 2]).as_str())
+                    msg.channel_id
+                        .say(
+                            &context.http,
+                            format!(
+                                "The unit you inputted is incorrect. Available units are: `{}`",
+                                &units[..units.len() - 2]
+                            )
+                            .as_str(),
+                        )
                         .await?;
                     return Ok(());
                 }
@@ -81,41 +86,56 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
             }
             let mut persistence_lock = _persistence.write().await;
             let reminders = persistence_lock.reminders.as_mut().unwrap();
-            let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
+            let entry = reminders
+                .entry(msg.author.id.0)
+                .or_insert_with(Reminder::new);
             match unit.as_ref().unwrap().as_str() {
                 "years" => {
-                    (*entry).datetime = Local::now() + Duration::days(365_i64 * (amount.unwrap() as i64));
-                },
+                    (*entry).datetime =
+                        Local::now() + Duration::days(365_i64 * (amount.unwrap() as i64));
+                }
                 "months" => {
-                    (*entry).datetime = Local::now() + Duration::days(30_i64 * (amount.unwrap() as i64));
-                },
+                    (*entry).datetime =
+                        Local::now() + Duration::days(30_i64 * (amount.unwrap() as i64));
+                }
                 "days" => {
                     (*entry).datetime = Local::now() + Duration::days(amount.unwrap() as i64);
-                },
+                }
                 "hours" => {
                     (*entry).datetime = Local::now() + Duration::hours(amount.unwrap() as i64);
-                },
+                }
                 "minutes" => {
                     (*entry).datetime = Local::now() + Duration::minutes(amount.unwrap() as i64);
-                },
+                }
                 "seconds" => {
                     (*entry).datetime = Local::now() + Duration::seconds(amount.unwrap() as i64);
-                },
-                _ => ()
+                }
+                _ => (),
             }
             (*entry).message = message.unwrap().to_string();
-            let result_msg = interface_string.result
-                .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
-                .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
+            let result_msg = interface_string
+                .result
+                .replace(
+                    "{time}",
+                    &Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                )
+                .replace(
+                    "{dueTime}",
+                    &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string(),
+                );
             msg.channel_id.say(&context.http, &result_msg).await?;
             persistence_lock.write();
             drop(persistence_lock);
             return Ok(());
-        },
+        }
         "on" => {
             let datetime = args.single::<String>();
-            if let Err(_) = datetime {
-                msg.channel_id.say(&context.http, "The inputted date and time is either incorrect or missing.")
+            if datetime.is_err() {
+                msg.channel_id
+                    .say(
+                        &context.http,
+                        "The inputted date and time is either incorrect or missing.",
+                    )
                     .await?;
                 return Ok(());
             }
@@ -123,7 +143,7 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
             let formats: [&str; 3] = [
                 "%Y-%m-%d %H:%M:%S",
                 "%Y/%m/%d %H:%M:%S",
-                "%Y.%m.%d %H:%M:%S"
+                "%Y.%m.%d %H:%M:%S",
             ];
             let mut datetime: ParseResult<DateTime<Local>> = Ok(Local::now());
             for f in formats.iter() {
@@ -132,16 +152,18 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
                     break;
                 }
             }
-            if let Err(_) = datetime {
-                msg.channel_id.say(&context.http, "The inputted format of the date and time is incorrect.")
+            if datetime.is_err() {
+                msg.channel_id
+                    .say(
+                        &context.http,
+                        "The inputted format of the date and time is incorrect.",
+                    )
                     .await?;
                 return Ok(());
-            }
-            else if let Ok(dt) = datetime.as_ref() {
+            } else if let Ok(dt) = datetime.as_ref() {
                 if dt < &Local::now() {
                     let error_msg = interface_string.errors["past_time"].as_str();
-                    msg.channel_id.say(&context.http, error_msg)
-                        .await?;
+                    msg.channel_id.say(&context.http, error_msg).await?;
                     return Ok(());
                 }
             }
@@ -154,18 +176,27 @@ pub async fn remind(context: &Context, msg: &Message, mut args: Args) -> Command
             }
             let mut persistence_lock = _persistence.write().await;
             let reminders = persistence_lock.reminders.as_mut().unwrap();
-            let entry = reminders.entry(msg.author.id.0).or_insert(Reminder::new());
+            let entry = reminders
+                .entry(msg.author.id.0)
+                .or_insert_with(Reminder::new);
             (*entry).datetime = datetime.unwrap();
             (*entry).message = message.unwrap().to_string();
-            let result_msg = interface_string.result
-                .replace("{time}", &Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
-                .replace("{dueTime}", &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string());
+            let result_msg = interface_string
+                .result
+                .replace(
+                    "{time}",
+                    &Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                )
+                .replace(
+                    "{dueTime}",
+                    &(*entry).datetime.format("%Y-%m-%d %H:%M:%S").to_string(),
+                );
             msg.channel_id.say(&context.http, &result_msg).await?;
             persistence_lock.write();
             drop(persistence_lock);
             return Ok(());
         }
-        _ => ()
+        _ => (),
     }
     drop(interface_lock);
     Ok(())

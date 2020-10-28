@@ -27,7 +27,7 @@ pub struct InterfaceStrings {
     pub time: CommandStrings,
     pub valentine: CommandStrings,
     pub say: HashMap<String, CommandStrings>,
-    pub remind: CommandStrings
+    pub remind: CommandStrings,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -36,5 +36,5 @@ pub struct CommandStrings {
     pub usage: String,
     pub errors: HashMap<String, String>,
     pub infos: HashMap<String, String>,
-    pub result: String
+    pub result: String,
 }

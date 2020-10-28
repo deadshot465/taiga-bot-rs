@@ -1,13 +1,11 @@
-use regex::Regex;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
 use crate::InterfaceService;
+use regex::Regex;
+use serenity::framework::standard::{macros::command, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 use std::sync::Arc;
 
-const EMOTE_BASE_LINK: &'static str = "https://cdn.discordapp.com/emojis/";
+const EMOTE_BASE_LINK: &str = "https://cdn.discordapp.com/emojis/";
 
 lazy_static! {
     static ref EMOTE_REGEX: Regex = Regex::new(r"(<a?:\w+:\d+>)").unwrap();
@@ -47,12 +45,16 @@ pub async fn enlarge(context: &Context, msg: &Message) -> CommandResult {
                 let id_capture = EMOTE_ID_REGEX.captures(emote).unwrap();
                 let id = id_capture.get(2).unwrap().as_str();
 
-                emote_links.push(format!("{}{}{}", EMOTE_BASE_LINK, id, if EMOTE_IS_ANIMATED_REGEX.is_match(emote) {
-                    ".gif"
-                }
-                else {
-                    ".png"
-                }));
+                emote_links.push(format!(
+                    "{}{}{}",
+                    EMOTE_BASE_LINK,
+                    id,
+                    if EMOTE_IS_ANIMATED_REGEX.is_match(emote) {
+                        ".gif"
+                    } else {
+                        ".png"
+                    }
+                ));
             }
         }
     }

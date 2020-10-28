@@ -5,5 +5,5 @@ use std::collections::HashMap;
 pub struct RandomMessage {
     pub keyword: String,
     pub messages: HashMap<String, Vec<String>>,
-    pub reactions: Vec<String>
+    pub reactions: Vec<String>,
 }

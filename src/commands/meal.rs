@@ -1,13 +1,11 @@
 use serde::{Deserialize, Serialize};
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult};
-use serenity::prelude::Context;
+use serenity::framework::standard::{macros::command, CommandResult};
 use serenity::model::channel::Message;
+use serenity::prelude::Context;
 
 #[derive(Deserialize, Serialize)]
 struct MealData {
-    pub meals: Vec<Meal>
+    pub meals: Vec<Meal>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -25,7 +23,7 @@ struct Meal {
     #[serde(rename = "strArea")]
     pub str_area: String,
     #[serde(rename = "strYoutube")]
-    pub str_youtube: String
+    pub str_youtube: String,
 }
 
 #[command]
@@ -36,7 +34,8 @@ struct Meal {
 #[bucket = "information"]
 pub async fn meal(context: &Context, msg: &Message) -> CommandResult {
     let client = reqwest::Client::new();
-    let response = client.get("http://www.themealdb.com/api/json/v1/1/random.php")
+    let response = client
+        .get("http://www.themealdb.com/api/json/v1/1/random.php")
         .send()
         .await?;
     let data: MealData = response.json().await?;
@@ -44,21 +43,24 @@ pub async fn meal(context: &Context, msg: &Message) -> CommandResult {
     let color = u32::from_str_radix("fd9b3b", 16).unwrap();
 
     msg.channel_id.say(&context.http, "Here you go!").await?;
-    msg.channel_id.send_message(&context.http, |m| m.embed(|e| e
-        .color(color)
-        .description(if meal.str_instructions.len() >= 2048 {
-            &meal.str_instructions[0..2047]
-        }
-        else {
-            &meal.str_instructions
+    msg.channel_id
+        .send_message(&context.http, |m| {
+            m.embed(|e| {
+                e.color(color)
+                    .description(if meal.str_instructions.len() >= 2048 {
+                        &meal.str_instructions[0..2047]
+                    } else {
+                        &meal.str_instructions
+                    })
+                    .title(&meal.str_meal)
+                    .image(&meal.str_meal_thumb)
+                    .url(&meal.str_source)
+                    .field("Category", &meal.str_category, true)
+                    .field("Area", &meal.str_area, true)
+                    .field("YouTube Video", &meal.str_youtube, true)
+                    .footer(|f| f.text("Bon Appétit! Powered by TheMealDB.com."))
+            })
         })
-        .title(&meal.str_meal)
-        .image(&meal.str_meal_thumb)
-        .url(&meal.str_source)
-        .field("Category", &meal.str_category, true)
-        .field("Area", &meal.str_area, true)
-        .field("YouTube Video", &meal.str_youtube, true)
-        .footer(|f| f.text("Bon Appétit! Powered by TheMealDB.com."))))
         .await?;
 
     Ok(())

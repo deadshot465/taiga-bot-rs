@@ -1,9 +1,7 @@
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult, Args};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
 use crate::{get_image, InterfaceService};
+use serenity::framework::standard::{macros::command, Args, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
 use std::borrow::Borrow;
 use std::sync::Arc;
 
@@ -27,8 +25,7 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
     let result: Vec<u8>;
     if let Ok(s) = &keyword {
         result = get_image(&s).await?;
-    }
-    else {
+    } else {
         let error_msg = interface_string.errors["length_too_short"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
         let data = context.data.read().await;
@@ -39,24 +36,26 @@ pub async fn image(context: &Context, msg: &Message, mut args: Args) -> CommandR
         drop(data);
         if is_kou {
             return Ok(());
-        }
-        else {
+        } else {
             result = get_image("burger").await?;
         }
     }
 
-    if result.len() == 0 {
+    if result.is_empty() {
         let error_msg = interface_string.errors["no_result"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
         drop(interface_lock);
         Ok(())
-    }
-    else {
-        let result_msg = interface_string.result.as_str()
+    } else {
+        let result_msg = interface_string
+            .result
+            .as_str()
             .replace("{keyword}", keyword.unwrap().as_str());
         drop(interface_lock);
         let files: Vec<(&[u8], &str)> = vec![(result.borrow(), "image.jpg")];
-        msg.channel_id.send_files(&context.http, files, |f| f.content(&result_msg)).await?;
+        msg.channel_id
+            .send_files(&context.http, files, |f| f.content(&result_msg))
+            .await?;
         Ok(())
     }
 }

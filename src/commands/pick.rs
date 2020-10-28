@@ -1,11 +1,9 @@
-use rand::prelude::*;
-use serenity::framework::standard::{macros::{
-    command
-}, CommandResult, Args};
-use serenity::prelude::Context;
-use serenity::model::channel::Message;
-use std::collections::HashMap;
 use crate::InterfaceService;
+use rand::prelude::*;
+use serenity::framework::standard::{macros::command, Args, CommandResult};
+use serenity::model::channel::Message;
+use serenity::prelude::Context;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 #[command]
@@ -24,7 +22,7 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let interface_string = &interface.pick;
 
     // If there are no arguments at all, abort.
-    if args.is_empty() || args.len() == 0 {
+    if args.is_empty() {
         let error_msg = interface_string.errors["length_too_short"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
         return Ok(());
@@ -41,20 +39,20 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     // E.g. k!pick 5000times|A|B|C
     if first_arg.contains('|') {
         let split_first_args = first_arg.split('|').collect::<Vec<&str>>();
-        let mut split_first_args = split_first_args.into_iter()
+        let mut split_first_args = split_first_args
+            .into_iter()
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         if split_first_args[0].ends_with("times") {
             // Store the raw times string into another variable.
-            raw_times = split_first_args.remove(0).to_string();
+            raw_times = split_first_args.remove(0);
             is_multiple = true;
         }
-        if split_first_args.len() > 0 {
+        if !split_first_args.is_empty() {
             options.append(&mut split_first_args);
             first_arg_piped = true;
         }
-    }
-    else {
+    } else {
         // E.g. k!pick 5000times A|B|C
         if first_arg.ends_with("times") {
             raw_times = first_arg;
@@ -63,7 +61,7 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     }
 
     // If it's multiple picks but there are no remaining arguments, and the option list is empty, abort.
-    if (args.len() == 0 || args.is_empty()) && (is_multiple && options.is_empty()) {
+    if args.is_empty() && (is_multiple && options.is_empty()) {
         let error_msg = interface_string.errors["length_too_short"].as_str();
         msg.channel_id.say(&context.http, error_msg).await?;
         return Ok(());
@@ -72,24 +70,23 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     // Get remaining options.
     if is_multiple {
         if let Some(s) = args.remains() {
-            let options_unsanitized: Vec<&str> = s.split('|')
-                .collect();
-            let mut options_unsanitized = options_unsanitized.into_iter()
+            let options_unsanitized: Vec<&str> = s.split('|').collect();
+            let mut options_unsanitized = options_unsanitized
+                .into_iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>();
             options.append(&mut options_unsanitized);
             if first_arg_piped {
-                let mut first_option = options.remove(0).to_string();
+                let mut first_option = options.remove(0);
                 first_option += " ";
                 first_option += options[0].as_str();
                 options[0] = first_option;
             }
         }
-    }
-    else {
-        let options_unsanitized = args.message().split('|')
-            .collect::<Vec<&str>>();
-        let mut options_unsanitized = options_unsanitized.into_iter()
+    } else {
+        let options_unsanitized = args.message().split('|').collect::<Vec<&str>>();
+        let mut options_unsanitized = options_unsanitized
+            .into_iter()
             .map(|s| s.to_string())
             .collect::<Vec<String>>();
         options.append(&mut options_unsanitized);
@@ -99,20 +96,18 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         .into_iter()
         .filter_map(|s| {
             let _s = s.trim();
-            if _s.len() > 0 {
+            if !_s.is_empty() {
                 Some(_s.to_string())
-            }
-            else {
+            } else {
                 None
             }
         })
         .collect();
 
     // Check if there are actually options.
-    if options.len() <= 0 {
+    if options.is_empty() {
         let message = interface_string.errors["length_too_short"].as_str();
-        msg.channel_id.say(&context.http, message)
-            .await?;
+        msg.channel_id.say(&context.http, message).await?;
         return Ok(());
     }
 
@@ -127,15 +122,15 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         }
         // Do the calculation.
         {
-            if let Err(_) = times {
+            if times.is_err() {
                 let error_msg = interface_string.errors["times_too_big"].as_str();
                 msg.channel_id.say(&context.http, error_msg).await?;
                 return Ok(());
-            }
-            else {
+            } else {
                 let mut rng = thread_rng();
                 for _ in 0..*times.as_ref().unwrap() {
-                    *options_map.entry(options[rng.gen_range(0, options.len())].as_str())
+                    *options_map
+                        .entry(options[rng.gen_range(0, options.len())].as_str())
                         .or_insert(0) += 1_u32;
                 }
             }
@@ -144,19 +139,19 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         let mut sorted_list: Vec<_> = options_map.into_iter().collect();
         sorted_list.sort_by(|a, b| b.1.cmp(&a.1));
         // Build the message and send.
-        let mut message = interface_string.result.as_str().replace("{option}", &sorted_list[0].0);
+        let mut message = interface_string
+            .result
+            .as_str()
+            .replace("{option}", &sorted_list[0].0);
         message += "\n";
         for pair in sorted_list.iter() {
             message += format!("{} - {} times\n", (*pair).0, (*pair).1).as_str();
         }
-        msg.channel_id.say(&context.http, message.as_str())
-            .await?;
-    }
-    else {
+        msg.channel_id.say(&context.http, message.as_str()).await?;
+    } else {
         let result = options[thread_rng().gen_range(0, options.len())].as_str();
         let message = interface_string.result.as_str().replace("{option}", result);
-        msg.channel_id.say(&context.http, message)
-            .await?;
+        msg.channel_id.say(&context.http, message).await?;
     }
     drop(interface_lock);
     Ok(())

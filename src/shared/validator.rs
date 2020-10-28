@@ -1,12 +1,15 @@
+use crate::{InterfaceStorage, PersistenceService};
 use regex::Regex;
-use serenity::prelude::Context;
 use serenity::model::channel::Message;
-use crate::{PersistenceService, InterfaceStorage};
+use serenity::prelude::Context;
 use std::sync::Arc;
 use tokio::sync::RwLockReadGuard;
 
 pub enum TextError {
-    NoMessage, LengthTooLong, WrongCharacterSet, None
+    NoMessage,
+    LengthTooLong,
+    WrongCharacterSet,
+    None,
 }
 
 lazy_static! {
@@ -17,7 +20,14 @@ lazy_static! {
     static ref NON_ASCII_AND_JAPANESE_REGEX: Regex = Regex::new(r"[^\x00-\x7F\u4e00-\u9fbf\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u3000-\u303f\u2018-\u2019]").unwrap();
 }
 
-pub async fn validate_dialog(context: &Context, msg: &Message, background: &String, character: &String, text: &String, interface: &RwLockReadGuard<'_, InterfaceStorage>) -> Result<(), String> {
+pub async fn validate_dialog(
+    context: &Context,
+    msg: &Message,
+    background: &str,
+    character: &str,
+    text: &str,
+    interface: &RwLockReadGuard<'_, InterfaceStorage>,
+) -> Result<(), String> {
     let lock = context.data.read().await;
     let persistence = lock.get::<PersistenceService>().unwrap();
     let _persistence = Arc::clone(persistence);
@@ -27,26 +37,27 @@ pub async fn validate_dialog(context: &Context, msg: &Message, background: &Stri
     let persistence_lock = _persistence.read().await;
     let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
     let characters = persistence_lock.dialog_characters.as_ref().unwrap();
-    let ref background_strings = persistence_lock.background_strings;
-    let ref character_strings = persistence_lock.character_strings;
+    let background_strings = &persistence_lock.background_strings;
+    let character_strings = &persistence_lock.character_strings;
 
-    if !backgrounds.contains(background) {
+    if !backgrounds.contains(&background.to_string()) {
         let message = interface_string.errors["background_not_found"]
             .as_str()
             .replace("{background}", background)
             .replace("{backgrounds}", background_strings);
         msg.channel_id
-            .say(&context.http, message.as_str()).await.unwrap();
+            .say(&context.http, message.as_str())
+            .await
+            .unwrap();
         return Err("Background not found.".to_string());
     }
 
-    if !characters.contains(character) {
+    if !characters.contains(&character.to_string()) {
         let message = interface_string.errors["character_not_found"]
             .as_str()
             .replace("{character}", character)
             .replace("{characters}", character_strings);
-        msg.channel_id
-            .say(&context.http, message).await.unwrap();
+        msg.channel_id.say(&context.http, message).await.unwrap();
         return Err("Character not found.".to_string());
     }
     drop(persistence_lock);
@@ -57,33 +68,32 @@ pub async fn validate_dialog(context: &Context, msg: &Message, background: &Stri
         match &text_validation.1 {
             TextError::NoMessage => {
                 let message = interface_string.errors["no_message"].as_str();
-                msg.channel_id
-                    .say(&context.http, message).await.unwrap();
+                msg.channel_id.say(&context.http, message).await.unwrap();
                 return Err("Message not found.".to_string());
-            },
+            }
             TextError::LengthTooLong => {
                 let message = interface_string.errors["message_too_long"].as_str();
-                msg.channel_id
-                    .say(&context.http, message).await.unwrap();
+                msg.channel_id.say(&context.http, message).await.unwrap();
                 return Err("Message too long.".to_string());
-            },
+            }
             TextError::WrongCharacterSet => {
                 let message = interface_string.errors["wrong_character_set"].as_str();
-                msg.channel_id
-                    .say(&context.http, message).await.unwrap();
+                msg.channel_id.say(&context.http, message).await.unwrap();
                 return Err("Wrong character set.".to_string());
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
     Ok(())
 }
 
 pub fn validate_text(text: &str) -> (bool, TextError) {
-    if text.len() == 0 || text.is_empty() {
+    if text.is_empty() {
         return (false, TextError::NoMessage);
     }
-    if (JAPANESE_REGEX.is_match(text) && text.len() > 230) || (!JAPANESE_REGEX.is_match(text) && text.len() > 180) {
+    if (JAPANESE_REGEX.is_match(text) && text.len() > 230)
+        || (!JAPANESE_REGEX.is_match(text) && text.len() > 180)
+    {
         return (false, TextError::LengthTooLong);
     }
     if EMOTE_MENTIONS_REGEX.is_match(text) || NON_ASCII_AND_JAPANESE_REGEX.is_match(text) {
