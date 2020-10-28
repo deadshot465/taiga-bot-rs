@@ -428,6 +428,10 @@ async fn smite_command(context: &Context, msg: &Message) {
                 let persistence = context_data
                     .get::<PersistenceService>()
                     .expect("Failed to get persistence service.");
+                let interface = context_data
+                    .get::<InterfaceService>()
+                    .expect("Failed to get interface service.");
+                let is_kou = interface.read().await.is_kou;
                 let persistence = persistence.clone();
                 drop(context_data);
                 let mut persistence_lock = persistence.write().await;
@@ -456,7 +460,11 @@ async fn smite_command(context: &Context, msg: &Message) {
                     }
                 }
                 let message = if smite_author {
-                    format!("You dare to smite me? I, THE GREAT TAIGA AKATORA WILL SMITE YOU INSTEAD!! {}", &gif)
+                    if is_kou {
+                        format!("What an evil apparition! As a member of Minamoto family, I should exorcise you! <:KouBrave:705182851397845193> {}", &gif)
+                    } else {
+                        format!("You dare to smite me? I, THE GREAT TAIGA AKATORA WILL SMITE YOU INSTEAD!! {}", &gif)
+                    }
                 } else {
                     format!("SMITE! {}", &gif)
                 };
