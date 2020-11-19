@@ -3,6 +3,7 @@
 extern crate lazy_static;
 mod commands;
 mod handlers;
+mod protos;
 mod shared;
 pub use commands::{
     about, admin, avatar, comic, convert, dialog, emote, enlarge, games, guide, help, image, meal,
@@ -10,4 +11,5 @@ pub use commands::{
 };
 pub use dotenv::dotenv;
 pub use handlers::*;
+pub use protos::game;
 pub use shared::*;

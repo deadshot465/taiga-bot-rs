@@ -1,22 +1,44 @@
 use crate::shared::structures::dialog::Comic;
 use crate::AuthenticationService;
-use game::game_client::GameClient;
-use game::{DialogReply, DialogRequest};
+/*use game::game_client::GameClient;
+use game::{DialogReply, DialogRequest};*/
+use crate::game::{DialogReply, DialogRequest};
+use crate::protos::game::game_client::GameClient;
+use once_cell::sync::OnceCell;
 use serenity::client::Context;
 use std::collections::HashMap;
+use tokio::sync::Mutex;
 use tonic::{Response, Streaming};
 
-pub mod game {
+/*pub mod game {
     tonic::include_proto!("game");
-}
+}*/
+
+static mut GRPC_CLIENT: OnceCell<GameClient<tonic::transport::Channel>> = OnceCell::new();
+static GRPC_CLIENT_INITIALIZED: OnceCell<Mutex<bool>> = OnceCell::new();
 
 pub async fn get_dialog(
     background: &str,
     character: &str,
     text: &str,
-    context: &Context,
+    _context: &Context,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let mut client = GameClient::connect("http://64.227.99.31:26361").await?;
+    let client = unsafe {
+        if let Some(c) = GRPC_CLIENT.get_mut() {
+            c
+        } else {
+            let client_initialized = GRPC_CLIENT_INITIALIZED.get_or_init(|| Mutex::new(false));
+            let mut initialized = client_initialized.lock().await;
+            if !*initialized {
+                let client = GameClient::connect("http://64.227.99.31:26361").await?;
+                if let Ok(_) = GRPC_CLIENT.set(client) {
+                    *initialized = true;
+                }
+            }
+            GRPC_CLIENT.get_mut().expect("Failed to get gRPC client.")
+        }
+    };
+
     let request = tonic::Request::new(DialogRequest {
         background: background.into(),
         character: character.into(),
