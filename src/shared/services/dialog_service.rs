@@ -2,8 +2,8 @@ use crate::shared::structures::dialog::Comic;
 use crate::AuthenticationService;
 /*use game::game_client::GameClient;
 use game::{DialogReply, DialogRequest};*/
-use crate::game::{DialogReply, DialogRequest};
-use crate::protos::game::game_client::GameClient;
+use crate::protos::discord_bot_service::discord_bot_service_client::DiscordBotServiceClient;
+use crate::protos::discord_bot_service::{DialogReply, DialogRequest};
 use once_cell::sync::OnceCell;
 use serenity::client::Context;
 use std::collections::HashMap;
@@ -14,7 +14,8 @@ use tonic::{Response, Streaming};
     tonic::include_proto!("game");
 }*/
 
-static mut GRPC_CLIENT: OnceCell<GameClient<tonic::transport::Channel>> = OnceCell::new();
+static mut GRPC_CLIENT: OnceCell<DiscordBotServiceClient<tonic::transport::Channel>> =
+    OnceCell::new();
 static GRPC_CLIENT_INITIALIZED: OnceCell<Mutex<bool>> = OnceCell::new();
 
 pub async fn get_dialog(
@@ -30,7 +31,7 @@ pub async fn get_dialog(
             let client_initialized = GRPC_CLIENT_INITIALIZED.get_or_init(|| Mutex::new(false));
             let mut initialized = client_initialized.lock().await;
             if !*initialized {
-                let client = GameClient::connect("http://64.227.99.31:26361").await?;
+                let client = DiscordBotServiceClient::connect("http://64.227.99.31:26361").await?;
                 if let Ok(_) = GRPC_CLIENT.set(client) {
                     *initialized = true;
                 }

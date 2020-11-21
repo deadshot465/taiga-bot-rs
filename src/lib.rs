@@ -11,5 +11,5 @@ pub use commands::{
 };
 pub use dotenv::dotenv;
 pub use handlers::*;
-pub use protos::game;
+pub use protos::discord_bot_service;
 pub use shared::*;

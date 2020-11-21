@@ -1,1 +1,1 @@
-pub mod game;
+pub mod discord_bot_service;

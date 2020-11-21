@@ -1,0 +1,22 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "TetsukiZone.Protos";
+
+package discord_bot_service;
+
+service DiscordBotService {
+  // Post dialog information to Puppeteer in order to generate an image.
+  // Internally used for Discord bots. Do not call this command in the game.
+  rpc PostDialog(DialogRequest) returns (stream DialogReply);
+}
+
+message DialogRequest {
+  string background = 1;
+  string character = 2;
+  string text = 3;
+}
+
+message DialogReply {
+  bool status = 1;
+  bytes image = 2;
+}
