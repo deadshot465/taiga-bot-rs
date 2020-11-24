@@ -5,7 +5,7 @@ use crate::protos::jwt_token_service::jwt_token_service_client::JwtTokenServiceC
 use crate::protos::jwt_token_service::AccessRequest;
 use crate::shared::structures::dialog::Comic;
 use crate::{AuthenticationService, SpecializedDialog};
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use once_cell::sync::OnceCell;
 use serenity::client::Context;
 use std::collections::HashMap;
@@ -204,7 +204,7 @@ async fn update_token() -> Result<(), Box<dyn std::error::Error>> {
                 token: response.token,
                 user_details: response.user_details,
                 expiry: response.expiry,
-            });
+            })?;
         }
     }
 
