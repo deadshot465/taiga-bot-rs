@@ -204,7 +204,7 @@ async fn update_token() -> Result<(), Box<dyn std::error::Error>> {
                 token: response.token,
                 user_details: response.user_details,
                 expiry: response.expiry,
-            })?;
+            });
         }
     }
 
