@@ -6,9 +6,37 @@ pub struct DialogRequest {
     pub character: std::string::String,
     #[prost(string, tag = "3")]
     pub text: std::string::String,
+    #[prost(string, tag = "4")]
+    pub jwt_token: std::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DialogReply {
+    #[prost(bool, tag = "1")]
+    pub status: bool,
+    #[prost(bytes, tag = "2")]
+    pub image: std::vec::Vec<u8>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SpecializedDialogRequest {
+    #[prost(string, tag = "1")]
+    pub background: std::string::String,
+    #[prost(string, tag = "2")]
+    pub character: std::string::String,
+    #[prost(int32, tag = "3")]
+    pub pose: i32,
+    #[prost(string, tag = "4")]
+    pub clothes: std::string::String,
+    #[prost(string, tag = "5")]
+    pub face: std::string::String,
+    #[prost(bool, tag = "6")]
+    pub is_hidden_character: bool,
+    #[prost(string, tag = "7")]
+    pub text: std::string::String,
+    #[prost(string, tag = "8")]
+    pub jwt_token: std::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SpecializedDialogReply {
     #[prost(bool, tag = "1")]
     pub status: bool,
     #[prost(bytes, tag = "2")]
@@ -48,7 +76,6 @@ pub mod discord_bot_service_client {
             Self { inner }
         }
         #[doc = " Post dialog information to Puppeteer in order to generate an image."]
-        #[doc = " Internally used for Discord bots. Do not call this command in the game."]
         pub async fn post_dialog(
             &mut self,
             request: impl tonic::IntoRequest<super::DialogRequest>,
@@ -63,6 +90,28 @@ pub mod discord_bot_service_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/discord_bot_service.DiscordBotService/PostDialog",
+            );
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
+        }
+        #[doc = " Post specialized dialog information to Puppeteer in order to generate an image."]
+        pub async fn post_specialized_dialog(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SpecializedDialogRequest>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::SpecializedDialogReply>>,
+            tonic::Status,
+        > {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::new(
+                    tonic::Code::Unknown,
+                    format!("Service was not ready: {}", e.into()),
+                )
+            })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/discord_bot_service.DiscordBotService/PostSpecializedDialog",
             );
             self.inner
                 .server_streaming(request.into_request(), path, codec)
@@ -95,11 +144,20 @@ pub mod discord_bot_service_server {
             + Sync
             + 'static;
         #[doc = " Post dialog information to Puppeteer in order to generate an image."]
-        #[doc = " Internally used for Discord bots. Do not call this command in the game."]
         async fn post_dialog(
             &self,
             request: tonic::Request<super::DialogRequest>,
         ) -> Result<tonic::Response<Self::PostDialogStream>, tonic::Status>;
+        #[doc = "Server streaming response type for the PostSpecializedDialog method."]
+        type PostSpecializedDialogStream: Stream<Item = Result<super::SpecializedDialogReply, tonic::Status>>
+            + Send
+            + Sync
+            + 'static;
+        #[doc = " Post specialized dialog information to Puppeteer in order to generate an image."]
+        async fn post_specialized_dialog(
+            &self,
+            request: tonic::Request<super::SpecializedDialogRequest>,
+        ) -> Result<tonic::Response<Self::PostSpecializedDialogStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct DiscordBotServiceServer<T: DiscordBotService> {
@@ -158,6 +216,43 @@ pub mod discord_bot_service_server {
                         let interceptor = inner.1;
                         let inner = inner.0;
                         let method = PostDialogSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = if let Some(interceptor) = interceptor {
+                            tonic::server::Grpc::with_interceptor(codec, interceptor)
+                        } else {
+                            tonic::server::Grpc::new(codec)
+                        };
+                        let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/discord_bot_service.DiscordBotService/PostSpecializedDialog" => {
+                    #[allow(non_camel_case_types)]
+                    struct PostSpecializedDialogSvc<T: DiscordBotService>(pub Arc<T>);
+                    impl<T: DiscordBotService>
+                        tonic::server::ServerStreamingService<super::SpecializedDialogRequest>
+                        for PostSpecializedDialogSvc<T>
+                    {
+                        type Response = super::SpecializedDialogReply;
+                        type ResponseStream = T::PostSpecializedDialogStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SpecializedDialogRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut =
+                                async move { (*inner).post_specialized_dialog(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let interceptor = inner.1;
+                        let inner = inner.0;
+                        let method = PostSpecializedDialogSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = if let Some(interceptor) = interceptor {
                             tonic::server::Grpc::with_interceptor(codec, interceptor)

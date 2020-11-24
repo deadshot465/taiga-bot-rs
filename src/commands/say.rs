@@ -1,7 +1,7 @@
 use crate::shared::SpecializedInfo;
 use crate::{
-    validate_text, AuthenticationService, AvailableSpecializedOptions, InterfaceService,
-    PersistenceService, SpecializedDialog, TextError,
+    get_specialized_dialog, validate_text, AuthenticationService, AvailableSpecializedOptions,
+    InterfaceService, PersistenceService, SpecializedDialog, TextError,
 };
 use rand::{thread_rng, Rng};
 use serenity::framework::standard::{macros::command, Args, CommandError, CommandResult};
@@ -419,12 +419,12 @@ async fn say(
         } else {
             drop(persistence_lock);
             text = t.content.clone();
-            let client = reqwest::Client::new();
+            /*let client = reqwest::Client::new();
             let mut authentication_lock = _authentication.lock().await;
-            authentication_lock.login().await.unwrap();
+            authentication_lock.login().await.unwrap();*/
             let request_data = SpecializedDialog {
                 background,
-                character: None,
+                character: Some(character.to_string()),
                 clothes: cloth,
                 face,
                 is_hidden_character: is_hidden,
@@ -432,21 +432,24 @@ async fn say(
                 text,
             };
 
-            let response = client
-                .post(format!("https://tetsukizone.com/api/dialog/{}", character).as_str())
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .header(
-                    "Authorization",
-                    format!("Bearer {}", authentication_lock.token.as_str()),
-                )
-                .json(&request_data)
-                .send()
-                .await?;
-            drop(authentication_lock);
+            /*let response = client
+            .post(format!("https://tetsukizone.com/api/dialog/{}", character).as_str())
+            .header("Accept", "application/json")
+            .header("Content-Type", "application/json")
+            .header(
+                "Authorization",
+                format!("Bearer {}", authentication_lock.token.as_str()),
+            )
+            .json(&request_data)
+            .send()
+            .await?;*/
+            //drop(authentication_lock);
 
-            let data = response.bytes().await?;
-            return Ok(data.to_vec());
+            //let data = response.bytes().await?;
+            let data = get_specialized_dialog(request_data)
+                .await
+                .expect("Failed to generate specialied dialog.");
+            return Ok(data);
         }
     } else {
         let error_msg = interface_string.errors["no_message"].as_str();

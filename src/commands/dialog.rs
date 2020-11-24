@@ -73,7 +73,7 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         context,
     )
     .await
-    .unwrap();
+    .expect("Failed to generate dialog.");
     let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
     msg.channel_id
         .send_files(&context.http, files, |m| m.content("Here you go~"))

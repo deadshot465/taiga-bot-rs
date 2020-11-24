@@ -6,17 +6,35 @@ package discord_bot_service;
 
 service DiscordBotService {
   // Post dialog information to Puppeteer in order to generate an image.
-  // Internally used for Discord bots. Do not call this command in the game.
   rpc PostDialog(DialogRequest) returns (stream DialogReply);
+  // Post specialized dialog information to Puppeteer in order to generate an image.
+  rpc PostSpecializedDialog(SpecializedDialogRequest) returns (stream SpecializedDialogReply);
 }
 
 message DialogRequest {
   string background = 1;
   string character = 2;
   string text = 3;
+  string jwt_token = 4;
 }
 
 message DialogReply {
+  bool status = 1;
+  bytes image = 2;
+}
+
+message SpecializedDialogRequest {
+  string background = 1;
+  string character = 2;
+  int32 pose = 3;
+  string clothes = 4;
+  string face = 5;
+  bool is_hidden_character = 6;
+  string text = 7;
+  string jwt_token = 8;
+}
+
+message SpecializedDialogReply {
   bool status = 1;
   bytes image = 2;
 }

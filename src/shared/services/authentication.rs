@@ -50,7 +50,7 @@ impl Authentication {
                 .as_ref()
                 .unwrap()
                 .parse::<DateTime<Utc>>()
-                .unwrap();
+                .expect("Failed to parse expiry date for JWT token.");
             if expiry_date > Utc::now() {
                 return Ok(());
             }
