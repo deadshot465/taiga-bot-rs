@@ -9,7 +9,8 @@ use std::sync::Arc;
 use tokio::time::Duration;
 
 lazy_static! {
-    static ref CHANNEL_REGEX: Regex = Regex::new(r"<#(\d+)>").unwrap();
+    static ref CHANNEL_REGEX: Regex =
+        Regex::new(r"<#(\d+)>").expect("Failed to create channel regex.");
 }
 
 enum ProcessType {
@@ -27,7 +28,13 @@ pub async fn allow(context: &Context, msg: &Message) -> CommandResult {
     let regex = &*CHANNEL_REGEX;
     let channels = regex
         .captures_iter(&msg.content)
-        .map(|m| m.get(1).unwrap().as_str().parse::<u64>().unwrap())
+        .map(|m| {
+            m.get(1)
+                .expect("Failed to get channel ID.")
+                .as_str()
+                .parse::<u64>()
+                .expect("Failed to parse u64 from string.")
+        })
         .collect::<Vec<u64>>();
     process(context, msg, channels, &ProcessType::Allow).await?;
     Ok(())
@@ -41,7 +48,13 @@ pub async fn disable(context: &Context, msg: &Message) -> CommandResult {
     let regex = &*CHANNEL_REGEX;
     let channels = regex
         .captures_iter(&msg.content)
-        .map(|m| m.get(1).unwrap().as_str().parse::<u64>().unwrap())
+        .map(|m| {
+            m.get(1)
+                .expect("Failed to get channel ID.")
+                .as_str()
+                .parse::<u64>()
+                .expect("Failed to parse u64 from string.")
+        })
         .collect::<Vec<u64>>();
     process(context, msg, channels, &ProcessType::Disable).await?;
     Ok(())
@@ -55,7 +68,13 @@ pub async fn enable(context: &Context, msg: &Message) -> CommandResult {
     let regex = &*CHANNEL_REGEX;
     let channels = regex
         .captures_iter(&msg.content)
-        .map(|m| m.get(1).unwrap().as_str().parse::<u64>().unwrap())
+        .map(|m| {
+            m.get(1)
+                .expect("Failed to get channel ID.")
+                .as_str()
+                .parse::<u64>()
+                .expect("Failed to parse u64 from string.")
+        })
         .collect::<Vec<u64>>();
     process(context, msg, channels, &ProcessType::Enable).await?;
     Ok(())
@@ -69,7 +88,13 @@ pub async fn ignore(context: &Context, msg: &Message) -> CommandResult {
     let regex = &*CHANNEL_REGEX;
     let channels = regex
         .captures_iter(&msg.content)
-        .map(|m| m.get(1).unwrap().as_str().parse::<u64>().unwrap())
+        .map(|m| {
+            m.get(1)
+                .expect("Failed to get channel ID.")
+                .as_str()
+                .parse::<u64>()
+                .expect("Failed to parse u64 from string.")
+        })
         .collect::<Vec<u64>>();
     process(context, msg, channels, &ProcessType::Ignore).await?;
     Ok(())
@@ -85,9 +110,14 @@ pub async fn purge(context: &Context, msg: &Message, mut args: Args) -> CommandR
     if let Ok(n) = arg {
         amount = n;
     }
-    let channels: HashMap<ChannelId, GuildChannel> =
-        msg.guild_id.unwrap().channels(&context.http).await?;
-    let channel = channels.get(&msg.channel_id).unwrap();
+    let channels: HashMap<ChannelId, GuildChannel> = msg
+        .guild_id
+        .expect("Failed to get guild channel ID.")
+        .channels(&context.http)
+        .await?;
+    let channel = channels
+        .get(&msg.channel_id)
+        .expect("Failed to get guild channel.");
     let messages: Vec<Message> = channel
         .messages(&context.http, |f| f.limit(amount).before(&msg.id))
         .await?;
@@ -101,7 +131,7 @@ pub async fn purge(context: &Context, msg: &Message, mut args: Args) -> CommandR
             ),
         )
         .await?;
-    tokio::time::delay_for(Duration::from_secs(5)).await;
+    tokio::time::sleep(Duration::from_secs(5)).await;
     msg.channel_id
         .delete_messages(&context.http, messages)
         .await?;
@@ -117,11 +147,16 @@ async fn process(
     process_type: &ProcessType,
 ) -> CommandResult {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let _persistence = Arc::clone(persistence);
     drop(data);
     let mut persistence_lock = _persistence.write().await;
-    let channel_settings = persistence_lock.channel_settings.as_mut().unwrap();
+    let channel_settings = persistence_lock
+        .channel_settings
+        .as_mut()
+        .expect("Failed to get channel settings.");
     for chn in channels.iter() {
         match process_type {
             ProcessType::Allow => {

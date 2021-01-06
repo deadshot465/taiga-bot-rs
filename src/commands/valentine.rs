@@ -16,13 +16,20 @@ use tokio::sync::RwLockReadGuard;
 #[bucket = "information"]
 pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
-    let interface = data.get::<InterfaceService>().unwrap();
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let interface = data
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let _interface = Arc::clone(interface);
     let _persistence = Arc::clone(persistence);
     drop(data);
     let interface_lock = _interface.read().await;
-    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_strings = interface_lock
+        .interface_strings
+        .as_ref()
+        .expect("Failed to get interface strings.");
     let interface_string = &interface_strings.valentine;
     let persistence_lock = _persistence.read().await;
     let valentine = get_valentine(&persistence_lock).await;
@@ -46,7 +53,8 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         valentine.name.as_str(),
         prefix_suffix
     );
-    let color = u32::from_str_radix(&valentine.color.as_str(), 16).unwrap() as i32;
+    let color = u32::from_str_radix(&valentine.color.as_str(), 16)
+        .expect("Failed to create u32 from string.") as i32;
 
     if is_keitaro {
         let message = interface_string.infos["keitaro_header"].as_str();
@@ -80,7 +88,10 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
         .await?;
 
     let mut persistence_lock = _persistence.write().await;
-    let user_records = persistence_lock.user_records.as_mut().unwrap();
+    let user_records = persistence_lock
+        .user_records
+        .as_mut()
+        .expect("Failed to get user records.");
     let user_record = user_records
         .entry(msg.author.id.0.to_string())
         .or_insert_with(UserRecords::new);
@@ -109,8 +120,11 @@ pub async fn valentine(context: &Context, msg: &Message) -> CommandResult {
 }
 
 async fn get_valentine(persistence: &RwLockReadGuard<'_, PersistenceStorage>) -> Character {
-    let valentines = persistence.valentines.as_ref().unwrap();
-    valentines[thread_rng().gen_range(0, valentines.len())].clone()
+    let valentines = persistence
+        .valentines
+        .as_ref()
+        .expect("Failed to get available valentines.");
+    valentines[thread_rng().gen_range(0..valentines.len())].clone()
 }
 
 fn get_first_name(name: &str) -> &str {

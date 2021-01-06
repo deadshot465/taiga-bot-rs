@@ -199,12 +199,15 @@ async fn update_token() -> Result<(), Box<dyn std::error::Error>> {
         });
         let response = client.access(request).await?;
         let response = response.into_inner();
-        unsafe {
+        let token_set_result = unsafe {
             JWT_TOKEN.set(JwtToken {
                 token: response.token,
                 user_details: response.user_details,
                 expiry: response.expiry,
-            });
+            })
+        };
+        if token_set_result.is_err() {
+            panic!("Failed to set OnceCell for JWT token.");
         }
     }
 

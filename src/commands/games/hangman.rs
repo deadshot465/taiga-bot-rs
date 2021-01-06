@@ -15,7 +15,10 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     // Get member so we can get the user's nickname instead of the user's real name
     let member = context
         .cache
-        .member(msg.guild_id.as_ref().unwrap(), &msg.author.id)
+        .member(
+            msg.guild_id.as_ref().expect("Failed to get guild ID."),
+            &msg.author.id,
+        )
         .await;
     let http = &context.http;
 
@@ -23,11 +26,15 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     let url = msg.author.avatar_url();
 
     // Construct the color of embed in advance
-    let color = u32::from_str_radix("ffd43b", 16).unwrap();
+    let color = u32::from_str_radix("ffd43b", 16).expect("Failed to create u32 from string.");
     let color = Color::from(color);
 
     // Introduce the game
-    let nick_name = member.as_ref().unwrap().nick.as_ref();
+    let nick_name = member
+        .as_ref()
+        .expect("Failed to get member.")
+        .nick
+        .as_ref();
     let name: &String;
     if let Some(n) = nick_name {
         name = n;
@@ -41,11 +48,13 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     .await?;
 
     // Wait for 2 second
-    tokio::time::delay_for(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     // Set the desired word
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let persistence_lock = persistence.read().await;
     let actual_word: String;
     {
@@ -53,9 +62,9 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
         actual_word = persistence_lock
             .game_words
             .as_ref()
-            .unwrap()
+            .expect("Failed to get game words.")
             .choose(&mut rng)
-            .unwrap()
+            .expect("Failed to choose a random word for Hangman.")
             .clone();
     }
     drop(persistence_lock);
@@ -70,7 +79,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
         &format!("There are {} letters in this word.", actual_word.len()),
     )
     .await?;
-    tokio::time::delay_for(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(2)).await;
 
     // First print all letters to be "_"
     let mut message = String::new();
@@ -113,8 +122,12 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
                 notice.delete(http).await?;
                 return Ok(());
             }
-            let input_result = input.as_ref().unwrap();
-            input_char = input_result.content.chars().next().unwrap();
+            let input_result = input.as_ref().expect("Failed to retrieve input.");
+            input_char = input_result
+                .content
+                .chars()
+                .next()
+                .expect("Failed to retrieve input character.");
             // If the reply contains more than one character, or is not an alphabet, ask the user for the reply again.
             if input_char.is_alphabetic() && input_result.content.len() == 1 {
                 input_result.delete(http).await?;

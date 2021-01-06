@@ -48,7 +48,7 @@ impl Authentication {
             let expiry_date = self
                 .expiry
                 .as_ref()
-                .unwrap()
+                .expect("Failed to get token expiry.")
                 .parse::<DateTime<Utc>>()
                 .expect("Failed to parse expiry date for JWT token.");
             if expiry_date > Utc::now() {
@@ -57,8 +57,16 @@ impl Authentication {
         }
 
         let mut request_data: HashMap<&str, String> = HashMap::new();
-        request_data.insert("UserName", env::var("LOGIN_NAME").unwrap());
-        request_data.insert("Password", env::var("LOGIN_PASS").unwrap());
+        request_data.insert(
+            "UserName",
+            env::var("LOGIN_NAME")
+                .expect("Failed to retrieve login name from environment variable."),
+        );
+        request_data.insert(
+            "Password",
+            env::var("LOGIN_PASS")
+                .expect("Failed to retrieve login password from environment variable."),
+        );
 
         let client = reqwest::Client::new();
         let response = client

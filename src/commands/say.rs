@@ -283,19 +283,31 @@ async fn say(
     is_hidden: bool,
 ) -> Result<Vec<u8>, CommandError> {
     let lock = context.data.read().await;
-    let interface = lock.get::<InterfaceService>().unwrap();
-    let persistence = lock.get::<PersistenceService>().unwrap();
-    let authentication = lock.get::<AuthenticationService>().unwrap();
+    let interface = lock
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence = lock
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
+    let authentication = lock
+        .get::<AuthenticationService>()
+        .expect("Failed to get authentication service.");
     let _persistence = Arc::clone(persistence);
     let _interface = Arc::clone(interface);
     let _authentication = Arc::clone(authentication);
     drop(lock);
     let interface_lock = _interface.read().await;
-    let interface_strings = interface_lock.interface_strings.as_ref().unwrap();
+    let interface_strings = interface_lock
+        .interface_strings
+        .as_ref()
+        .expect("Failed to get interface strings.");
     let interface_string = &interface_strings.say[character];
     let persistence_lock = _persistence.read().await;
 
-    let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
+    let backgrounds = persistence_lock
+        .dialog_backgrounds
+        .as_ref()
+        .expect("Failed to get dialog backgrounds.");
     msg.reply(&context.http, "Please specify a background in 10 seconds, or specify nothing or anything to use a random background.")
         .await?;
     let background: String;
@@ -309,13 +321,16 @@ async fn say(
         if backgrounds.contains(&lower_case) {
             background = lower_case;
         } else {
-            background = backgrounds[thread_rng().gen_range(0, backgrounds.len())].clone();
+            background = backgrounds[thread_rng().gen_range(0..backgrounds.len())].clone();
         }
     } else {
-        background = backgrounds[thread_rng().gen_range(0, backgrounds.len())].clone();
+        background = backgrounds[thread_rng().gen_range(0..backgrounds.len())].clone();
     }
 
-    let options = persistence_lock.specialized_info.as_ref().unwrap();
+    let options = persistence_lock
+        .specialized_info
+        .as_ref()
+        .expect("Failed to get specialized infos.");
     let character_available_options = &options[character];
 
     msg.reply(&context.http, "Please specify a pose number in 10 seconds.")
@@ -419,16 +434,17 @@ async fn say(
         } else {
             drop(persistence_lock);
             text = t.content.clone();
-            /*let client = reqwest::Client::new();
-            let mut authentication_lock = _authentication.lock().await;
-            authentication_lock.login().await.unwrap();*/
+
             let request_data = SpecializedDialog {
                 background,
                 character: Some(character.to_string()),
                 clothes: cloth,
                 face,
                 is_hidden_character: is_hidden,
-                pose: pose.as_str().parse::<u8>().unwrap(),
+                pose: pose
+                    .as_str()
+                    .parse::<u8>()
+                    .expect("Failed to parse u8 from string."),
                 text,
             };
 
@@ -461,8 +477,12 @@ async fn say(
 
 async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandResult {
     let lock = context.data.read().await;
-    let interface = lock.get::<InterfaceService>().unwrap();
-    let persistence = lock.get::<PersistenceService>().unwrap();
+    let interface = lock
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence = lock
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let _persistence = Arc::clone(persistence);
     let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
@@ -472,12 +492,21 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
 
     let character_available_options: &SpecializedInfo;
     let available_backgrounds: &Vec<String>;
-    let options = persistence_lock.specialized_info.as_ref().unwrap();
+    let options = persistence_lock
+        .specialized_info
+        .as_ref()
+        .expect("Failed to get specialized infos.");
     character_available_options = &options[character];
-    available_backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
+    available_backgrounds = persistence_lock
+        .dialog_backgrounds
+        .as_ref()
+        .expect("Failed to get dialog backgrounds.");
 
-    let member = msg.member(&context.http).await.unwrap();
-    let color = u32::from_str_radix("ff6600", 16).unwrap();
+    let member = msg
+        .member(&context.http)
+        .await
+        .expect("Failed to get member.");
+    let color = u32::from_str_radix("ff6600", 16).expect("Failed to create u32 from string.");
 
     if is_kou {
         msg.channel_id
@@ -531,8 +560,11 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
                     .iter()
                     .map(|p| (p.0, p.1))
                     .collect::<Vec<(&String, &AvailableSpecializedOptions)>>();
-                available_options
-                    .sort_by(|a, b| a.0.parse::<u8>().unwrap().cmp(&b.0.parse::<u8>().unwrap()));
+                available_options.sort_by(|a, b| {
+                    a.0.parse::<u8>()
+                        .expect("Failed to parse u8 from string.")
+                        .cmp(&b.0.parse::<u8>().expect("Failed to parse u8 from string."))
+                });
 
                 for pair in available_options.iter() {
                     let cloth_title = format!("**Available Clothes for Pose {}**", pair.0);
@@ -558,7 +590,9 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
                                 break;
                             }
                             let slice = &faces[last_start..last_start + stride];
-                            last_period_index = slice.rfind(',').unwrap() + last_start;
+                            last_period_index =
+                                slice.rfind(',').expect("Failed to find last period index.")
+                                    + last_start;
                             let slice = &faces[last_start..last_period_index];
                             face_msg_list.push(slice.to_string());
                             last_start = last_period_index + 1;

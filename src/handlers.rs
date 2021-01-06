@@ -24,22 +24,22 @@ const SMITE_ROLE_IDS: [u64; 3] = [766023350287335465, 769101869489979422, 771070
 const KOU_SERVER_ID: u64 = 705036924330704968_u64;
 
 lazy_static::lazy_static! {
-    static ref ANIMATED_REGEX: Regex = Regex::new(r"(<a)").unwrap();
-    static ref EMOTE_REGEX: Regex = Regex::new(r"<a?:(\w+):(\d+)>").unwrap();
+    static ref ANIMATED_REGEX: Regex = Regex::new(r"(<a)").expect("Failed to create animated emote regex.");
+    static ref EMOTE_REGEX: Regex = Regex::new(r"<a?:(\w+):(\d+)>").expect("Failed to create emote regex.");
 }
 
 pub struct Handler;
 
 fn hit_or_miss(chance: u8) -> bool {
-    thread_rng().gen_range(0_u8, 100_u8) < chance
+    thread_rng().gen_range(0_u8..100_u8) < chance
 }
 
 async fn handle_self_mentions(context: &Context, msg: &Message) {
-    let bot_id = env::var("BOT_ID").unwrap();
+    let bot_id = env::var("BOT_ID").expect("Failed to retrieve bot ID.");
     let mention_reaction_chance: u8 = env::var("MENTION_REACTION_CHANCE")
-        .unwrap()
+        .expect("Failed to retrieve mention reaction chance from environment variables.")
         .parse::<u8>()
-        .unwrap();
+        .expect("Failed to parse u8 from string.");
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
@@ -51,7 +51,10 @@ async fn handle_self_mentions(context: &Context, msg: &Message) {
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
     let persistence_lock = persistence.read().await;
-    let random_messages = persistence_lock.random_messages.as_ref().unwrap();
+    let random_messages = persistence_lock
+        .random_messages
+        .as_ref()
+        .expect("Failed to retrieve random messages.");
     let messages = random_messages
         .iter()
         .find(|m| {
@@ -61,14 +64,14 @@ async fn handle_self_mentions(context: &Context, msg: &Message) {
                 m.keyword.as_str() == "taiga"
             }
         })
-        .unwrap()
+        .expect("Failed to find applicable random messages.")
         .clone();
     drop(persistence_lock);
     drop(lock);
     // Randomly replies to messages that mention the bot.
     if msg.content.contains(&bot_id) && hit_or_miss(mention_reaction_chance) {
         let english_msgs = &messages.messages["en"];
-        let index = thread_rng().gen_range(0, english_msgs.len());
+        let index = thread_rng().gen_range(0..english_msgs.len());
         msg.channel_id
             .say(&context.http, english_msgs[index].as_str())
             .await
@@ -80,7 +83,10 @@ async fn handle_reactions(context: &Context, msg: &Message) {
     if msg.author.bot {
         return;
     }
-    let reaction_chance: u8 = env::var("REACTION_CHANCE").unwrap().parse::<u8>().unwrap();
+    let reaction_chance: u8 = env::var("REACTION_CHANCE")
+        .expect("Failed to retrieve reaction chance from environment variables.")
+        .parse::<u8>()
+        .expect("Failed to parse u8 from string.");
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
@@ -90,7 +96,10 @@ async fn handle_reactions(context: &Context, msg: &Message) {
         .expect("Failed to retrieve interface service.");
     let _persistence = Arc::clone(persistence);
     let persistence_lock = _persistence.read().await;
-    let random_messages = persistence_lock.random_messages.as_ref().unwrap();
+    let random_messages = persistence_lock
+        .random_messages
+        .as_ref()
+        .expect("Failed to retrieve random messages.");
     let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;
     drop(interface_lock);
@@ -111,15 +120,22 @@ async fn handle_reactions(context: &Context, msg: &Message) {
             if m.keyword.as_str() == "kou" && lower_case.contains("mikkou") {
                 continue;
             }
-            let index = thread_rng().gen_range(0, m.reactions.len());
+            let index = thread_rng().gen_range(0..m.reactions.len());
             let reaction = m.reactions[index].as_str();
             let emote_regex = &*EMOTE_REGEX;
             let animated_regex = &*ANIMATED_REGEX;
             if emote_regex.is_match(reaction) {
                 let animated = animated_regex.is_match(reaction);
-                let captures = emote_regex.captures(reaction).unwrap();
-                let emote_name = captures.get(1).unwrap().as_str();
-                let emote_id = captures.get(2).unwrap().as_str().parse::<u64>().unwrap();
+                let captures = emote_regex
+                    .captures(reaction)
+                    .expect("Failed to retrieve captures of regular expression.");
+                let emote_name = captures.get(1).expect("Failed to get emote name.").as_str();
+                let emote_id = captures
+                    .get(2)
+                    .expect("Failed to get emote ID.")
+                    .as_str()
+                    .parse::<u64>()
+                    .expect("Failed to parse u64 from string.");
                 let reaction_type = ReactionType::Custom {
                     animated,
                     id: EmojiId(emote_id),
@@ -157,7 +173,7 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     if persistence_lock
         .channel_settings
         .as_ref()
-        .unwrap()
+        .expect("Failed to retrieve channel settings.")
         .ignored_channels
         .contains(&msg.channel_id.0)
     {
@@ -170,7 +186,10 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     if is_kou {
         return;
     }
-    let user_replies = persistence_lock.user_replies.as_ref().unwrap();
+    let user_replies = persistence_lock
+        .user_replies
+        .as_ref()
+        .expect("Failed to retrieve user replies.");
     if !user_replies
         .iter()
         .map(|r| r.user)
@@ -180,9 +199,9 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     }
 
     let reply_user_chance: u8 = env::var("RDM_REPLY_USER_CHANCE")
-        .unwrap()
+        .expect("Failed to retrieve random user reply chance.")
         .parse::<u8>()
-        .unwrap();
+        .expect("Failed to parse u8 from string.");
     if hit_or_miss(reply_user_chance) {
         let messages = user_replies
             .iter()
@@ -193,14 +212,14 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
                     None
                 }
             })
-            .unwrap();
+            .expect("Failed to find and map user reply messages.");
         if msg.author.id.0 == 677249244842950684 {
             let average_probability = 1_f64 / (messages.len() as f64);
             let specialized_chance = (average_probability / 2_f64).floor();
             let reply = messages
                 .iter()
                 .find(|s| s.contains("You know what") && s.contains("moderate"))
-                .unwrap();
+                .expect("Failed to find specialized messages.");
             let hit = hit_or_miss(specialized_chance as u8);
             if hit {
                 msg.reply(&context.http, reply)
@@ -211,13 +230,13 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
                     .iter()
                     .filter(|s| !s.starts_with("You know what"))
                     .collect::<Vec<&String>>();
-                let index = thread_rng().gen_range(0, _messages.len());
+                let index = thread_rng().gen_range(0.._messages.len());
                 msg.reply(&context.http, _messages[index])
                     .await
                     .expect("Failed to reply to the user.");
             }
         } else {
-            let index = thread_rng().gen_range(0, messages.len());
+            let index = thread_rng().gen_range(0..messages.len());
             msg.reply(&context.http, messages[index].as_str())
                 .await
                 .expect("Failed to reply to the user.");
@@ -228,7 +247,7 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
         let user_records = persistence_lock
             .user_records
             .as_mut()
-            .unwrap()
+            .expect("Failed to get user records.")
             .entry(user_id)
             .or_insert_with(UserRecords::new);
         let reply_count = &mut user_records.replies;
@@ -256,7 +275,7 @@ async fn handle_replies(context: &Context, msg: &Message) {
     if persistence_lock
         .channel_settings
         .as_ref()
-        .unwrap()
+        .expect("Failed to get channel settings.")
         .ignored_channels
         .contains(&msg.channel_id.0)
     {
@@ -266,8 +285,14 @@ async fn handle_replies(context: &Context, msg: &Message) {
         return;
     }
     let lower_case = msg.content.to_lowercase();
-    let all_messages = persistence_lock.random_messages.as_ref().unwrap();
-    let random_reply_chance: u8 = env::var("RDM_REPLY_CHANCE").unwrap().parse::<u8>().unwrap();
+    let all_messages = persistence_lock
+        .random_messages
+        .as_ref()
+        .expect("Failed to retrieve random messages.");
+    let random_reply_chance: u8 = env::var("RDM_REPLY_CHANCE")
+        .expect("Failed to get random reply chance from environment variables.")
+        .parse::<u8>()
+        .expect("Failed to parse u8 from string.");
 
     let should_reply = all_messages
         .iter()
@@ -286,9 +311,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
             let messages = all_messages
                 .iter()
                 .find(|m| m.keyword.as_str() == "kou")
-                .unwrap();
+                .expect("Failed to find Kou's random messages.");
             let english_msgs = &messages.messages["en"];
-            let index = thread_rng().gen_range(0, english_msgs.len());
+            let index = thread_rng().gen_range(0..english_msgs.len());
             msg.channel_id
                 .say(&context.http, english_msgs[index].as_str())
                 .await
@@ -297,19 +322,22 @@ async fn handle_replies(context: &Context, msg: &Message) {
         }
     } else {
         let specialized_reply_chance: u8 = env::var("SPECIALIZED_CHANCE")
-            .unwrap()
+            .expect("Failed to retrieve specialized reply chance from environment variables.")
             .parse::<u8>()
-            .unwrap();
+            .expect("Failed to parse u8 from string.");
         if hit_or_miss(specialized_reply_chance) {
-            let backgrounds = persistence_lock.dialog_backgrounds.as_ref().unwrap();
-            let index = thread_rng().gen_range(0, backgrounds.len());
+            let backgrounds = persistence_lock
+                .dialog_backgrounds
+                .as_ref()
+                .expect("Failed to retrieve dialog backgrounds.");
+            let index = thread_rng().gen_range(0..backgrounds.len());
             let background = backgrounds[index].as_str();
-            if lower_case.contains("hiro") {
+            if lower_case.contains("hiro") && !lower_case.contains("shiro") {
                 let character = "taiga";
                 let text = "Hiro will be terribly wrong if he thinks he can steal Keitaro from me!";
                 let bytes = get_dialog(background, character, text, context)
                     .await
-                    .unwrap();
+                    .expect("Failed to generate dialog.");
                 let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
                 msg.channel_id
                     .send_files(&context.http, files, |m| m.content(""))
@@ -318,7 +346,9 @@ async fn handle_replies(context: &Context, msg: &Message) {
 
                 return;
             } else if lower_case.contains("aiden") {
-                let bytes = get_image("hamburger").await.unwrap();
+                let bytes = get_image("hamburger")
+                    .await
+                    .expect("Failed to get hamburger image.");
                 let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
                 msg.channel_id
                     .say(&context.http, "Three orders of double-quarter-pounder cheeseburgers! Two large fries and one large soda!\nBurger patties well-done, three slices of pickles for each! No mayonnaise! Just ketchup and mustard!")
@@ -346,8 +376,11 @@ async fn handle_replies(context: &Context, msg: &Message) {
                 if message.keyword.as_str() == "kou" && lower_case.contains("kou") {
                     continue;
                 }
-                let m = message.messages.get("en").unwrap();
-                let index = thread_rng().gen_range(0, m.len());
+                let m = message
+                    .messages
+                    .get("en")
+                    .expect("Failed to get Taiga's messages.");
+                let index = thread_rng().gen_range(0..m.len());
                 msg.channel_id
                     .say(&context.http, m[index].as_str())
                     .await
@@ -360,7 +393,7 @@ async fn handle_replies(context: &Context, msg: &Message) {
 }
 
 async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
-    let mut cmd = std::env::var("PREFIX").unwrap();
+    let mut cmd = std::env::var("PREFIX").expect("Failed to retrieve bot's prefix.");
     cmd += emote.name.as_str();
     let remains: &str;
     if msg.content.len() > cmd.len() {
@@ -500,7 +533,10 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
     drop(data_lock);
     let persistence_lock = persistence_clone.read().await;
     let interface_lock = interface_clone.read().await;
-    let config = persistence_lock.config.as_ref().unwrap();
+    let config = persistence_lock
+        .config
+        .as_ref()
+        .expect("Failed to retrieve configuration.");
     let emote_exist = config.emotes.iter().find(|e| e.name == cmd);
     if let Some(e) = emote_exist {
         emote_command(context, msg, e).await;
@@ -512,9 +548,9 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
     failed_messages = &interface_lock
         .interface_strings
         .as_ref()
-        .unwrap()
+        .expect("Failed to retrieve interface strings.")
         .failed_messages;
-    let index = thread_rng().gen_range(0, failed_messages.len());
+    let index = thread_rng().gen_range(0..failed_messages.len());
     let response = failed_messages[index].replace("{command}", cmd);
     msg.channel_id
         .say(&context.http, &response)
@@ -534,7 +570,7 @@ pub async fn message_received(context: &Context, msg: &Message) {
     if channel.is_none() {
         return;
     }
-    let private_channel = channel.unwrap().private();
+    let private_channel = channel.expect("Failed to retrieve channel.").private();
     if private_channel.is_none() {
         let mut guild = guild.clone().expect("Failed to get guild from cache.");
         let member = guild
@@ -561,7 +597,12 @@ pub async fn message_received(context: &Context, msg: &Message) {
                     .add_role(&context.http, RoleId(736534226945572884))
                     .await
                     .expect("Failed to add a role to the user.");
-                greeting(context, msg.guild_id.as_ref().unwrap(), &member).await;
+                greeting(
+                    context,
+                    msg.guild_id.as_ref().expect("Failed to retrieve guild ID."),
+                    &member,
+                )
+                .await;
                 msg.delete(&context.http)
                     .await
                     .expect("Failed to delete the message.");
@@ -569,11 +610,12 @@ pub async fn message_received(context: &Context, msg: &Message) {
                 msg.delete(&context.http)
                     .await
                     .expect("Failed to delete the message.");
-                let _msg = msg
+                let reply_message = msg
                     .reply(&context.http, "Your answer is incorrect. Please try again.")
                     .await;
-                tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
-                _msg.unwrap()
+                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                reply_message
+                    .expect("Failed to retrieve sent message.")
                     .delete(&context.http)
                     .await
                     .expect("Failed to delete the message.");
@@ -604,23 +646,29 @@ pub async fn message_received(context: &Context, msg: &Message) {
     let interface_lock = interface_clone.read().await;
 
     // Update last modified time of persistence storage and write data every 5 minutes.
-    let last_modified_time = persistence_lock.last_modified_time.as_ref().unwrap();
+    let last_modified_time = persistence_lock
+        .last_modified_time
+        .as_ref()
+        .expect("Failed to retrieve last modified time.");
     if last_modified_time < &Utc::now() {
         persistence_lock.write();
         persistence_lock.last_modified_time = Some(Utc::now() + Duration::minutes(5));
     }
 
     // Update presence every 60 minutes.
-    let presence_timer = persistence_lock.presence_timer.as_ref().unwrap();
+    let presence_timer = persistence_lock
+        .presence_timer
+        .as_ref()
+        .expect("Failed to retrieve presence timer.");
     if presence_timer < &Utc::now() {
         let presences: &[String] = interface_lock
             .interface_strings
             .as_ref()
-            .unwrap()
+            .expect("Failed to retrieve interface strings.")
             .presence
             .borrow();
         let activity =
-            Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
+            Activity::playing(presences[thread_rng().gen_range(0..presences.len())].as_str());
         let status = OnlineStatus::Online;
         context.set_presence(Some(activity), status).await;
         persistence_lock.presence_timer = Some(Utc::now() + Duration::hours(1));
@@ -628,7 +676,10 @@ pub async fn message_received(context: &Context, msg: &Message) {
     drop(interface_lock);
 
     let mut is_persistence_changed = false;
-    let reminders = persistence_lock.reminders.as_mut().unwrap();
+    let reminders = persistence_lock
+        .reminders
+        .as_mut()
+        .expect("Failed to retrieve reminders.");
     let mut user_id_to_remove = HashSet::new();
     // Remind users
     for (user_id, reminder) in reminders.iter() {
@@ -660,10 +711,13 @@ pub async fn message_received(context: &Context, msg: &Message) {
     }
     for id in smote_users_to_remove.iter() {
         let mut guild = guild.clone().expect("Failed to get guild from cache.");
-        let member = guild
-            .members
-            .get_mut(&UserId::from(*id))
-            .expect("Failed to get member from cache.");
+        let member = guild.members.get_mut(&UserId::from(*id));
+        let member = match member {
+            Some(m) => m,
+            None => {
+                continue;
+            }
+        };
         for role_id in SMITE_ROLE_IDS.iter() {
             let result: serenity::Result<()> = member
                 .remove_role(&context.http, RoleId::from(*role_id))
@@ -684,16 +738,21 @@ pub async fn message_received(context: &Context, msg: &Message) {
 #[hook]
 pub async fn before(context: &Context, msg: &Message, command_name: &str) -> bool {
     let lock = context.data.read().await;
-    let persistence = lock.get::<PersistenceService>().unwrap();
+    let persistence = lock
+        .get::<PersistenceService>()
+        .expect("Failed to retrieve persistence service.");
     let _persistence = Arc::clone(persistence);
     drop(lock);
     let persistence_lock = _persistence.read().await;
-    let channel = msg.channel(&context.cache).await.unwrap();
+    let channel = msg
+        .channel(&context.cache)
+        .await
+        .expect("Failed to retrieve message channel.");
     let guild_channel = channel.guild();
     let enabled_channels = &persistence_lock
         .channel_settings
         .as_ref()
-        .unwrap()
+        .expect("Failed to retrieve channel settings.")
         .enabled_channels;
     if ADMIN_COMMANDS.contains(&command_name) {
         drop(persistence_lock);
@@ -732,12 +791,14 @@ pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchErr
         }
         DispatchError::Ratelimited(time) => {
             let lock = context.data.read().await;
-            let interface = lock.get::<InterfaceService>().unwrap();
+            let interface = lock
+                .get::<InterfaceService>()
+                .expect("Failed to retrieve interface service.");
             let interface_lock = interface.read().await;
             let error_msg = interface_lock
                 .interface_strings
                 .as_ref()
-                .unwrap()
+                .expect("Failed to retrieve interface strings.")
                 .cool_down
                 .clone();
             drop(interface_lock);
@@ -767,18 +828,20 @@ impl EventHandler for Handler {
 
     async fn ready(&self, context: Context, ready: Ready) {
         let lock = context.data.read().await;
-        let interface = lock.get::<InterfaceService>().unwrap();
+        let interface = lock
+            .get::<InterfaceService>()
+            .expect("Failed to retrieve interface service.");
         let interface_lock = interface.read().await;
         let presences = interface_lock
             .interface_strings
             .as_ref()
-            .unwrap()
+            .expect("Failed to retrieve interface strings.")
             .presence
             .to_vec();
         drop(interface_lock);
         drop(lock);
         let activity =
-            Activity::playing(presences[thread_rng().gen_range(0, presences.len())].as_str());
+            Activity::playing(presences[thread_rng().gen_range(0..presences.len())].as_str());
         let status = OnlineStatus::Online;
         context.set_presence(Some(activity), status).await;
         info!("{} is now online!", ready.user.name.as_str());
@@ -787,9 +850,16 @@ impl EventHandler for Handler {
 
 async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
     let data = context.data.read().await;
-    let command_groups = data.get::<CommandGroupCollection>().unwrap().to_vec();
-    let interface = data.get::<InterfaceService>().unwrap();
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let command_groups = data
+        .get::<CommandGroupCollection>()
+        .expect("Failed to retrieve command group collection.")
+        .to_vec();
+    let interface = data
+        .get::<InterfaceService>()
+        .expect("Failed to retrieve interface service.");
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to retrieve persistence service.");
     let interface_lock = interface.read().await;
     let persistence_lock = persistence.read().await;
     let is_kou = interface_lock.is_kou;
@@ -797,7 +867,7 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
     let greetings = interface_lock
         .interface_strings
         .as_ref()
-        .unwrap()
+        .expect("Failed to retrieve interface strings.")
         .greetings
         .to_vec();
     drop(persistence_lock);
@@ -808,19 +878,28 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
         let mut rng = thread_rng();
         greeting = greetings
             .choose(&mut rng)
-            .unwrap()
+            .expect("Failed to choose random greeting message.")
             .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
     }
     let mut general_channels: Vec<String> = vec![];
-    general_channels.push(env::var("GENCHN").unwrap());
-    general_channels.push(env::var("TESTGENCHN").unwrap());
-    general_channels.push(env::var("KOUGENCHN").unwrap());
-    general_channels.push(env::var("ECC_GENCHAN").unwrap());
+    general_channels.push(env::var("GENCHN").expect("Failed to retrieve general channel ID."));
+    general_channels
+        .push(env::var("TESTGENCHN").expect("Failed to retrieve test general channel ID."));
+    general_channels
+        .push(env::var("KOUGENCHN").expect("Failed to retrieve Kou server's general channel ID."));
+    general_channels
+        .push(env::var("ECC_GENCHAN").expect("Failed to retrieve ECC's general channel ID."));
 
-    let guild_channels: HashMap<ChannelId, GuildChannel> =
-        guild_id.channels(&context.http).await.unwrap();
+    let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id
+        .channels(&context.http)
+        .await
+        .expect("Failed to retrieve guild channels.");
     for channel in general_channels.iter() {
-        let guild = guild_channels.get(&ChannelId::from(channel.parse::<u64>().unwrap()));
+        let guild = guild_channels.get(&ChannelId::from(
+            channel
+                .parse::<u64>()
+                .expect("Failed to parse u64 from string."),
+        ));
         if let Some(c) = guild {
             c.say(&context.http, &greeting)
                 .await
@@ -832,7 +911,8 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
     text = text.replace("{user}", &member.user.mention());
     let guild_name = guild_id.name(&context.cache).await.unwrap_or_default();
     text = text.replace("{guildName}", &guild_name);
-    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16).unwrap();
+    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16)
+        .expect("Failed to create u32 value from string.");
     let color = Color::new(color_code);
 
     build_embed(

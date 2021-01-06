@@ -14,11 +14,16 @@ use std::sync::Arc;
 #[bucket = "utilities"]
 pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let data = context.data.read().await;
-    let interface = data.get::<InterfaceService>().unwrap();
+    let interface = data
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
     let _interface = Arc::clone(interface);
     drop(data);
     let interface_lock = _interface.read().await;
-    let interface = interface_lock.interface_strings.as_ref().unwrap();
+    let interface = interface_lock
+        .interface_strings
+        .as_ref()
+        .expect("Failed to get interface strings.");
     let interface_string = &interface.pick;
 
     // If there are no arguments at all, abort.
@@ -29,7 +34,9 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     }
 
     // Get the first argument in the list.
-    let first_arg = args.single::<String>().unwrap();
+    let first_arg = args
+        .single::<String>()
+        .expect("Failed to get first argument.");
     let mut is_multiple = false;
     let mut first_arg_piped = false;
     let mut raw_times = String::new();
@@ -113,7 +120,9 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
 
     if is_multiple {
         // Parse the times.
-        let index = raw_times.find('t').unwrap();
+        let index = raw_times
+            .find('t')
+            .expect("Failed to find raw times in the input string.");
         let times = &raw_times[..index].parse::<u32>();
         // Map all options to a map.
         let mut options_map = HashMap::new();
@@ -128,9 +137,9 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
                 return Ok(());
             } else {
                 let mut rng = thread_rng();
-                for _ in 0..*times.as_ref().unwrap() {
+                for _ in 0..*times.as_ref().expect("Failed to parse u32 from string.") {
                     *options_map
-                        .entry(options[rng.gen_range(0, options.len())].as_str())
+                        .entry(options[rng.gen_range(0..options.len())].as_str())
                         .or_insert(0) += 1_u32;
                 }
             }
@@ -149,7 +158,7 @@ pub async fn pick(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         }
         msg.channel_id.say(&context.http, message.as_str()).await?;
     } else {
-        let result = options[thread_rng().gen_range(0, options.len())].as_str();
+        let result = options[thread_rng().gen_range(0..options.len())].as_str();
         let message = interface_string.result.as_str().replace("{option}", result);
         msg.channel_id.say(&context.http, message).await?;
     }

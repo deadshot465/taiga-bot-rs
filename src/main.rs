@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
 
     let prefix = env::var("PREFIX").unwrap();
 
-    let mut client = Client::new(token)
+    let mut client = Client::builder(token)
         .add_intent(GatewayIntents::GUILDS)
         .add_intent(GatewayIntents::GUILD_MEMBERS)
         .add_intent(GatewayIntents::GUILD_VOICE_STATES)

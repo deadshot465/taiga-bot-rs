@@ -37,8 +37,12 @@ const KOU_RESPONSES: [&str; 5] = [
 #[bucket = "games"]
 pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let data = context.data.read().await;
-    let interface = data.get::<InterfaceService>().unwrap();
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let interface = data
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let interface_lock = interface.read().await;
     // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
     let is_kou = interface_lock.is_kou;
@@ -68,7 +72,8 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     drop(persistence_lock);
 
     // Build color to be used in embeds beforehand.
-    let color_value = u32::from_str_radix(if is_kou { "e7a43a" } else { "e81615" }, 16).unwrap();
+    let color_value = u32::from_str_radix(if is_kou { "e7a43a" } else { "e81615" }, 16)
+        .expect("Failed to create u32 from string.");
     let color = Color::new(color_value);
 
     // Check if rounds are specified. If there's any error, sanitize it and set max rounds to 7.
@@ -94,9 +99,16 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
     let mut result: Option<HashMap<u64, u8>> = None;
     // If game starts, wait for game result.
     if game_started {
-        let _result = progress(context, msg, max_rounds, is_kou, &players.unwrap()).await;
-        if _result.is_ok() {
-            result = Some(_result.unwrap());
+        let progress_result = progress(
+            context,
+            msg,
+            max_rounds,
+            is_kou,
+            &players.expect("Failed to get participating players."),
+        )
+        .await;
+        if progress_result.is_ok() {
+            result = Some(progress_result.expect("Failed to get progress result."));
         } else {
             result = None;
         }
@@ -147,10 +159,15 @@ async fn join_game(
     is_kou: bool,
 ) -> (bool, Option<Vec<User>>) {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let mut persistence_lock = persistence.write().await;
     // Add the current channel to ongoing quizzes.
-    let ongoing_quizzes = persistence_lock.ongoing_quizzes.as_mut().unwrap();
+    let ongoing_quizzes = persistence_lock
+        .ongoing_quizzes
+        .as_mut()
+        .expect("Failed to get ongoing quizzes.");
     let _ = ongoing_quizzes.insert(msg.channel_id.0);
     drop(persistence_lock);
     drop(data);
@@ -277,7 +294,9 @@ async fn progress(
     players: &[User],
 ) -> std::result::Result<HashMap<u64, u8>, CommandError> {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let persistence_lock = persistence.read().await;
     let http = &context.http;
     let mut score_board = HashMap::<u64, u8>::new();
@@ -290,12 +309,15 @@ async fn progress(
     // This means other users who didn't join the game can't reply.
     let mut collector = MessageCollectorBuilder::new(context)
         .channel_id(msg.channel_id.0)
-        .guild_id(msg.guild_id.as_ref().unwrap().0)
+        .guild_id(msg.guild_id.as_ref().expect("Failed to get guild ID.").0)
         .filter(move |m| player_ids.contains(&m.author.id.0))
         .await;
 
     // Get quiz questions from persistence storage and shuffle it.
-    let questions = persistence_lock.quiz_questions.as_ref().unwrap();
+    let questions = persistence_lock
+        .quiz_questions
+        .as_ref()
+        .expect("Failed to get quiz questions.");
     quiz_questions = questions.to_vec();
     {
         let mut rng = thread_rng();
@@ -311,14 +333,15 @@ async fn progress(
         if current_question.is_none() {
             return Ok(score_board);
         }
-        let mut current_question = current_question.unwrap();
+        let mut current_question = current_question.expect("Failed to get current question.");
         // Map all answers to lowercase for comparison.
         if current_question._type == "FILL" {
             msg.channel_id
                 .say(http, current_question.question.as_str())
                 .await?;
             // Only wait for replies for 30 seconds; after that, consider the game stale.
-            let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(30));
+            let delay = tokio::time::sleep(tokio::time::Duration::from_secs(30));
+            tokio::pin!(delay);
             // This loop and tokio::select macro will pick the first future that completes.
             // That means either user replies in 30 seconds, or the delay completes.
             loop {
@@ -334,9 +357,9 @@ async fn progress(
                             {
                                 let mut rng = thread_rng();
                                 response = if is_kou {
-                                    KOU_RESPONSES.choose(&mut rng).unwrap()
+                                    KOU_RESPONSES.choose(&mut rng).expect("Failed to choose a random Kou response.")
                                 } else {
-                                    TAIGA_RESPONSES.choose(&mut rng).unwrap()
+                                    TAIGA_RESPONSES.choose(&mut rng).expect("Failed to choose a random Taiga response.")
                                 }
                             }
                             if current_question.answers
@@ -384,7 +407,8 @@ async fn progress(
             message += joined.as_str();
             msg.channel_id.say(http, message.as_str()).await?;
             // Again we use branch to select the first concurrent task that completes.
-            let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(30));
+            let delay = tokio::time::sleep(tokio::time::Duration::from_secs(30));
+            tokio::pin!(delay);
             loop {
                 tokio::select! {
                     _ = &mut delay => {
@@ -398,9 +422,9 @@ async fn progress(
                                 {
                                     let mut rng = thread_rng();
                                     response = if is_kou {
-                                        KOU_RESPONSES.choose(&mut rng).unwrap()
+                                        KOU_RESPONSES.choose(&mut rng).expect("Failed to choose a random Kou response.")
                                     } else {
-                                        TAIGA_RESPONSES.choose(&mut rng).unwrap()
+                                        TAIGA_RESPONSES.choose(&mut rng).expect("Failed to choose a random Taiga response.")
                                     }
                                 }
                                 v.channel_id.say(http, format!("{} {}", v.author.mention(), response).as_str()).await?;
@@ -428,18 +452,23 @@ async fn end_game(
     color: &Color,
 ) -> CommandResult {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let mut persistence_lock = persistence.write().await;
     // Remove the game from ongoing quizzes.
-    let ongoing_quizzes = persistence_lock.ongoing_quizzes.as_mut().unwrap();
+    let ongoing_quizzes = persistence_lock
+        .ongoing_quizzes
+        .as_mut()
+        .expect("Failed to get ongoing quizzes.");
     ongoing_quizzes.remove(&msg.channel_id.0);
     drop(persistence_lock);
     drop(data);
 
     // Build up the scoreboard.
     if show_scoreboard {
-        let score_board = result.unwrap();
-        let guild_id = msg.guild_id.unwrap();
+        let score_board = result.expect("Failed to get score board.");
+        let guild_id = msg.guild_id.expect("Failed to get guild ID.");
         let guild = context
             .cache
             .guild(guild_id)
@@ -447,7 +476,15 @@ async fn end_game(
             .expect("Failed to get guild information.");
         let mut score_board = score_board
             .iter()
-            .map(|item| (guild.members.get(&UserId(*item.0)).unwrap(), *item.1))
+            .map(|item| {
+                (
+                    guild
+                        .members
+                        .get(&UserId(*item.0))
+                        .expect("Failed to get member."),
+                    *item.1,
+                )
+            })
             .collect::<Vec<(&Member, u8)>>();
         score_board.sort_by_key(|item| (*item).1);
         score_board.reverse();

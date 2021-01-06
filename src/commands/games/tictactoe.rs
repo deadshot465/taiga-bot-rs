@@ -26,7 +26,9 @@ const CROSS: &str = "×";
 #[bucket = "games"]
 async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let _persistence = Arc::clone(persistence);
     drop(data);
     let persistence_lock = _persistence.read().await;
@@ -45,12 +47,18 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     }
     drop(persistence_lock);
 
-    let color_value = u32::from_str_radix("306998", 16).unwrap();
+    let color_value = u32::from_str_radix("306998", 16).expect("Failed to create u32 from string.");
     let color = Color::new(color_value);
     let (game_started, players) = join_game(context, msg, color).await;
     // If game starts, wait for game result.
     if game_started {
-        let _ = progress(context, msg, players.unwrap(), color).await;
+        let _ = progress(
+            context,
+            msg,
+            players.expect("Failed to get players."),
+            color,
+        )
+        .await;
     }
     end_game(context, msg).await;
     Ok(())
@@ -59,10 +67,15 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
 /// Handles player joining.
 async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Option<Vec<User>>) {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let mut persistence_lock = persistence.write().await;
     // Add the current channel to ongoing quizzes.
-    let ongoing_tictactoes = persistence_lock.ongoing_tictactoes.as_mut().unwrap();
+    let ongoing_tictactoes = persistence_lock
+        .ongoing_tictactoes
+        .as_mut()
+        .expect("Failed to get ongoing tic-tac-toes.");
     let _ = ongoing_tictactoes.insert(msg.channel_id.0);
     drop(persistence_lock);
     drop(data);
@@ -222,7 +235,7 @@ async fn draw_board(
         Ok(Some(_msg))
     } else {
         message
-            .unwrap()
+            .expect("Failed to get sent message")
             .edit(&context.http, |m| {
                 m.embed(|e| {
                     e.color(color);
@@ -276,25 +289,25 @@ async fn progress(
                 "There is an error when creating the board! Game is aborted.",
             )
             .await?;
-        tokio::time::delay_for(tokio::time::Duration::from_secs(3)).await;
+        tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
         err_msg
             .delete(http)
             .await
             .expect("Failed to delete message.");
         return Err(CommandError::from("Failed to create game board."));
     }
-    let mut message = message.unwrap();
+    let mut message = message.expect("Failed to get message.");
     let mut round = 0;
     let _players = players.to_vec();
     let mut player1_collector = MessageCollectorBuilder::new(&context)
         .channel_id(msg.channel_id.0)
-        .guild_id(msg.guild_id.as_ref().unwrap().0)
+        .guild_id(msg.guild_id.as_ref().expect("Failed to get guild ID.").0)
         .filter(move |m| m.author.id.0 == _players[0].id.0)
         .await;
     let _players = players.to_vec();
     let mut player2_collector = MessageCollectorBuilder::new(&context)
         .channel_id(msg.channel_id.0)
-        .guild_id(msg.guild_id.as_ref().unwrap().0)
+        .guild_id(msg.guild_id.as_ref().expect("Failed to get guild ID.").0)
         .filter(move |m| m.author.id.0 == _players[1].id.0)
         .await;
     loop {
@@ -314,13 +327,14 @@ async fn progress(
                 ),
             )
             .await?;
-        let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(30));
+        let delay = tokio::time::sleep(tokio::time::Duration::from_secs(30));
         let collector = if round % 2 == 0 {
             &mut player1_collector
         } else {
             &mut player2_collector
         };
         let mut y = 0_u8;
+        tokio::pin!(delay);
         loop {
             tokio::select! {
                 _ = &mut delay => {
@@ -354,7 +368,8 @@ async fn progress(
             )
             .await?;
         let mut x = 0_u8;
-        let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(30));
+        let delay = tokio::time::sleep(tokio::time::Duration::from_secs(30));
+        tokio::pin!(delay);
         loop {
             tokio::select! {
                 _ = &mut delay => {
@@ -382,7 +397,7 @@ async fn progress(
                 .channel_id
                 .say(http, "The slot you selected is occupied!")
                 .await?;
-            tokio::time::delay_for(tokio::time::Duration::from_secs_f32(1.5)).await;
+            tokio::time::sleep(tokio::time::Duration::from_secs_f32(1.5)).await;
             err_msg
                 .delete(http)
                 .await
@@ -489,9 +504,14 @@ fn check_result(board: &[Vec<&str>]) -> TicTacToeResult {
 
 async fn end_game(context: &Context, msg: &Message) {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let mut persistence_lock = persistence.write().await;
-    let ongoing_tictactoes = persistence_lock.ongoing_tictactoes.as_mut().unwrap();
+    let ongoing_tictactoes = persistence_lock
+        .ongoing_tictactoes
+        .as_mut()
+        .expect("Failed to get ongoing tic-tac-toes.");
     ongoing_tictactoes.remove(&msg.channel_id.0);
     drop(persistence_lock);
     drop(data);

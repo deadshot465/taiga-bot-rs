@@ -19,9 +19,16 @@ const TAIGA_GOODBYE: &str = "Hope you like my guide! Make sure to say hello to o
 #[bucket = "information"]
 async fn guide(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
-    let command_groups = data.get::<CommandGroupCollection>().unwrap().to_vec();
-    let interface = data.get::<InterfaceService>().unwrap();
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let command_groups = data
+        .get::<CommandGroupCollection>()
+        .expect("Failed to retrieve command group collection.")
+        .to_vec();
+    let interface = data
+        .get::<InterfaceService>()
+        .expect("Failed to get interface service.");
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let interface_lock = interface.read().await;
     let persistence_lock = persistence.read().await;
     let is_kou = interface_lock.is_kou;
@@ -33,14 +40,18 @@ async fn guide(context: &Context, msg: &Message) -> CommandResult {
     let guild_name = msg
         .guild_id
         .as_ref()
-        .unwrap()
+        .expect("Failed to get guild ID.")
         .name(&context.cache)
         .await
         .unwrap_or_default();
     text = text.replace("{user}", &msg.author.mention());
     text = text.replace("{guildName}", &guild_name);
-    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16).unwrap();
-    let member = msg.member(&context.http).await.unwrap();
+    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16)
+        .expect("Failed to create u32 from string.");
+    let member = msg
+        .member(&context.http)
+        .await
+        .expect("Failed to get member.");
     build_embed(
         context,
         &member,
@@ -127,7 +138,7 @@ pub async fn build_embed(
         .await?;
 
     'outer: loop {
-        let mut delay = tokio::time::delay_for(tokio::time::Duration::from_secs(60 * 5));
+        let delay = tokio::time::sleep(tokio::time::Duration::from_secs(60 * 5));
         message
             .edit(http, |m| {
                 m.embed(|e| {
@@ -174,6 +185,7 @@ pub async fn build_embed(
         }
         message.react(http, end_reaction.clone()).await?;
         */
+        tokio::pin!(delay);
         'inner: loop {
             tokio::select! {
                 _ = &mut delay => {
@@ -205,13 +217,13 @@ pub async fn build_embed(
                                 e.color(color);
                                 let cmd = all_commands.iter()
                                     .find(|c| c.options.names.contains(&lower_case.as_str()))
-                                    .unwrap();
-                                e.description(cmd.options.desc.unwrap());
+                                    .expect("Failed to get all command names.");
+                                e.description(cmd.options.desc.expect("Failed to get description of the command."));
                                 e
                             })).await?;
                             let _http = http.clone();
                             tokio::spawn(async move {
-                                tokio::time::delay_for(tokio::time::Duration::from_secs(10)).await;
+                                tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
                                 _msg.delete(_http).await.expect("Failed to delete the message.");
                             });
                         }
@@ -223,7 +235,7 @@ pub async fn build_embed(
                                             .await?;
                                         let _http = http.clone();
                                         tokio::spawn(async move {
-                                            tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
+                                            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                                             _msg.delete(_http).await.expect("Failed to delete message.");
                                         });
                                     }
@@ -237,7 +249,7 @@ pub async fn build_embed(
                                             .await?;
                                         let _http = http.clone();
                                         tokio::spawn(async move {
-                                            tokio::time::delay_for(tokio::time::Duration::from_secs(5)).await;
+                                            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                                             _msg.delete(_http).await.expect("Failed to delete message.");
                                         });
                                     }

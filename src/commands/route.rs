@@ -37,8 +37,9 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
         "Play {}'s route next. All bois are best bois.",
         get_first_name(route.name.as_str())
     );
-    let color = u32::from_str_radix(&route.color.as_str(), 16).unwrap() as i32;
-    let mut ending = ENDINGS[thread_rng().gen_range(0, ENDINGS.len())];
+    let color = u32::from_str_radix(&route.color.as_str(), 16)
+        .expect("Failed to create u32 from string.") as i32;
+    let mut ending = ENDINGS[thread_rng().gen_range(0..ENDINGS.len())];
     if route.name == "Hiro Akiba (Mature)" || route.name == "Minamoto Kou" {
         ending = "Perfect";
     }
@@ -60,10 +61,10 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
                 .footer(|f| f.text(footer))
                 .thumbnail(if route.name == "Hiro Akiba (Mature)" {
                     let id = MATURE_HIRO_EMOTE_IDS
-                        [thread_rng().gen_range(0, MATURE_HIRO_EMOTE_IDS.len())];
+                        [thread_rng().gen_range(0..MATURE_HIRO_EMOTE_IDS.len())];
                     get_emote_url(id)
                 } else if route.name == "Minamoto Kou" {
-                    KOU_GIFS[thread_rng().gen_range(0, KOU_GIFS.len())].to_string()
+                    KOU_GIFS[thread_rng().gen_range(0..KOU_GIFS.len())].to_string()
                 } else {
                     get_emote_url(route.emote_id.as_str())
                 })
@@ -73,9 +74,14 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
         .await?;
 
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let mut persistence_lock = persistence.write().await;
-    let user_records = persistence_lock.user_records.as_mut().unwrap();
+    let user_records = persistence_lock
+        .user_records
+        .as_mut()
+        .expect("Failed to get user records.");
     let user_record = user_records
         .entry(msg.author.id.0.to_string())
         .or_insert_with(UserRecords::new);
@@ -105,10 +111,15 @@ pub async fn route(context: &Context, msg: &Message) -> CommandResult {
 
 async fn get_route(context: &Context) -> Character {
     let data = context.data.read().await;
-    let persistence = data.get::<PersistenceService>().unwrap();
+    let persistence = data
+        .get::<PersistenceService>()
+        .expect("Failed to get persistence service.");
     let persistence_lock = persistence.read().await;
-    let res = thread_rng().gen_range(0, 100);
-    let routes = persistence_lock.routes.as_ref().unwrap();
+    let res = thread_rng().gen_range(0..100);
+    let routes = persistence_lock
+        .routes
+        .as_ref()
+        .expect("Failed to get routes.");
     match res {
         x if x >= 0 && x <= 14 => routes[0].clone(),
         x if x >= 15 && x <= 19 => routes[1].clone(),

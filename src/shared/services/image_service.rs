@@ -26,7 +26,8 @@ struct SearchResult {
 const ITEM_PER_PAGE: u8 = 10;
 
 pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
-    let token = std::env::var("UNSPLASH_TOKEN").unwrap();
+    let token = std::env::var("UNSPLASH_TOKEN")
+        .expect("Failed to get unsplash token from environment variable.");
     let client = reqwest::Client::new();
     let response = client
         .get(
@@ -47,7 +48,7 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
 
     // Limit to the first 25% pages.
     let upper_page_limit = ((total_pages as f32) * 0.25_f32).ceil();
-    let random_page_number = thread_rng().gen_range(0_u32, (upper_page_limit as u32) + 1_u32);
+    let random_page_number = thread_rng().gen_range(0_u32..(upper_page_limit as u32) + 1_u32);
     let response = client
         .get(
             format!(
@@ -64,9 +65,9 @@ pub async fn get_image(keyword: &str) -> Result<Vec<u8>, CommandError> {
     {
         let mut rng = thread_rng();
         item_no = if random_page_number == total_pages {
-            rng.gen_range(0_usize, modulo as usize)
+            rng.gen_range(0_usize..modulo as usize)
         } else {
-            rng.gen_range(0_usize, ITEM_PER_PAGE as usize)
+            rng.gen_range(0_usize..ITEM_PER_PAGE as usize)
         };
     }
     let link = &data.results[item_no].urls.regular;
