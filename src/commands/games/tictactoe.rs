@@ -107,7 +107,10 @@ async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Opt
     // Loop until 10 seconds have already passed.
     loop {
         // Get user mentions from participating players.
-        let user_mentions = users.iter().map(|u| u.mention()).collect::<Vec<String>>();
+        let user_mentions = users
+            .iter()
+            .map(|u| u.mention().to_string())
+            .collect::<Vec<String>>();
         description = format!("React below to start a tic-tac-toe!\nYou need 2 players (including yourself) to play this game.\nCurrent players:{}\n{} seconds left!", user_mentions.join(", "), (end_joining_time - Utc::now()).num_seconds());
         // Edit the message to show current participants.
         message

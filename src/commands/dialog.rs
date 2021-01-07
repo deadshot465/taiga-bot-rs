@@ -70,7 +70,6 @@ pub async fn dialog(context: &Context, msg: &Message, mut args: Args) -> Command
         background.as_str(),
         character.as_str(),
         text_content.as_str(),
-        context,
     )
     .await
     .expect("Failed to generate dialog.");

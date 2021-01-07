@@ -199,7 +199,10 @@ async fn join_game(
     // Loop until 10 seconds have already passed.
     loop {
         // Get user mentions from participating players.
-        let user_mentions = users.iter().map(|u| u.mention()).collect::<Vec<String>>();
+        let user_mentions = users
+            .iter()
+            .map(|u| u.mention().to_string())
+            .collect::<Vec<String>>();
         // Kou will possibly only have SFW questions.
         // While Taiga might have NSFW questions.
         description = format!("React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!", if is_kou {

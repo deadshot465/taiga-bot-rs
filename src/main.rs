@@ -85,15 +85,16 @@ async fn main() -> anyhow::Result<()> {
     let prefix = env::var("PREFIX").unwrap();
 
     let mut client = Client::builder(token)
-        .add_intent(GatewayIntents::GUILDS)
-        .add_intent(GatewayIntents::GUILD_MEMBERS)
-        .add_intent(GatewayIntents::GUILD_VOICE_STATES)
-        .add_intent(GatewayIntents::GUILD_PRESENCES)
-        .add_intent(GatewayIntents::GUILD_MESSAGES)
-        .add_intent(GatewayIntents::GUILD_MESSAGE_REACTIONS)
-        .add_intent(GatewayIntents::GUILD_MESSAGE_TYPING)
-        .add_intent(GatewayIntents::GUILD_MESSAGE_REACTIONS)
-        .add_intent(GatewayIntents::DIRECT_MESSAGES)
+        .intents(
+            GatewayIntents::GUILDS
+                | GatewayIntents::GUILD_MEMBERS
+                | GatewayIntents::GUILD_VOICE_STATES
+                | GatewayIntents::GUILD_PRESENCES
+                | GatewayIntents::GUILD_MESSAGES
+                | GatewayIntents::GUILD_MESSAGE_TYPING
+                | GatewayIntents::GUILD_MESSAGE_REACTIONS
+                | GatewayIntents::DIRECT_MESSAGES,
+        )
         .event_handler(Handler)
         .framework(
             StandardFramework::new()

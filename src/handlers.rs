@@ -335,7 +335,7 @@ async fn handle_replies(context: &Context, msg: &Message) {
             if lower_case.contains("hiro") && !lower_case.contains("shiro") {
                 let character = "taiga";
                 let text = "Hiro will be terribly wrong if he thinks he can steal Keitaro from me!";
-                let bytes = get_dialog(background, character, text, context)
+                let bytes = get_dialog(background, character, text)
                     .await
                     .expect("Failed to generate dialog.");
                 let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
@@ -908,7 +908,7 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
         }
     }
 
-    text = text.replace("{user}", &member.user.mention());
+    text = text.replace("{user}", &member.user.mention().to_string());
     let guild_name = guild_id.name(&context.cache).await.unwrap_or_default();
     text = text.replace("{guildName}", &guild_name);
     let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16)

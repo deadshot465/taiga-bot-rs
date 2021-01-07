@@ -1,7 +1,7 @@
 use crate::shared::SpecializedInfo;
 use crate::{
-    get_specialized_dialog, validate_text, AuthenticationService, AvailableSpecializedOptions,
-    InterfaceService, PersistenceService, SpecializedDialog, TextError,
+    get_specialized_dialog, validate_text, AvailableSpecializedOptions, InterfaceService,
+    PersistenceService, SpecializedDialog, TextError,
 };
 use rand::{thread_rng, Rng};
 use serenity::framework::standard::{macros::command, Args, CommandError, CommandResult};
@@ -289,20 +289,16 @@ async fn say(
     let persistence = lock
         .get::<PersistenceService>()
         .expect("Failed to get persistence service.");
-    let authentication = lock
-        .get::<AuthenticationService>()
-        .expect("Failed to get authentication service.");
-    let _persistence = Arc::clone(persistence);
-    let _interface = Arc::clone(interface);
-    let _authentication = Arc::clone(authentication);
+    let persistence_clone = Arc::clone(persistence);
+    let interface_clone = Arc::clone(interface);
     drop(lock);
-    let interface_lock = _interface.read().await;
+    let interface_lock = interface_clone.read().await;
     let interface_strings = interface_lock
         .interface_strings
         .as_ref()
         .expect("Failed to get interface strings.");
     let interface_string = &interface_strings.say[character];
-    let persistence_lock = _persistence.read().await;
+    let persistence_lock = persistence_clone.read().await;
 
     let backgrounds = persistence_lock
         .dialog_backgrounds
@@ -464,7 +460,7 @@ async fn say(
             //let data = response.bytes().await?;
             let data = get_specialized_dialog(request_data)
                 .await
-                .expect("Failed to generate specialied dialog.");
+                .expect("Failed to generate specialized dialog.");
             return Ok(data);
         }
     } else {

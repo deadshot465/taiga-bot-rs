@@ -44,7 +44,7 @@ async fn guide(context: &Context, msg: &Message) -> CommandResult {
         .name(&context.cache)
         .await
         .unwrap_or_default();
-    text = text.replace("{user}", &msg.author.mention());
+    text = text.replace("{user}", &msg.author.mention().to_string());
     text = text.replace("{guildName}", &guild_name);
     let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16)
         .expect("Failed to create u32 from string.");
