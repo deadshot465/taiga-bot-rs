@@ -7,3 +7,5 @@
 /persistence/userReplies.json
 /persistence/config.json
 /persistence/smite.json
+.DS_Store
+**/*/.DS_Store
