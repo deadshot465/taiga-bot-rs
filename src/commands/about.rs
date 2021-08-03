@@ -30,17 +30,17 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
             .description(description +
                 "It was also inspired by dunste123#0129's Hiro. \n" +
                 "Join Yuuto's dev team and start developing on the [project website](http://iamdeja.github.io/yuuto-docs/). \n\n" +
-                "Taiga version 3.0 was made and developed by: \n" +
+                "Taiga version 3.0.1 was made and developed by: \n" +
                 "**Tetsuki Syu#1250**, **Kirito#9286**, **Arch#0226** \n" +
                 "Yuuto version 2.0 was made and developed by: \n" +
                 "**Arch#0226**, **dunste123#0129**, **Tai Chi#4634**, **zsotroav#8941** \n" +
-                "Taiga version 3.0 and Yuuto's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
+                "Taiga version 3.0.1 and Yuuto's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
                 "Japanese oracle co-translated with: \n**Kirito#9286** \n" +
                 "Hangman, Quiz, and Tic-tac-toe minigames co-written with: \n**Kirito#9286** \n" +
                 "Taiga reactions and feedback shared by: \n" +
                 "**Kirito#9286**, **Kachiryoku#0387**, and countless Camp Buddy fans. \n" +
                 "Taiga Bot is licensed under GNU GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html \n")
-            .footer(|f| f.text("Taiga Bot: Release 3.0 | 2020-08-24 | For my most important person."))
+            .footer(|f| f.text("Taiga Bot: Release 3.0.1 | 2021-08-04"))
             .thumbnail("https://cdn.discordapp.com/emojis/448579316171669545.png")))
             .await?;
     } else {
@@ -56,13 +56,13 @@ pub async fn about(context: &Context, msg: &Message) -> CommandResult {
             .description(description +
                 "It was also inspired and based on [Taiga](https://www.github.com/deadshot465/TaigaBotCS) and inspired by the [Yuuto project](http://iamdeja.github.io/yuuto-docs/) \n" +
                 "It was also a dedication and a tribute to my most important person. \n\n" +
-                "Kou version 2.0 was made and developed by: \n" +
+                "Kou version 2.0.1 was made and developed by: \n" +
                 "**Tetsuki Syu#1250**, **Kirito#9286**, **Arch#0226** \n" +
-                "Taiga version 3.0 and Taiga's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
+                "Taiga version 3.0.1 and Taiga's Rust version ported by: \n**Tetsuki Syu#1250** \n" +
                 "Japanese oracle co-translated with: \n**Kirito#9286** \n" +
                 "Hangman, Quiz, and Tic-tac-toe minigames co-written with: \n**Kirito#9286** \n" +
                 "Kou Bot is licensed under GNU GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html \n")
-            .footer(|f| f.text("Kou Bot: Release 2.0 | 2020-08-24 | For my most important person."))
+            .footer(|f| f.text("Kou Bot: Release 2.0.1 | 2021-08-04"))
             .thumbnail("https://cdn.discordapp.com/emojis/448579316171669545.png")))
             .await?;
     }
