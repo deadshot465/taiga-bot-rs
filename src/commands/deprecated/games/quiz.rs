@@ -42,7 +42,7 @@ pub async fn quiz(context: &Context, msg: &Message, mut args: Args) -> CommandRe
         .expect("Failed to get interface service.");
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let interface_lock = interface.read().await;
     // Check if it's Kou or Taiga, since Taiga's quizzes may contain NSFW contents.
     let is_kou = interface_lock.is_kou;
@@ -161,7 +161,7 @@ async fn join_game(
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let mut persistence_lock = persistence.write().await;
     // Add the current channel to ongoing quizzes.
     let ongoing_quizzes = persistence_lock
@@ -299,7 +299,7 @@ async fn progress(
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let persistence_lock = persistence.read().await;
     let http = &context.http;
     let mut score_board = HashMap::<u64, u8>::new();
@@ -316,7 +316,7 @@ async fn progress(
         .filter(move |m| player_ids.contains(&m.author.id.0))
         .await;
 
-    // Get quiz questions from persistence storage and shuffle it.
+    // Get quiz questions from assets storage and shuffle it.
     let questions = persistence_lock
         .quiz_questions
         .as_ref()
@@ -457,7 +457,7 @@ async fn end_game(
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let mut persistence_lock = persistence.write().await;
     // Remove the game from ongoing quizzes.
     let ongoing_quizzes = persistence_lock

@@ -149,7 +149,7 @@ async fn process(
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let _persistence = Arc::clone(persistence);
     drop(data);
     let mut persistence_lock = _persistence.write().await;

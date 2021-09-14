@@ -1,4 +1,4 @@
-use crate::shared::structures::ChannelSettings;
+use crate::shared::structs::ChannelSettings;
 use crate::shared::{
     Character, ConversionTable, Oracle, ShipMessage, SpecializedInfo, UserRecords,
 };
@@ -15,13 +15,13 @@ const VALID_SPECIALIZED_CHARACTERS: [&str; 10] = [
     "hiro", "taiga", "keitaro", "yoichi", "yuri", "kieran", "natsumi", "hunter", "eduard", "lee",
 ];
 
-const USER_RECORDS_PATH: &str = "./persistence/userRecords.json";
-const CHANNEL_SETTINGS_PATH: &str = "./persistence/channelSettings.json";
-const REMINDER_PATH: &str = "./persistence/reminders.json";
-const CONFIG_PATH: &str = "./persistence/config.json";
-const SMOTE_USER_PATH: &str = "./persistence/smite.json";
-const TAIGA_QUIZ_PATH: &str = "./persistence/game/quiz_taiga.json";
-const KOU_QUIZ_PATH: &str = "./persistence/game/quiz_kou.json";
+const USER_RECORDS_PATH: &str = "./assets/userRecords.json";
+const CHANNEL_SETTINGS_PATH: &str = "./assets/channelSettings.json";
+const REMINDER_PATH: &str = "./assets/reminders.json";
+const CONFIG_PATH: &str = "./assets/config.json";
+const SMOTE_USER_PATH: &str = "./assets/smite.json";
+const TAIGA_QUIZ_PATH: &str = "./assets/game/quiz_taiga.json";
+const KOU_QUIZ_PATH: &str = "./assets/game/quiz_kou.json";
 
 pub struct PersistenceService;
 impl TypeMapKey for PersistenceService {
@@ -97,7 +97,7 @@ impl PersistenceStorage {
         entity
             .load(is_kou)
             .await
-            .expect("Failed to initialize persistence storage.");
+            .expect("Failed to initialize assets storage.");
         Ok(entity)
     }
 
@@ -218,7 +218,7 @@ impl PersistenceStorage {
     }
 
     pub fn write(&self) {
-        log::info!("Writing persistence data...");
+        log::info!("Writing assets data...");
         let serialized_user_records: Vec<u8> =
             serde_json::to_vec_pretty(self.user_records.as_ref().unwrap()).unwrap();
         let serialized_user_records_data: &[u8] = serialized_user_records.borrow();

@@ -2,9 +2,35 @@ use regex::Regex;
 use serenity::framework::standard::CommandError;
 use serenity::model::guild::{Guild, Member};
 use serenity::model::id::UserId;
+use serenity::model::prelude::User;
 use serenity::prelude::Context;
 
-pub async fn search_user(
+pub fn get_animated_emote_url(emote_id: &str) -> String {
+    format!("https://cdn.discordapp.com/emojis/{}.gif?v=1", emote_id)
+}
+
+pub fn get_author_avatar(user: &User) -> String {
+    user.avatar_url().unwrap_or(user.default_avatar_url())
+}
+
+pub fn get_author_name(user: &User, member: &Option<Member>) -> String {
+    if let Some(m) = member {
+        m.display_name().to_string()
+    } else {
+        user.name.clone()
+    }
+}
+
+pub fn get_first_name(name: &str) -> &str {
+    let first_name: Vec<&str> = name.split(' ').collect();
+    first_name[0]
+}
+
+pub fn get_static_emote_url(emote_id: &str) -> String {
+    format!("https://cdn.discordapp.com/emojis/{}.png?v=1", emote_id)
+}
+
+/*pub async fn search_user(
     context: &Context,
     guild: &Guild,
     query: &str,
@@ -117,3 +143,4 @@ fn ignore_case<'a>(str1: &'a str, str2: &'a str) -> bool {
     }
     str1.to_uppercase() == str2.to_uppercase()
 }
+*/

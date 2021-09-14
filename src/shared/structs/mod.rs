@@ -1,0 +1,14 @@
+/*pub mod channel_settings;
+pub mod character;
+pub mod command_group_collection;*/
+pub mod config;
+//pub mod dialog;
+pub mod information;
+pub mod record;
+/*pub mod oracle;
+pub mod quiz_question;
+pub mod random_message;
+pub mod reminders;
+pub mod ship_message;
+pub mod specialized_info;
+pub mod user_reply;*/

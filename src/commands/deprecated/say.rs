@@ -288,7 +288,7 @@ async fn say(
         .expect("Failed to get interface service.");
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let persistence_clone = Arc::clone(persistence);
     let interface_clone = Arc::clone(interface);
     drop(lock);
@@ -478,7 +478,7 @@ async fn say_help(context: &Context, msg: &Message, character: &str) -> CommandR
         .expect("Failed to get interface service.");
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let _persistence = Arc::clone(persistence);
     let interface_lock = interface.read().await;
     let is_kou = interface_lock.is_kou;

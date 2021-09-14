@@ -28,7 +28,7 @@ async fn tictactoe(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let _persistence = Arc::clone(persistence);
     drop(data);
     let persistence_lock = _persistence.read().await;
@@ -69,7 +69,7 @@ async fn join_game(context: &Context, msg: &Message, color: Color) -> (bool, Opt
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let mut persistence_lock = persistence.write().await;
     // Add the current channel to ongoing quizzes.
     let ongoing_tictactoes = persistence_lock
@@ -509,7 +509,7 @@ async fn end_game(context: &Context, msg: &Message) {
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let mut persistence_lock = persistence.write().await;
     let ongoing_tictactoes = persistence_lock
         .ongoing_tictactoes

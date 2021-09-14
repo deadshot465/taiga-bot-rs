@@ -1,4 +1,4 @@
-use crate::shared::structures::dialog::{Comic, Dialog};
+use crate::shared::structs::dialog::{Comic, Dialog};
 use crate::{
     get_comic, validate_text, PersistenceService, SpecializedDialog, SpecializedInfo, TextError,
 };

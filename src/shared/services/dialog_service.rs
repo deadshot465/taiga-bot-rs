@@ -3,7 +3,7 @@ use crate::protos::discord_bot_service::{DialogReply, DialogRequest, Specialized
 use crate::protos::jwt_token_service::access_reply::User;
 use crate::protos::jwt_token_service::jwt_token_service_client::JwtTokenServiceClient;
 use crate::protos::jwt_token_service::AccessRequest;*/
-use crate::shared::structures::dialog::Comic;
+use crate::shared::structs::dialog::Comic;
 use crate::{AuthenticationService, SpecializedDialog};
 use chrono::{DateTime, TimeZone, Utc};
 use once_cell::sync::OnceCell;

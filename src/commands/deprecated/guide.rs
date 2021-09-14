@@ -28,7 +28,7 @@ async fn guide(context: &Context, msg: &Message) -> CommandResult {
         .expect("Failed to get interface service.");
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let interface_lock = interface.read().await;
     let persistence_lock = persistence.read().await;
     let is_kou = interface_lock.is_kou;

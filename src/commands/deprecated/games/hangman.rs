@@ -54,7 +54,7 @@ pub async fn hangman(context: &Context, msg: &Message) -> CommandResult {
     let data = context.data.read().await;
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let persistence_lock = persistence.read().await;
     let actual_word: String;
     {

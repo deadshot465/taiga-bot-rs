@@ -43,7 +43,7 @@ async fn handle_self_mentions(context: &Context, msg: &Message) {
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface = lock
         .get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
@@ -90,7 +90,7 @@ async fn handle_reactions(context: &Context, msg: &Message) {
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface = lock
         .get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
@@ -160,7 +160,7 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface = lock
         .get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
@@ -262,7 +262,7 @@ async fn handle_replies(context: &Context, msg: &Message) {
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface = lock
         .get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
@@ -460,7 +460,7 @@ async fn smite_command(context: &Context, msg: &Message) {
                 let context_data = context.data.read().await;
                 let persistence = context_data
                     .get::<PersistenceService>()
-                    .expect("Failed to get persistence service.");
+                    .expect("Failed to get assets service.");
                 let interface = context_data
                     .get::<InterfaceService>()
                     .expect("Failed to get interface service.");
@@ -524,7 +524,7 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
     let data_lock = context.data.read().await;
     let persistence = data_lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface = data_lock
         .get::<InterfaceService>()
         .expect("Failed to retrieve interface service.");
@@ -635,7 +635,7 @@ pub async fn message_received(context: &Context, msg: &Message) {
     let context_data = context.data.read().await;
     let persistence = context_data
         .get::<PersistenceService>()
-        .expect("Failed to get persistence service.");
+        .expect("Failed to get assets service.");
     let interface = context_data
         .get::<InterfaceService>()
         .expect("Failed to get interface service.");
@@ -645,7 +645,7 @@ pub async fn message_received(context: &Context, msg: &Message) {
     let mut persistence_lock = persistence_clone.write().await;
     let interface_lock = interface_clone.read().await;
 
-    // Update last modified time of persistence storage and write data every 5 minutes.
+    // Update last modified time of assets storage and write data every 5 minutes.
     let last_modified_time = persistence_lock
         .last_modified_time
         .as_ref()
@@ -740,7 +740,7 @@ pub async fn before(context: &Context, msg: &Message, command_name: &str) -> boo
     let lock = context.data.read().await;
     let persistence = lock
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let _persistence = Arc::clone(persistence);
     drop(lock);
     let persistence_lock = _persistence.read().await;
@@ -859,7 +859,7 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
         .expect("Failed to retrieve interface service.");
     let persistence = data
         .get::<PersistenceService>()
-        .expect("Failed to retrieve persistence service.");
+        .expect("Failed to retrieve assets service.");
     let interface_lock = interface.read().await;
     let persistence_lock = persistence.read().await;
     let is_kou = interface_lock.is_kou;

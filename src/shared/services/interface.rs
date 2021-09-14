@@ -9,8 +9,8 @@ impl TypeMapKey for InterfaceService {
     type Value = Arc<RwLock<InterfaceStorage>>;
 }
 
-const TAIGA_STRING_PATH: &str = "./persistence/interfaceStringsTaiga.json";
-const KOU_STRING_PATH: &str = "./persistence/interfaceStringsKou.json";
+const TAIGA_STRING_PATH: &str = "./assets/interfaceStringsTaiga.json";
+const KOU_STRING_PATH: &str = "./assets/interfaceStringsKou.json";
 
 pub struct InterfaceStorage {
     pub interface_strings: Option<InterfaceStrings>,
