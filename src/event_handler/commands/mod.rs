@@ -21,6 +21,10 @@ pub fn initialize() {
     AVAILABLE_COMMANDS.get_or_init(|| {
         let mut map: HashMap<String, T> = HashMap::new();
         map.insert(
+            "about".to_string(),
+            crate::commands::information::about::about_async,
+        );
+        map.insert(
             "meal".to_string(),
             crate::commands::information::meal::meal_async,
         );
@@ -56,6 +60,10 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
     Ok(GuildId(KOU_SERVER_ID)
         .set_application_commands(&ctx.http, |commands| {
             commands
+                .create_application_command(|cmd| {
+                    cmd.name("about")
+                        .description("Shows information about the bot.")
+                })
                 .create_application_command(|cmd| {
                     cmd.name("meal").description("Get a random meal recipe.")
                 })

@@ -23,6 +23,8 @@ pub struct Configuration {
     pub random_reply_chance: i32,
     pub application_id: u64,
     pub recreate_global_slash_commands: bool,
+    pub version_number: String,
+    pub update_date: String,
 }
 
 impl Configuration {
@@ -41,6 +43,8 @@ impl Configuration {
             random_reply_chance: 10,
             application_id: 0,
             recreate_global_slash_commands: true,
+            version_number: "".to_string(),
+            update_date: "".to_string(),
         }
     }
 

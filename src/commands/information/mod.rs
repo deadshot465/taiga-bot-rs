@@ -1,3 +1,4 @@
+pub mod about;
 pub mod meal;
 pub mod oracle;
 pub mod ping;

@@ -1,0 +1,12 @@
+Taiga was inspired and loosely based on the [Yuuto project](http://iamdeja.github.io/yuuto-docs/).
+You can check out more information on the [project's website](http://iamdeja.github.io/yuuto-docs/).
+
+Taiga version 4.0.0 was made and developed by:
+**Tetsuki Syu#1250**, **Arch#0226**
+Japanese oracle co-translated with:
+**Kirito#9286**
+Hangman, Quiz, and Tic-tac-toe minigames co-written with:
+**Kirito#9286**
+Taiga reactions and feedback shared by:
+**Kirito#9286**, **Kachiryoku#0387**, and countless Camp Buddy fans.
+Taiga Bot is licensed under GNU GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
