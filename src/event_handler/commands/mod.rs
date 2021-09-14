@@ -25,6 +25,10 @@ pub fn initialize() {
             crate::commands::information::about::about_async,
         );
         map.insert(
+            "avatar".to_string(),
+            crate::commands::utility::avatar::avatar_async,
+        );
+        map.insert(
             "meal".to_string(),
             crate::commands::information::meal::meal_async,
         );
@@ -65,6 +69,16 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
                         .description("Shows information about the bot.")
                 })
                 .create_application_command(|cmd| {
+                    cmd.name("avatar")
+                        .description("Get avatar/profile image of yourself or another user.")
+                        .create_option(|opt| {
+                            opt.name("user")
+                                .description("The user whose avatar to get.")
+                                .required(true)
+                                .kind(ApplicationCommandOptionType::User)
+                        })
+                })
+                .create_application_command(|cmd| {
                     cmd.name("meal").description("Get a random meal recipe.")
                 })
                 .create_application_command(|cmd| {
@@ -83,9 +97,8 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
                 .create_application_command(|cmd| {
                     cmd.name("stats")
                         .description("This command will show your records with several commands.")
-                        .create_option(|option| {
-                            option
-                                .required(false)
+                        .create_option(|opt| {
+                            opt.required(false)
                                 .name("command")
                                 .description(
                                     "(Optional) The command of which you want to query the record.",
