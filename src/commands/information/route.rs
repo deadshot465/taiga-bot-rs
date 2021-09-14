@@ -45,7 +45,7 @@ async fn route(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     let color =
         u32::from_str_radix(&route.color, 16).expect("Failed to create a color from string.");
     let ending = if route.name.contains("Mature") || route.name.contains("Kou") {
-        "Best"
+        "Perfect"
     } else {
         let mut rng = rand::thread_rng();
         ENDINGS

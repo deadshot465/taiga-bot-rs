@@ -28,10 +28,7 @@ async fn valentine(ctx: Context, command: ApplicationCommandInteraction) -> anyh
     };
 
     let is_keitaro = get_first_name(&valentine.name) == "Keitaro";
-    let is_kou = KOU
-        .get()
-        .copied()
-        .expect("Cannot determine if it's Kou or Taiga.");
+    let is_kou = KOU.get().copied().unwrap_or(false);
     let rig_keitaro = !is_kou && is_keitaro;
     let prefix_suffix = if rig_keitaro { "~~" } else { "" };
 

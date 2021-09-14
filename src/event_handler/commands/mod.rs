@@ -1,6 +1,6 @@
 use once_cell::sync::OnceCell;
 use serenity::model::prelude::application_command::{
-    ApplicationCommand, ApplicationCommandInteraction,
+    ApplicationCommand, ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
 use serenity::model::prelude::GuildId;
 use serenity::prelude::Context;
@@ -21,6 +21,10 @@ pub fn initialize() {
     AVAILABLE_COMMANDS.get_or_init(|| {
         let mut map: HashMap<String, T> = HashMap::new();
         map.insert(
+            "meal".to_string(),
+            crate::commands::information::meal::meal_async,
+        );
+        map.insert(
             "oracle".to_string(),
             crate::commands::information::oracle::oracle_async,
         );
@@ -33,8 +37,8 @@ pub fn initialize() {
             crate::commands::information::route::route_async,
         );
         map.insert(
-            "meal".to_string(),
-            crate::commands::information::meal::meal_async,
+            "stats".to_string(),
+            crate::commands::information::stats::stats_async,
         );
         map.insert(
             "valentine".to_string(),
@@ -53,6 +57,9 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
         .set_application_commands(&ctx.http, |commands| {
             commands
                 .create_application_command(|cmd| {
+                    cmd.name("meal").description("Get a random meal recipe.")
+                })
+                .create_application_command(|cmd| {
                     cmd.name("oracle").description(
                         "Draw an oracle and know the future of something on your mind.",
                     )
@@ -66,7 +73,19 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
                         .description("Tells you what route to play next.")
                 })
                 .create_application_command(|cmd| {
-                    cmd.name("meal").description("Get a random meal recipe.")
+                    cmd.name("stats")
+                        .description("This command will show your records with several commands.")
+                        .create_option(|option| {
+                            option
+                                .required(false)
+                                .name("command")
+                                .description(
+                                    "(Optional) The command of which you want to query the record.",
+                                )
+                                .add_string_choice("route", "route")
+                                .add_string_choice("valentine", "valentine")
+                                .kind(ApplicationCommandOptionType::String)
+                        })
                 })
                 .create_application_command(|cmd| {
                     cmd.name("valentine")

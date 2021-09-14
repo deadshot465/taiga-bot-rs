@@ -8,7 +8,7 @@ pub static USER_RECORDS: OnceCell<RwLock<HashMap<String, UserRecord>>> = OnceCel
 
 const USER_RECORDS_FILE_NAME: &str = "/user_records.json";
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UserRecord {
     pub route: HashMap<String, HashMap<String, u16>>,
     pub valentine: HashMap<String, u16>,

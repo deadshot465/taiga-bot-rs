@@ -13,10 +13,7 @@ pub fn ping_async(
 }
 
 async fn ping(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let is_kou = KOU
-        .get()
-        .copied()
-        .expect("Cannot determine if it's Kou or Taiga.");
+    let is_kou = KOU.get().copied().unwrap_or(false);
 
     let starting_msg = if is_kou {
         "<:KouBrave:705182851397845193> Pinging..."
