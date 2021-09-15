@@ -2,6 +2,7 @@
 pub mod character;
 pub mod command_group_collection;*/
 pub mod config;
+pub mod game;
 //pub mod dialog;
 pub mod information;
 pub mod record;

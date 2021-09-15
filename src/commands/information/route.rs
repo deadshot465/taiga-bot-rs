@@ -6,7 +6,6 @@ use crate::shared::utility::{
 use rand::prelude::*;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
-use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
 

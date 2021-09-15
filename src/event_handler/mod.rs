@@ -29,9 +29,10 @@ impl EventHandler for Handler {
         if let Interaction::ApplicationCommand(command) = interaction {
             if let Some(commands) = AVAILABLE_COMMANDS.get() {
                 if let Some(cmd) = commands.get(&command.data.name) {
-                    cmd(ctx, command)
-                        .await
-                        .expect("Failed to execute slash command.");
+                    let execution_result = cmd(ctx, command).await;
+                    if let Err(e) = execution_result {
+                        log::error!("Failed to execute slash command. Error: {}", e);
+                    }
                 } else {
                     command
                         .create_interaction_response(&ctx.http, |response| {

@@ -1,11 +1,7 @@
 use crate::shared::constants::{CAMP_BUDDY_STAR, KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
-use crate::shared::structs::information::oracle::ORACLES;
-use crate::shared::utility::{get_author_avatar, get_author_name};
-use rand::prelude::*;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
-use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
 

@@ -1,4 +1,3 @@
-use crate::shared::structs::config::configuration::KOU;
 use crate::shared::structs::information::oracle::ORACLES;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;

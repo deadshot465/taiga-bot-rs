@@ -4,7 +4,6 @@ use crate::shared::structs::record::user_record::{UserRecord, USER_RECORDS};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use serenity::builder::CreateEmbed;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
-use serenity::model::prelude::Embed;
 use serenity::prelude::*;
 use serenity::utils::Color;
 use std::collections::HashMap;

@@ -1,9 +1,5 @@
-use regex::Regex;
-use serenity::framework::standard::CommandError;
-use serenity::model::guild::{Guild, Member};
-use serenity::model::id::UserId;
+use serenity::model::guild::Member;
 use serenity::model::prelude::User;
-use serenity::prelude::Context;
 
 pub fn get_animated_emote_url(emote_id: &str) -> String {
     format!("https://cdn.discordapp.com/emojis/{}.gif?v=1", emote_id)
