@@ -15,7 +15,7 @@ impl EventHandler for Handler {
 
         let config = CONFIGURATION.get().expect("Failed to get configuration.");
         if config.recreate_global_slash_commands {
-            commands::build_global_slash_commands(&ctx)
+            commands::build_global_slash_commands(&ctx, config.recreate_global_slash_commands)
                 .await
                 .expect("Failed to override global commands.");
         }
