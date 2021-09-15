@@ -49,7 +49,7 @@ async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
         let current_user = ctx.http.get_current_user().await?;
         current_user
             .avatar_url()
-            .unwrap_or(current_user.default_avatar_url())
+            .unwrap_or_else(|| current_user.default_avatar_url())
     } else {
         CAMP_BUDDY_STAR.to_string()
     };

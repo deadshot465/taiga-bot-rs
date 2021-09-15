@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::structs::game::quiz_question::QUIZ_QUESTIONS;
@@ -123,7 +124,7 @@ fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
             .and_then(|value| value.value.as_ref())
             .and_then(|value| value.as_u64())
             .unwrap_or(DEFAULT_ROUNDS);
-        if value < 2 || value > 10 {
+        if !(2..=10).contains(&value) {
             DEFAULT_ROUNDS
         } else {
             value
@@ -296,11 +297,10 @@ async fn progress_game(
         .await;
 
     let quiz_questions = {
-        let rounds = (1..=max_rounds).collect::<Vec<_>>();
         let mut rng = rand::thread_rng();
         QUIZ_QUESTIONS
             .choose_multiple(&mut rng, max_rounds as usize)
-            .zip(rounds.into_iter())
+            .zip(1..=max_rounds)
             .collect::<Vec<_>>()
     };
 

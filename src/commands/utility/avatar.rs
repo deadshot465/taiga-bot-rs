@@ -29,7 +29,9 @@ async fn avatar(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
             .as_ref()
             .expect("Failed to resolve option value.")
         {
-            let avatar_url = user.avatar_url().unwrap_or(user.default_avatar_url());
+            let avatar_url = user
+                .avatar_url()
+                .unwrap_or_else(|| user.default_avatar_url());
             let user_name = user.name.clone();
 
             command

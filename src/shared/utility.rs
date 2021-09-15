@@ -6,7 +6,8 @@ pub fn get_animated_emote_url(emote_id: &str) -> String {
 }
 
 pub fn get_author_avatar(user: &User) -> String {
-    user.avatar_url().unwrap_or(user.default_avatar_url())
+    user.avatar_url()
+        .unwrap_or_else(|| user.default_avatar_url())
 }
 
 pub fn get_author_name(user: &User, member: &Option<Member>) -> String {
