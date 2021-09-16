@@ -121,7 +121,7 @@ fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
         let value = opt
             .options
             .get(0)
-            .and_then(|value| value.value.as_ref())
+            .and_then(|opt| opt.value.as_ref())
             .and_then(|value| value.as_u64())
             .unwrap_or(DEFAULT_ROUNDS);
         if !(2..=10).contains(&value) {

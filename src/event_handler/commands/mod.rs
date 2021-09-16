@@ -35,6 +35,10 @@ pub fn initialize() {
         );
         map.insert("game".to_string(), crate::commands::game::dispatch_async);
         map.insert(
+            "image".to_string(),
+            crate::commands::utility::image::image_async,
+        );
+        map.insert(
             "meal".to_string(),
             crate::commands::information::meal::meal_async,
         );
@@ -90,6 +94,7 @@ fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApp
     register_avatar(commands);
     register_enlarge(commands);
     register_game(commands);
+    register_image(commands);
     register_meal(commands);
     register_oracle(commands);
     register_ping(commands);
@@ -145,6 +150,46 @@ fn register_game(commands: &mut CreateApplicationCommands) -> &mut CreateApplica
                         opt.name("rounds")
                             .description("Rounds you want to play.")
                             .kind(ApplicationCommandOptionType::Integer)
+                            .required(false)
+                    })
+            })
+    })
+}
+
+fn register_image(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("image")
+            .description("Get random images based on keywords.")
+            .create_option(|opt| {
+                opt.kind(ApplicationCommandOptionType::SubCommand)
+                    .name("image")
+                    .description("Get random images based on keywords.")
+                    .create_sub_option(|opt| {
+                        opt.name("keyword")
+                            .description("Keyword to search for.")
+                            .kind(ApplicationCommandOptionType::String)
+                            .required(false)
+                    })
+            })
+            .create_option(|opt| {
+                opt.kind(ApplicationCommandOptionType::SubCommand)
+                    .name("cat")
+                    .description("Get cat images.")
+                    .create_sub_option(|opt| {
+                        opt.name("keyword")
+                            .description("Keyword to search for.")
+                            .kind(ApplicationCommandOptionType::String)
+                            .required(false)
+                    })
+            })
+            .create_option(|opt| {
+                opt.kind(ApplicationCommandOptionType::SubCommand)
+                    .name("dog")
+                    .description("Get dog images.")
+                    .create_sub_option(|opt| {
+                        opt.name("keyword")
+                            .description("Keyword to search for.")
+                            .kind(ApplicationCommandOptionType::String)
                             .required(false)
                     })
             })

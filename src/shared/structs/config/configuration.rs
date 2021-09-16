@@ -25,6 +25,8 @@ pub struct Configuration {
     pub recreate_global_slash_commands: bool,
     pub version_number: String,
     pub update_date: String,
+    pub unsplash_token: String,
+    pub cat_token: String,
 }
 
 impl Configuration {
@@ -45,6 +47,8 @@ impl Configuration {
             recreate_global_slash_commands: true,
             version_number: "".to_string(),
             update_date: "".to_string(),
+            unsplash_token: "".to_string(),
+            cat_token: "".to_string(),
         }
     }
 

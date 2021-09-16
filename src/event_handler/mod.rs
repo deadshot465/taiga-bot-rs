@@ -13,9 +13,12 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, ready: Ready) {
         log::info!("{} is now online.", ready.user.name);
 
-        let config = CONFIGURATION.get().expect("Failed to get configuration.");
-        if config.recreate_global_slash_commands {
-            commands::build_global_slash_commands(&ctx, config.recreate_global_slash_commands)
+        let recreate_global_slash_commands = CONFIGURATION
+            .get()
+            .map(|c| c.recreate_global_slash_commands)
+            .expect("Failed to get recreate commands setting from configuration.");
+        if recreate_global_slash_commands {
+            commands::build_global_slash_commands(&ctx, recreate_global_slash_commands)
                 .await
                 .expect("Failed to override global commands.");
         }
