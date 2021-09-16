@@ -47,6 +47,10 @@ pub fn initialize() {
             crate::commands::information::oracle::oracle_async,
         );
         map.insert(
+            "pick".to_string(),
+            crate::commands::utility::pick::pick_async,
+        );
+        map.insert(
             "ping".to_string(),
             crate::commands::information::ping::ping_async,
         );
@@ -97,6 +101,7 @@ fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApp
     register_image(commands);
     register_meal(commands);
     register_oracle(commands);
+    register_pick(commands);
     register_ping(commands);
     register_route(commands);
     register_stats(commands);
@@ -205,6 +210,27 @@ fn register_oracle(commands: &mut CreateApplicationCommands) -> &mut CreateAppli
     commands.create_application_command(|cmd| {
         cmd.name("oracle")
             .description("Draw an oracle and know the future of something on your mind.")
+    })
+}
+
+fn register_pick(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("pick")
+            .description("Pick from several options.")
+            .create_option(|opt| {
+                opt.name("times")
+                    .description(
+                        "Times to pick. Negative numbers or numbers too big will be ignored.",
+                    )
+                    .kind(ApplicationCommandOptionType::Integer)
+                    .required(true)
+            })
+            .create_option(|opt| {
+                opt.name("choices")
+                    .description("Choices to pick from, separated by pipe (|).")
+                    .kind(ApplicationCommandOptionType::String)
+                    .required(true)
+            })
     })
 }
 

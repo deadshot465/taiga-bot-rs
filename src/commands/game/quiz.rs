@@ -286,9 +286,11 @@ async fn progress_game(
     players: &[User],
     max_rounds: u64,
 ) -> anyhow::Result<HashMap<u64, u8>> {
-    let mut score_board = HashMap::new();
-
     let player_ids = players.iter().map(|u| u.id.0).collect::<Vec<_>>();
+    let mut score_board = player_ids
+        .iter()
+        .map(|id| (*id, 0_u8))
+        .collect::<HashMap<_, _>>();
     let cloned_player_ids = player_ids.clone();
     let mut collector = MessageCollectorBuilder::new(ctx)
         .channel_id(command.channel_id.0)

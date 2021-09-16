@@ -16,16 +16,20 @@ impl EventHandler for Handler {
         let recreate_global_slash_commands = CONFIGURATION
             .get()
             .map(|c| c.recreate_global_slash_commands)
-            .expect("Failed to get recreate commands setting from configuration.");
+            .unwrap_or(false);
+
         if recreate_global_slash_commands {
-            commands::build_global_slash_commands(&ctx, recreate_global_slash_commands)
-                .await
-                .expect("Failed to override global commands.");
+            let result =
+                commands::build_global_slash_commands(&ctx, recreate_global_slash_commands).await;
+            if let Err(e) = result {
+                log::error!("Failed to override global commands. Error: {}", e);
+            }
         }
 
-        commands::build_guild_slash_commands(&ctx)
-            .await
-            .expect("Failed to override guild commands.");
+        let result = commands::build_guild_slash_commands(&ctx).await;
+        if let Err(e) = result {
+            log::error!("Failed to override guild commands. Error: {}", e);
+        }
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
@@ -37,14 +41,16 @@ impl EventHandler for Handler {
                         log::error!("Failed to execute slash command. Error: {}", e);
                     }
                 } else {
-                    command
+                    let result = command
                         .create_interaction_response(&ctx.http, |response| {
                             response.interaction_response_data(|data| {
                                 data.content("Sorry, this command is not yet implemented!")
                             })
                         })
-                        .await
-                        .expect("Cannot find slash command.")
+                        .await;
+                    if let Err(e) = result {
+                        log::error!("Failed to execute slash command. Error: {}", e);
+                    }
                 }
             }
         }

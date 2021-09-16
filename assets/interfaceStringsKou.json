@@ -107,28 +107,6 @@
     },
     "result": ""
   },
-  "image": {
-    "description": "Get a random image based on a keyword",
-    "usage": "Run `image <keyword>` to get a random image. Only one keyword is permitted.",
-    "errors": {
-      "length_too_short": "I can try to ask Mokke to find anything for you, but you need to tell me what you want first! <:KouHehe:705054435352641587>",
-      "length_too_long": "Uhh...Can you be more specific? Like only one keyword at a time, please? <:KouCry:705054435826597928>",
-      "no_result": "Sorry...I don't understand the keyword and cannot find anything... <:KouCry:705054435826597928>",
-      "generic": "An error occured. Must be because of Hanako. <:KouBrave:705182851397845193> - {json}"
-    },
-    "infos": {
-    },
-    "result": "Here is your image for {keyword}"
-  },
-  "meal": {
-    "description": "Get a random meal recipe",
-    "usage": "Run `meal` to get a random meal recipe.",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": "Here you go!"
-  },
   "owoify": {
     "description": "This command will owoify your text",
     "usage": "Run `owoify <text>` or `owoify <intensity> <text>` to owoify any text!\nIntensities available are `easy` (default), `medium`, and `hard`.",
@@ -139,37 +117,6 @@
     "infos": {
     },
     "result": "OwO-ified for {author}~!\n\n{text}"
-  },
-  "oracle": {
-    "description": "Draw an oracle and know the future of something on your mind",
-    "usage": "Run `oracle` to draw an oracle and know your fortune.",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": "Wish you good luck!"
-  },
-  "pick": {
-    "description": "Pick from several options",
-    "usage": "Run `pick <option1> | <option2> | <option3>...` to let Kou pick one option for you. Run `pick <number>times <option1> | <option2> | <option3>...` to let Kou pick more than once and determine the option that is picked up most times for you.",
-    "errors": {
-      "length_too_short": "This command requires at least two options: `pick <option1> | <option2>...`",
-      "times_too_big": "Sorry I'm generally bad at math...I'd lose count if I had to count that many times."
-    },
-    "infos": {
-    },
-    "result": "<:KouPoint:717505202651136051> | I pick **{option}**!"
-  },
-  "ping": {
-    "description": "Returns latency",
-    "usage": "Run `ping` to get the current latency.",
-    "errors": {
-    },
-    "infos": {
-      "pinging": "\uD83C\uDFD3 Pinging....",
-      "responding": "\uD83C\uDFD3 Pong!\nLatency is: {latency}ms."
-    },
-    "result": ""
   },
   "remind": {
     "description": "This command will make Kou remind you in a specific time.",
@@ -182,15 +129,6 @@
     },
     "infos": {},
     "result": "It's {time} in my place, so I will remind you on {dueTime}."
-  },
-  "route": {
-    "description": "Tells you what route to play next",
-    "usage": "Run `route` to get which route you want to play next.",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": ""
   },
   "say": {
     "hiro": {
@@ -384,18 +322,6 @@
     },
     "result": ""
   },
-  "stats": {
-    "description": "This command will show your records with several commands.",
-    "usage": "Run `stats <command>` to show your records with several commands. Available commands are: `route, valentine`.",
-    "errors": {
-      "length_too_short": "<:KouBakaNii:712631334937296946> I need at least a command's name...",
-      "no_such_command": "<:KouConfused:717495654003245076> I can't find this command in the 4pm Bookstacks..."
-    },
-    "infos": {
-
-    },
-    "result": "Here's {user}'s records with `{command}`\n"
-  },
   "time": {
     "description": "Query the time of a city",
     "usage": "Run `time <city name>` to query the current local time of a city.",
@@ -407,17 +333,5 @@
 
     },
     "result": "The current local time of **{city}** is: {time}."
-  },
-  "valentine": {
-    "description": "Tells you your next valentine",
-    "usage": "Run `valentine` to get your next valentine.",
-    "errors": {
-    },
-    "infos": {
-      "keitaro_header": "I heard someone is super jealous about this guy, but you bet I will protect Nene senpai!",
-      "keitaro_footer": "Don't fret if {firstName} isn't your type. Who knows, maybe it's time for a new favorite.",
-      "normal_footer": "Don't fret if {firstName} isn't your type. Who knows, maybe it's time for a new favorite."
-    },
-    "result": ""
   }
 }
