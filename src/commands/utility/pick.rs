@@ -19,15 +19,14 @@ pub fn pick_async(
 }
 
 async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let times = if let Some(opt) = command.data.options.get(0) {
-        opt.value
-            .as_ref()
-            .and_then(|value| value.as_u64())
-            .map(|n| if n == 0 { 1 } else { n })
-            .unwrap_or(1)
-    } else {
-        1
-    };
+    let times = command
+        .data
+        .options
+        .get(0)
+        .and_then(|opt| opt.value.as_ref())
+        .and_then(|value| value.as_u64())
+        .map(|n| if n == 0 { 1 } else { n })
+        .unwrap_or(1);
 
     let available_choices_raw = command
         .data

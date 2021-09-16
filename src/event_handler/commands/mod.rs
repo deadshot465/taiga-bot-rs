@@ -47,6 +47,10 @@ pub fn initialize() {
             crate::commands::information::oracle::oracle_async,
         );
         map.insert(
+            "owoify".to_string(),
+            crate::commands::fun::owoify::owoify_async,
+        );
+        map.insert(
             "pick".to_string(),
             crate::commands::utility::pick::pick_async,
         );
@@ -101,6 +105,7 @@ fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApp
     register_image(commands);
     register_meal(commands);
     register_oracle(commands);
+    register_owoify(commands);
     register_pick(commands);
     register_ping(commands);
     register_route(commands);
@@ -210,6 +215,28 @@ fn register_oracle(commands: &mut CreateApplicationCommands) -> &mut CreateAppli
     commands.create_application_command(|cmd| {
         cmd.name("oracle")
             .description("Draw an oracle and know the future of something on your mind.")
+    })
+}
+
+fn register_owoify(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("owoify")
+            .description("This command will owoify your text.")
+            .create_option(|opt| {
+                opt.kind(ApplicationCommandOptionType::String)
+                    .name("level")
+                    .description("The owoiness you want to owoify your text.")
+                    .required(true)
+                    .add_string_choice("soft", "soft")
+                    .add_string_choice("medium", "medium")
+                    .add_string_choice("hard", "hard")
+            })
+            .create_option(|opt| {
+                opt.kind(ApplicationCommandOptionType::String)
+                    .name("text")
+                    .description("The text to owoify.")
+                    .required(true)
+            })
     })
 }
 

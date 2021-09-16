@@ -24,14 +24,13 @@ pub fn enlarge_async(
 }
 
 async fn enlarge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let raw_string = if let Some(opt) = command.data.options.get(0) {
-        opt.value
-            .as_ref()
-            .and_then(|v| v.as_str())
-            .unwrap_or_default()
-    } else {
-        ""
-    };
+    let raw_string = command
+        .data
+        .options
+        .get(0)
+        .and_then(|opt| opt.value.as_ref())
+        .and_then(|value| value.as_str())
+        .unwrap_or_default();
 
     if !EMOTE_ID_REGEX.is_match(raw_string) {
         command

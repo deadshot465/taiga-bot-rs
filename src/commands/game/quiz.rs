@@ -117,21 +117,21 @@ async fn new_game(
 }
 
 fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
-    if let Some(opt) = command.data.options.get(0) {
-        let value = opt
-            .options
-            .get(0)
-            .and_then(|opt| opt.value.as_ref())
-            .and_then(|value| value.as_u64())
-            .unwrap_or(DEFAULT_ROUNDS);
-        if !(2..=10).contains(&value) {
-            DEFAULT_ROUNDS
-        } else {
-            value
-        }
-    } else {
-        DEFAULT_ROUNDS
-    }
+    command
+        .data
+        .options
+        .get(0)
+        .and_then(|opt| opt.options.get(0))
+        .and_then(|opt| opt.value.as_ref())
+        .and_then(|value| value.as_u64())
+        .map(|rounds| {
+            if !(2..=10).contains(&rounds) {
+                DEFAULT_ROUNDS
+            } else {
+                rounds
+            }
+        })
+        .unwrap_or(DEFAULT_ROUNDS)
 }
 
 async fn join_game(
