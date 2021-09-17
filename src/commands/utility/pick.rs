@@ -104,7 +104,7 @@ async fn cancel_pick(
 
 fn sanitize_options(raw_string: &str) -> Vec<&str> {
     raw_string
-        .split("|")
+        .split('|')
         .filter_map(|s| {
             let trimmed = s.trim();
             if !trimmed.is_empty() {
@@ -118,10 +118,10 @@ fn sanitize_options(raw_string: &str) -> Vec<&str> {
 
 fn single_pick<'a>(choices: &'a [&str]) -> &'a str {
     let mut rng = rand::thread_rng();
-    choices.choose(&mut rng).map(|s| *s).unwrap_or_default()
+    choices.choose(&mut rng).copied().unwrap_or_default()
 }
 
-fn multiple_pick<'a>(choices: Vec<String>, times: u64) -> (String, HashMap<String, u64>) {
+fn multiple_pick(choices: Vec<String>, times: u64) -> (String, HashMap<String, u64>) {
     let mut result_map = choices
         .iter()
         .map(|s| (s.clone(), 0_u64))

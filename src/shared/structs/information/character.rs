@@ -3,7 +3,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 const ROUTES_FILE_NAME: &str = "/json/routes.json";
-const VALENTINE_FILE_NAME: &str = "/json/valentines.json";
+const VALENTINES_FILE_NAME: &str = "/json/valentines.json";
 
 pub static ROUTES: Lazy<Vec<Character>> = Lazy::new(|| {
     let routes_path = String::from(ASSET_DIRECTORY) + ROUTES_FILE_NAME;
@@ -12,7 +12,7 @@ pub static ROUTES: Lazy<Vec<Character>> = Lazy::new(|| {
 });
 
 pub static VALENTINES: Lazy<Vec<Character>> = Lazy::new(|| {
-    let valentines_path = String::from(ASSET_DIRECTORY) + VALENTINE_FILE_NAME;
+    let valentines_path = String::from(ASSET_DIRECTORY) + VALENTINES_FILE_NAME;
     let json = std::fs::read(&valentines_path).expect("Failed to read valentines from local file.");
     serde_json::from_slice(&json).expect("Failed to deserialize valentines.")
 });

@@ -1,3 +1,4 @@
+#![allow(clippy::ptr_arg)]
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::authentication::AUTHENTICATION;
 use crate::shared::structs::config::configuration::CONFIGURATION;

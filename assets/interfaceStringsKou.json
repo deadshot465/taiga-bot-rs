@@ -285,15 +285,6 @@
       "result": "Here you go~!"
     }
   },
-  "ship": {
-    "description": "Ship two users",
-    "usage": "Run `ship <user1> <user2>` to find out the compatibility between the two users!",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": ""
-  },
   "time": {
     "description": "Query the time of a city",
     "usage": "Run `time <city name>` to query the current local time of a city.",

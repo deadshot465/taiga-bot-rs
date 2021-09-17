@@ -243,10 +243,10 @@ pub async fn get_dog_image(
 ) -> anyhow::Result<CreateEmbed> {
     // Due to Dog API's query nature, we have to retain only the first keyword
     let keyword = keyword
-        .split(" ")
+        .split(' ')
         .collect::<Vec<_>>()
         .get(0)
-        .map(|s| *s)
+        .copied()
         .unwrap_or_default();
 
     if keyword.is_empty() {

@@ -110,7 +110,7 @@ impl PersistenceStorage {
         let raw_routes = fs::read("./persistence/routes.json")?;
         let raw_valentines = fs::read("./persistence/valentines.json")?;
         let raw_oracles = fs::read("./persistence/oracles.json")?;
-        let raw_ship_messages = fs::read("./persistence/shipMessages.json")?;
+        let raw_ship_messages = fs::read("./persistence/ship_messages.json")?;
         let raw_conversion_table = fs::read("./persistence/convert.json")?;
         let raw_user_records = fs::read(USER_RECORDS_PATH)?;
         let raw_channel_settings = fs::read(CHANNEL_SETTINGS_PATH)?;

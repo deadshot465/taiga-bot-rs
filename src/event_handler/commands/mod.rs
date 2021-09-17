@@ -66,6 +66,7 @@ pub fn initialize() {
             "route".to_string(),
             crate::commands::information::route::route_async,
         );
+        map.insert("ship".to_string(), crate::commands::fun::ship::ship_async);
         map.insert(
             "stats".to_string(),
             crate::commands::information::stats::stats_async,
@@ -114,6 +115,7 @@ fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApp
     register_pick(commands);
     register_ping(commands);
     register_route(commands);
+    register_ship(commands);
     register_stats(commands);
     register_valentine(commands)
 }
@@ -302,6 +304,25 @@ fn register_route(commands: &mut CreateApplicationCommands) -> &mut CreateApplic
     commands.create_application_command(|cmd| {
         cmd.name("route")
             .description("Tells you what route to play next.")
+    })
+}
+
+fn register_ship(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("ship")
+            .description("Ship two users.")
+            .create_option(|opt| {
+                opt.required(true)
+                    .name("user_1")
+                    .description("The first user to ship with the second user.")
+                    .kind(ApplicationCommandOptionType::User)
+            })
+            .create_option(|opt| {
+                opt.required(true)
+                    .name("user_2")
+                    .description("The second user to ship with the first user.")
+                    .kind(ApplicationCommandOptionType::User)
+            })
     })
 }
 
