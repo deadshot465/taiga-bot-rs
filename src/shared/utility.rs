@@ -1,4 +1,5 @@
 use serenity::model::guild::Member;
+use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::model::prelude::User;
 
 pub fn get_animated_emote_url(emote_id: &str) -> String {
@@ -25,6 +26,16 @@ pub fn get_first_name(name: &str) -> &str {
 
 pub fn get_static_emote_url(emote_id: &str) -> String {
     format!("https://cdn.discordapp.com/emojis/{}.png?v=1", emote_id)
+}
+
+pub fn extract_string_option(command: &ApplicationCommandInteraction, index: usize) -> &str {
+    command
+        .data
+        .options
+        .get(index)
+        .and_then(|opt| opt.value.as_ref())
+        .and_then(|value| value.as_str())
+        .unwrap_or_default()
 }
 
 /*pub async fn search_user(

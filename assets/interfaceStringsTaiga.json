@@ -87,23 +87,6 @@
     },
     "result": "<:chibitaiga:697893400891883531> According to Lee's calculations, {source} is {amount}{target}."
   },
-  "dialog": {
-    "description": "Returns an image of a character in Camp Buddy saying anything you want",
-    "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
-    "errors": {
-      "length_too_short": "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)",
-      "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-      "character_not_found": "Sorry, but I don't think that `{character}` is a character in Camp Buddy\nAvailable characters are: `{characters}`.",
-      "no_message": "At least give me something to send, you dumbass.",
-      "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:TaigaAck2:700006264507465778>",
-      "wrong_character_set": "I don't do emotes, mentions, non-latin and non-Japanese characters",
-      "cooldown": "I only have two hands, not an octopus. Bother me again later. <:TaigaAngry:699705315519889479>",
-      "generic": "An error just happened. I blame Rhakon. <:TaigaLOL:700004692079542333> - {json}"
-    },
-    "infos": {
-    },
-    "result": "Here you go~!"
-  },
   "emote": {
     "description": "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected.",
     "usage": "Run `emote <register|deregister>` to register or deregister an emote.",
@@ -116,17 +99,6 @@
     "infos": {
     },
     "result": ""
-  },
-  "owoify": {
-    "description": "This command will owoify your text",
-    "usage": "Run `owoify <text>` or `owoify <intensity> <text>` to owoify any text!\nIntensities available are `easy` (default), `medium`, and `hard`.",
-    "errors": {
-      "length_too_short": "...There's nothing to owoify, you dummy.",
-      "length_too_long": "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
-    },
-    "infos": {
-    },
-    "result": "OwO-ified for {author}~!\n\n{text}"
   },
   "remind": {
     "description": "This command will make Taiga remind you in a specific time.",

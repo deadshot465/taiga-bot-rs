@@ -1,118 +1,59 @@
-/*use crate::protos::discord_bot_service::discord_bot_service_client::DiscordBotServiceClient;
-use crate::protos::discord_bot_service::{DialogReply, DialogRequest, SpecializedDialogRequest};
-use crate::protos::jwt_token_service::access_reply::User;
-use crate::protos::jwt_token_service::jwt_token_service_client::JwtTokenServiceClient;
-use crate::protos::jwt_token_service::AccessRequest;*/
-use crate::shared::structs::dialog::Comic;
-use crate::{AuthenticationService, SpecializedDialog};
-use chrono::{DateTime, TimeZone, Utc};
-use once_cell::sync::OnceCell;
-use serde::{Deserialize, Serialize};
-use serenity::client::Context;
+use crate::shared::services::HTTP_CLIENT;
+use crate::shared::structs::authentication::AUTHENTICATION;
+use crate::shared::structs::config::configuration::CONFIGURATION;
+use crate::shared::structs::fun::dialog::Dialog;
+use once_cell::sync::Lazy;
+use rand::prelude::*;
+use regex::Regex;
 use std::collections::HashMap;
-use std::env;
-use tokio::sync::Mutex;
-//use tonic::{Response, Streaming};
 
-/*static mut DISCORD_SERVICE_CLIENT: OnceCell<DiscordBotServiceClient<tonic::transport::Channel>> =
-    OnceCell::new();
-static DISCORD_SERVICE_CLIENT_INITIALIZED: OnceCell<Mutex<bool>> = OnceCell::new();
-static mut JWT_TOKEN_CLIENT: OnceCell<JwtTokenServiceClient<tonic::transport::Channel>> =
-    OnceCell::new();*/
-static REST_CLIENT_INITIALIZED: OnceCell<Mutex<bool>> = OnceCell::new();
+const DIALOG_PATH: &str = "/dialog";
+const DIALOG_TEXT_LIMIT: usize = 180;
 
-// Via REST API
-static mut REST_CLIENT: OnceCell<reqwest::Client> = OnceCell::new();
+static EMOTE_MENTIONS_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"<(?:[^\d>]+|:[A-Za-z0-9]+:)\w+>").expect("Failed to build emote mentions regex.")
+});
+static NON_ASCII_AND_JAPANESE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"[^\x00-\x7F\u4e00-\u9fbf\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u3000-\u303f\u2018-\u2019]")
+        .expect("Failed to build non-ASCII and Japanese regex.")
+});
 
-/*struct JwtToken {
-    pub token: String,
-    pub user_details: Option<User>,
-    pub expiry: String,
-}*/
+pub async fn get_dialog(
+    background: String,
+    character: String,
+    text: String,
+) -> anyhow::Result<Vec<u8>> {
+    let dialog = Dialog {
+        background,
+        character,
+        text,
+    };
 
-#[derive(Deserialize, Serialize)]
-pub struct JwtToken {
-    pub token: String,
-    #[serde(rename = "userDetails")]
-    pub user_details: UserDetails,
-    pub expiry: String,
-}
+    let server_endpoint = CONFIGURATION
+        .get()
+        .map(|c| &c.server_endpoint)
+        .expect("Failed to get server endpoint from configuration.");
 
-#[derive(Deserialize, Serialize)]
-pub struct UserDetails {
-    #[serde(rename = "userName")]
-    pub user_name: String,
-    #[serde(rename = "userRole")]
-    pub user_role: String,
-    #[serde(rename = "type")]
-    pub user_type: u8,
-}
-
-static mut JWT_TOKEN: OnceCell<JwtToken> = OnceCell::new();
-
-pub async fn get_dialog(background: &str, character: &str, text: &str) -> anyhow::Result<Vec<u8>> {
-    initialize_clients().await?;
-    update_token().await?;
-
-    let token = unsafe { JWT_TOKEN.get().expect("Failed to get JWT token.") };
-    let client = unsafe { REST_CLIENT.get().expect("Failed to get REST client.") };
-
-    let mut request_data = HashMap::new();
-    request_data.insert("Background", background);
-    request_data.insert("Character", character);
-    request_data.insert("Text", text);
-
-    let response = client
-        .post("https://tetsukizone.com/api/dialog")
-        .json(&request_data)
+    let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
+    let token = AUTHENTICATION.read().await.token.clone();
+    let response = HTTP_CLIENT
+        .post(&dialog_path)
+        .json(&dialog)
         .header("Content-Type", "application/json")
-        .bearer_auth(token.token.clone())
+        .bearer_auth(token)
         .send()
         .await?;
 
     match response.bytes().await {
         Ok(bytes) => Ok(bytes.to_vec()),
-        Err(_) => Ok(vec![]),
+        Err(e) => {
+            log::error!("Error when getting bytes data of dialog.");
+            Err(anyhow::anyhow!("{}", e))
+        }
     }
 }
 
-/*pub async fn get_dialog(
-    background: &str,
-    character: &str,
-    text: &str,
-    _context: &Context,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    initialize_clients().await?;
-    update_token().await?;
-
-    let token = unsafe { JWT_TOKEN.get().expect("Failed to get JWT token.") };
-
-    let discord_client = unsafe {
-        DISCORD_SERVICE_CLIENT
-            .get_mut()
-            .expect("Failed to get gRPC client for Discord bot.")
-    };
-
-    let request = tonic::Request::new(DialogRequest {
-        background: background.into(),
-        character: character.into(),
-        text: text.into(),
-        jwt_token: token.token.clone(),
-    });
-    let response: Response<Streaming<DialogReply>> = discord_client.post_dialog(request).await?;
-    let mut response: Streaming<DialogReply> = response.into_inner();
-    if let Some(message) = response.message().await? {
-        if message.status {
-            Ok(message.image)
-        } else {
-            Ok(vec![])
-        }
-    } else {
-        Ok(vec![])
-    }
-}*/
-
-pub async fn get_specialized_dialog(mut dialog: SpecializedDialog) -> anyhow::Result<Vec<u8>> {
+/*pub async fn get_specialized_dialog(mut dialog: SpecializedDialog) -> anyhow::Result<Vec<u8>> {
     initialize_clients().await?;
     update_token().await?;
 
@@ -136,46 +77,6 @@ pub async fn get_specialized_dialog(mut dialog: SpecializedDialog) -> anyhow::Re
         Err(_) => Ok(vec![]),
     }
 }
-
-/*pub async fn get_specialized_dialog(
-    dialog: SpecializedDialog,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    initialize_clients().await?;
-    update_token().await?;
-
-    let token = unsafe { JWT_TOKEN.get().expect("Failed to get JWT token.") };
-
-    let discord_client = unsafe {
-        DISCORD_SERVICE_CLIENT
-            .get_mut()
-            .expect("Failed to get gRPC client for Discord bot.")
-    };
-
-    let request = tonic::Request::new(SpecializedDialogRequest {
-        background: dialog.background,
-        character: dialog
-            .character
-            .expect("Failed to get character information from input."),
-        pose: dialog.pose as i32,
-        clothes: dialog.clothes,
-        face: dialog.face,
-        is_hidden_character: dialog.is_hidden_character,
-        text: dialog.text,
-        jwt_token: token.token.clone(),
-    });
-
-    let response = discord_client.post_specialized_dialog(request).await?;
-    let mut response = response.into_inner();
-    if let Some(message) = response.message().await? {
-        if message.status {
-            Ok(message.image)
-        } else {
-            Ok(vec![])
-        }
-    } else {
-        Ok(vec![])
-    }
-}*/
 
 pub async fn get_comic(
     comic_data: Vec<Comic>,
@@ -210,138 +111,69 @@ pub async fn get_comic(
     } else {
         Ok(vec![])
     }
-}
-
-async fn initialize_clients() -> anyhow::Result<()> {
-    unsafe {
-        if REST_CLIENT.get().is_none() {
-            let client_initialized = REST_CLIENT_INITIALIZED.get_or_init(|| Mutex::new(false));
-            let mut initialized = client_initialized.lock().await;
-            if !*initialized {
-                let client = reqwest::Client::new();
-                if let Ok(_) = REST_CLIENT.set(client) {
-                    *initialized = true;
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-/*async fn initialize_clients() -> Result<(), Box<dyn std::error::Error>> {
-    unsafe {
-        if JWT_TOKEN_CLIENT.get_mut().is_none() {
-            let client_initialized = JWT_TOKEN_CLIENT_INITIALIZED.get_or_init(|| Mutex::new(false));
-            let mut initialized = client_initialized.lock().await;
-            if !*initialized {
-                let client = JwtTokenServiceClient::connect("http://64.227.99.31:26361").await?;
-                if let Ok(_) = JWT_TOKEN_CLIENT.set(client) {
-                    *initialized = true;
-                }
-            }
-        }
-
-        if DISCORD_SERVICE_CLIENT.get_mut().is_none() {
-            let client_initialized =
-                DISCORD_SERVICE_CLIENT_INITIALIZED.get_or_init(|| Mutex::new(false));
-            let mut initialized = client_initialized.lock().await;
-            if !*initialized {
-                let client = DiscordBotServiceClient::connect("http://64.227.99.31:26361").await?;
-                if let Ok(_) = DISCORD_SERVICE_CLIENT.set(client) {
-                    *initialized = true;
-                }
-            }
-        }
-    }
-
-    Ok(())
 }*/
 
-async fn update_token() -> anyhow::Result<()> {
-    let token = unsafe { JWT_TOKEN.get_mut() };
-    let client = unsafe {
-        REST_CLIENT
-            .get()
-            .expect("Failed to get REST client for JWT token.")
-    };
+pub async fn validate_dialog(
+    background: &mut String,
+    character: &String,
+    text: &String,
+    is_kou: bool,
+) -> anyhow::Result<()> {
+    let server_endpoint = CONFIGURATION
+        .get()
+        .map(|c| &c.server_endpoint)
+        .expect("Failed to get server endpoint from configuration.");
 
-    if let Some(t) = token {
-        let expiry = t.expiry.parse::<DateTime<Utc>>()?;
-        if expiry < Utc::now() {
-            let mut request_data = HashMap::new();
-            request_data.insert("UserName", env::var("LOGIN_NAME")?);
-            request_data.insert("Password", env::var("LOGIN_PASS")?);
-            let request = client
-                .post("https://tetsukizone.com/api/login")
-                .json(&request_data)
-                .send()
-                .await?;
+    let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
+    let dialog_options: HashMap<String, Vec<String>> =
+        HTTP_CLIENT.get(&dialog_path).send().await?.json().await?;
 
-            let response: JwtToken = request.json().await?;
-            *t = response;
+    if let Some(backgrounds) = dialog_options.get("backgrounds") {
+        if !backgrounds.contains(background) {
+            *background = {
+                let mut rng = rand::thread_rng();
+                backgrounds.choose(&mut rng).cloned().unwrap_or_default()
+            }
         }
-    } else {
-        let mut request_data = HashMap::new();
-        request_data.insert("UserName", env::var("LOGIN_NAME")?);
-        request_data.insert("Password", env::var("LOGIN_PASS")?);
-        let request = client
-            .post("https://tetsukizone.com/api/login")
-            .json(&request_data)
-            .send()
-            .await?;
+    }
 
-        let response: JwtToken = request.json().await?;
-        let jwt_token_set_result = unsafe { JWT_TOKEN.set(response) };
-        if jwt_token_set_result.is_err() {
-            panic!("Failed to set OnceCell for JWT token.");
+    if let Some(characters) = dialog_options.get("characters") {
+        if !characters.contains(character) {
+            let characters_text: String = characters
+                .iter()
+                .map(|s| format!("`{}`", s))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            return Err(anyhow::anyhow!(format!(
+                "Sorry, but I don't think that `{}` is a supported character.\n\
+                Available characters are: {}.",
+                character, characters_text
+            )));
         }
+    }
+
+    if text.is_empty() {
+        return Err(anyhow::anyhow!(if is_kou {
+            "Uh...I don't know what to send if you don't tell me anything..."
+        } else {
+            "At least give me something to send, you dumbass."
+        }));
+    }
+
+    if text.chars().count() > DIALOG_TEXT_LIMIT {
+        return Err(anyhow::anyhow!(
+            "Sorry, the message limit is 180 characters!"
+        ));
+    }
+
+    if EMOTE_MENTIONS_REGEX.is_match(text) || NON_ASCII_AND_JAPANESE_REGEX.is_match(text) {
+        return Err(anyhow::anyhow!(if is_kou {
+            "I can't do emotes, mentions, non-latin and non-Japanese characters."
+        } else {
+            "I don't do emotes, mentions, non-latin and non-Japanese characters."
+        }));
     }
 
     Ok(())
 }
-
-/*async fn update_token() -> Result<(), Box<dyn std::error::Error>> {
-    let token = unsafe { JWT_TOKEN.get_mut() };
-
-    let client = unsafe {
-        JWT_TOKEN_CLIENT
-            .get_mut()
-            .expect("Failed to get gRPC client for JWT token.")
-    };
-
-    if let Some(t) = token {
-        let expiry = Utc.datetime_from_str(&t.expiry, "%m/%d/%Y %H:%M:%S")?;
-        if expiry < Utc::now() {
-            let request = tonic::Request::new(AccessRequest {
-                user_name: env::var("LOGIN_NAME")?,
-                password: env::var("LOGIN_PASS")?,
-            });
-            let response = client.access(request).await?;
-            let response = response.into_inner();
-            *t = JwtToken {
-                token: response.token,
-                user_details: response.user_details,
-                expiry: response.expiry,
-            };
-        }
-    } else {
-        let request = tonic::Request::new(AccessRequest {
-            user_name: env::var("LOGIN_NAME")?,
-            password: env::var("LOGIN_PASS")?,
-        });
-        let response = client.access(request).await?;
-        let response = response.into_inner();
-        let token_set_result = unsafe {
-            JWT_TOKEN.set(JwtToken {
-                token: response.token,
-                user_details: response.user_details,
-                expiry: response.expiry,
-            })
-        };
-        if token_set_result.is_err() {
-            panic!("Failed to set OnceCell for JWT token.");
-        }
-    }
-
-    Ok(())
-}*/

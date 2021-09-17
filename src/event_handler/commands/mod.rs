@@ -30,6 +30,10 @@ pub fn initialize() {
             crate::commands::utility::avatar::avatar_async,
         );
         map.insert(
+            "dialog".to_string(),
+            crate::commands::fun::dialog::dialog_async,
+        );
+        map.insert(
             "enlarge".to_string(),
             crate::commands::utility::enlarge::enlarge_async,
         );
@@ -100,6 +104,7 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
 fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
     register_about(commands);
     register_avatar(commands);
+    register_dialog(commands);
     register_enlarge(commands);
     register_game(commands);
     register_image(commands);
@@ -129,6 +134,31 @@ fn register_avatar(commands: &mut CreateApplicationCommands) -> &mut CreateAppli
                     .description("The user whose avatar to get.")
                     .required(true)
                     .kind(ApplicationCommandOptionType::User)
+            })
+    })
+}
+
+fn register_dialog(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("dialog")
+            .description("Returns an image of a character saying anything you want.")
+            .create_option(|opt| {
+                opt.name("background")
+                    .description("The background of the character. A random background if the specified one doesn't exist.")
+                    .required(true)
+                    .kind(ApplicationCommandOptionType::String)
+            })
+            .create_option(|opt| {
+                opt.name("character")
+                    .description("The character whom you want to make saying something.")
+                    .required(true)
+                    .kind(ApplicationCommandOptionType::String)
+            })
+            .create_option(|opt| {
+                opt.name("text")
+                    .description("The text of the dialog. Cannot be over 180 characters.")
+                    .required(true)
+                    .kind(ApplicationCommandOptionType::String)
             })
     })
 }

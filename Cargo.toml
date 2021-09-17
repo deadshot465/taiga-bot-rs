@@ -23,7 +23,7 @@ reqwest = { version = ">=0.11", features = ["blocking", "json"] }
 serde = { version = ">=1.0", features = ["derive"] }
 serde_json = ">=1.0"
 serenity = { version = ">=0.10.0", features = ["cache", "collector", "gateway", "unstable_discord_api"] }
-tokio = { version = ">=1.0", features = ["full"] }
+tokio = { version = ">=1.0", features = ["full", "parking_lot"] }
 tonic = ">=0.5"
 serde_dhall = ">=0.10"
 

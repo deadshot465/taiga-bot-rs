@@ -1,23 +1,20 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum Comic {
     Dialog(Dialog),
     SpecializedDialog(SpecializedDialog),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Dialog {
-    #[serde(rename = "Background")]
     pub background: String,
-    #[serde(rename = "Character")]
     pub character: String,
-    #[serde(rename = "Text")]
     pub text: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SpecializedDialog {
     #[serde(rename = "Background")]
     pub background: String,

@@ -77,23 +77,6 @@
     },
     "result": "<:KouBang:705054435667214367> Alright, that's the best calculation I got! {source} is {amount}{target}."
   },
-  "dialog": {
-    "description": "Returns an image of a character in Camp Buddy saying anything you want",
-    "usage": "Run `dialog <background> <character> <message>` or `dialog <character> <message>` to give you an image of a Camp Buddy character with a custom dialog!\nAvailable backgrounds: `{backgrounds}`\nAvailable characters: `{characters}`",
-    "errors": {
-      "length_too_short": "This command requires two arguments: `dialog [background] <character> <text>` ([] is optional)",
-      "background_not_found": "Sorry, but I couldn't find `{background}` as a location\nAvailable backgrounds are: `{backgrounds}`.",
-      "character_not_found": "Sorry, but I don't think that `{character}` is a character in Camp Buddy\nAvailable characters are: `{characters}`.",
-      "no_message": "Uh...I don't know what to send if you don't tell me anything...",
-      "message_too_long": "Sorry, the message limit is 180 characters for latin characters, 78 characters for Japanese <:KouCrack:705797095742767150>",
-      "wrong_character_set": "I can't do emotes, mentions, non-latin and non-Japanese characters",
-      "cooldown": "Sorry, I still have chores to do. Maybe later? <:KouWorryBlush:705037055096389683>",
-      "generic": "An error just happened. Must be Hanako up to something no good! <:KouAngry:705054323050020896> - {json}"
-    },
-    "infos": {
-    },
-    "result": "Here you go~!"
-  },
   "emote": {
     "description": "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected.",
     "usage": "Run `emote <register|deregister>` to register or deregister an emote.",
@@ -106,17 +89,6 @@
     "infos": {
     },
     "result": ""
-  },
-  "owoify": {
-    "description": "This command will owoify your text",
-    "usage": "Run `owoify <text>` or `owoify <intensity> <text>` to owoify any text!\nIntensities available are `easy` (default), `medium`, and `hard`.",
-    "errors": {
-      "length_too_short": "...I don't know what to owo, sorry...",
-      "length_too_long": "<:KouCry:705054435826597928> I'm not really smart so I can't owoify such a long sentence..."
-    },
-    "infos": {
-    },
-    "result": "OwO-ified for {author}~!\n\n{text}"
   },
   "remind": {
     "description": "This command will make Kou remind you in a specific time.",

@@ -27,6 +27,7 @@ pub struct Configuration {
     pub update_date: String,
     pub unsplash_token: String,
     pub cat_token: String,
+    pub server_endpoint: String,
 }
 
 impl Configuration {
@@ -49,6 +50,7 @@ impl Configuration {
             update_date: "".to_string(),
             unsplash_token: "".to_string(),
             cat_token: "".to_string(),
+            server_endpoint: "http://localhost:8080".to_string(),
         }
     }
 
