@@ -10,7 +10,7 @@ pub static ORACLES: Lazy<Vec<Oracle>> = Lazy::new(|| {
     serde_json::from_slice(&oracles).expect("Failed to deserialize oracles.")
 });
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Oracle {
     pub no: u8,
     pub fortune: String,

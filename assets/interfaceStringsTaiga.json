@@ -295,17 +295,5 @@
       "infos": {},
       "result": "Here you go~!"
     }
-  },
-  "time": {
-    "description": "Query the time of a city",
-    "usage": "Run `time <city name>` to query the current local time of a city.",
-    "errors": {
-      "length_too_short": "This command requires a city name.",
-      "no_result": "Sorry, I couldn't find the city you're querying."
-    },
-    "infos": {
-
-    },
-    "result": "The current local time of **{city}** is: {time}."
   }
 }

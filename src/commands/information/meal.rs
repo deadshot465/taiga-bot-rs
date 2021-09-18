@@ -1,33 +1,10 @@
 use crate::shared::services::HTTP_CLIENT;
-use serde::{Deserialize, Serialize};
+use crate::shared::structs::information::meal::MealData;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
-
-#[derive(Deserialize, Serialize)]
-struct MealData {
-    pub meals: Vec<Meal>,
-}
-
-#[derive(Deserialize, Serialize)]
-struct Meal {
-    #[serde(rename = "strMeal")]
-    pub str_meal: String,
-    #[serde(rename = "strInstructions")]
-    pub str_instructions: String,
-    #[serde(rename = "strMealThumb")]
-    pub str_meal_thumb: String,
-    #[serde(rename = "strSource")]
-    pub str_source: String,
-    #[serde(rename = "strCategory")]
-    pub str_category: String,
-    #[serde(rename = "strArea")]
-    pub str_area: String,
-    #[serde(rename = "strYoutube")]
-    pub str_youtube: String,
-}
 
 const ENDPOINT: &str = "http://www.themealdb.com/api/json/v1/1/random.php";
 

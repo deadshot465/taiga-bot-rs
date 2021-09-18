@@ -17,7 +17,7 @@ pub static VALENTINES: Lazy<Vec<Character>> = Lazy::new(|| {
     serde_json::from_slice(&json).expect("Failed to deserialize valentines.")
 });
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Character {
     pub name: String,
     pub description: String,

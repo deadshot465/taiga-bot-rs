@@ -72,6 +72,10 @@ pub fn initialize() {
             crate::commands::information::stats::stats_async,
         );
         map.insert(
+            "time".to_string(),
+            crate::commands::information::time::time_async,
+        );
+        map.insert(
             "valentine".to_string(),
             crate::commands::information::valentine::valentine_async,
         );
@@ -117,6 +121,7 @@ fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApp
     register_route(commands);
     register_ship(commands);
     register_stats(commands);
+    register_time(commands);
     register_valentine(commands)
 }
 
@@ -336,6 +341,19 @@ fn register_stats(commands: &mut CreateApplicationCommands) -> &mut CreateApplic
                     .description("(Optional) The command of which you want to query the record.")
                     .add_string_choice("route", "route")
                     .add_string_choice("valentine", "valentine")
+                    .kind(ApplicationCommandOptionType::String)
+            })
+    })
+}
+
+fn register_time(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("time")
+            .description("Query the time of a city based on a city name or an address.")
+            .create_option(|opt| {
+                opt.name("city_name_or_address")
+                    .description("A city name or an address of which to query time.")
+                    .required(true)
                     .kind(ApplicationCommandOptionType::String)
             })
     })
