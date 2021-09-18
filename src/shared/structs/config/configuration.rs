@@ -1,14 +1,13 @@
 use crate::shared::constants::CONFIG_DIRECTORY;
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
-use serde_dhall::StaticType;
 
 pub static CONFIGURATION: OnceCell<Configuration> = OnceCell::new();
 pub static KOU: OnceCell<bool> = OnceCell::new();
 
-const CONFIG_FILE_NAME: &str = "/config.dhall";
+const CONFIG_FILE_NAME: &str = "/config.toml";
 
-#[derive(Deserialize, Serialize, StaticType, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Configuration {
     pub prefix: String,
     pub token: String,
@@ -58,10 +57,8 @@ impl Configuration {
 
     pub fn write_config(&self) -> anyhow::Result<()> {
         let config_path = String::from(CONFIG_DIRECTORY) + CONFIG_FILE_NAME;
-        let serialized_dhall = serde_dhall::serialize(self)
-            .static_type_annotation()
-            .to_string()?;
-        std::fs::write(&config_path, serialized_dhall)?;
+        let serialized_toml = toml::to_string_pretty(self)?;
+        std::fs::write(&config_path, serialized_toml)?;
         Ok(())
     }
 }
@@ -77,8 +74,9 @@ pub fn initialize() -> anyhow::Result<()> {
         new_config.write_config()?;
         CONFIGURATION.get_or_init(|| new_config);
     } else {
-        let deserialized_dhall: Configuration = serde_dhall::from_file(&config_path).parse()?;
-        CONFIGURATION.get_or_init(|| deserialized_dhall);
+        let toml = std::fs::read(&config_path)?;
+        let deserialized_toml: Configuration = toml::from_slice(&toml)?;
+        CONFIGURATION.get_or_init(|| deserialized_toml);
     }
 
     Ok(())

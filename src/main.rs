@@ -21,6 +21,16 @@ async fn main() -> anyhow::Result<()> {
     user_record::initialize()?;
     event_handler::commands::initialize();
 
+    if configuration::CONFIGURATION
+        .get()
+        .map(|c| c.token.as_str())
+        .unwrap_or_default()
+        .is_empty()
+    {
+        log::error!("Discord token cannot be empty.");
+        return Ok(());
+    }
+
     let mut client = {
         let config = configuration::CONFIGURATION
             .get()
