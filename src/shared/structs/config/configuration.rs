@@ -28,6 +28,7 @@ pub struct Configuration {
     pub unsplash_token: String,
     pub cat_token: String,
     pub server_endpoint: String,
+    pub exchange_rate_api_key: String,
 }
 
 impl Configuration {
@@ -51,6 +52,7 @@ impl Configuration {
             unsplash_token: "".to_string(),
             cat_token: "".to_string(),
             server_endpoint: "http://localhost:8080".to_string(),
+            exchange_rate_api_key: "".to_string(),
         }
     }
 

@@ -55,38 +55,6 @@
     "Uh oh, this failed about as much as Kieran’s redemption arc. Try again!"
   ],
   "cool_down": "You dumbass need {timeLeft} more second(s) before telling me to do the command again.",
-  "about": {
-    "description": "Shows information about the Taiga bot",
-    "usage": "Show information about the Taiga bot.",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": ""
-  },
-  "comic": {
-    "description": "Make a simple and short Camp Buddy comic.",
-    "usage": "Run `comic` and upload the file at the same time to make a simple manga.",
-    "errors": {
-    },
-    "infos": {},
-    "result": "Here you go~!"
-  },
-  "cvt": {
-    "description": "Helps converting stuff",
-    "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
-    "errors": {
-      "length_too_short": "Temperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.\nThe syntax is `{prefix}cvt <unit-to-convert-to> <value>`",
-      "invalid_unit": "<:Spray:701105694761418774> Valid units are `{units}`.",
-      "wrong_pattern": "<:TaigaUneasy2:700006812673638500> Not sure what you mean by `{input}`",
-      "operation_not_possible": "<:TaigaAck2:700006264507465778> That's not possible, you dummy.",
-      "is_nan": "<:TaigaAck2:700006264507465778> Even Lee would be unable to calculate that.",
-      "generic": "<:TaigaAck2:700006264507465778> Guess something just went wrong."
-    },
-    "infos": {
-    },
-    "result": "<:chibitaiga:697893400891883531> According to Lee's calculations, {source} is {amount}{target}."
-  },
   "emote": {
     "description": "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected.",
     "usage": "Run `emote <register|deregister>` to register or deregister an emote.",

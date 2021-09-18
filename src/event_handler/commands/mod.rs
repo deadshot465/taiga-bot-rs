@@ -30,6 +30,10 @@ pub fn initialize() {
             crate::commands::utility::avatar::avatar_async,
         );
         map.insert(
+            "convert".to_string(),
+            crate::commands::utility::convert::convert_async,
+        );
+        map.insert(
             "dialog".to_string(),
             crate::commands::fun::dialog::dialog_async,
         );
@@ -109,6 +113,7 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
 fn register_commands(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
     register_about(commands);
     register_avatar(commands);
+    register_convert(commands);
     register_dialog(commands);
     register_enlarge(commands);
     register_game(commands);
@@ -141,6 +146,131 @@ fn register_avatar(commands: &mut CreateApplicationCommands) -> &mut CreateAppli
                     .description("The user whose avatar to get.")
                     .required(true)
                     .kind(ApplicationCommandOptionType::User)
+            })
+    })
+}
+
+fn register_convert(commands: &mut CreateApplicationCommands) -> &mut CreateApplicationCommands {
+    commands.create_application_command(|cmd| {
+        cmd.name("convert")
+            .description("Helps converting stuff.")
+            .create_option(|opt| {
+                opt.name("length")
+                    .description("Convert length.")
+                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .create_sub_option(|opt| {
+                        opt.name("source_unit")
+                            .description("The source length to convert from.")
+                            .kind(ApplicationCommandOptionType::String)
+                            .required(true)
+                            .add_string_choice("km", "km")
+                            .add_string_choice("m", "m")
+                            .add_string_choice("cm", "cm")
+                            .add_string_choice("inches", "in")
+                            .add_string_choice("feet", "ft")
+                            .add_string_choice("miles", "mi")
+                            .add_string_choice("au", "au")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("target_unit")
+                            .description("The target length to convert to.")
+                            .kind(ApplicationCommandOptionType::String)
+                            .required(true)
+                            .add_string_choice("km", "km")
+                            .add_string_choice("m", "m")
+                            .add_string_choice("cm", "cm")
+                            .add_string_choice("inches", "in")
+                            .add_string_choice("feet", "ft")
+                            .add_string_choice("miles", "mi")
+                            .add_string_choice("au", "au")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("amount")
+                            .description("The amount to convert.")
+                            .kind(ApplicationCommandOptionType::Number)
+                            .required(true)
+                    })
+            })
+            .create_option(|opt| {
+                opt.name("weight")
+                    .description("Convert weight.")
+                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .create_sub_option(|opt| {
+                        opt.name("source_unit")
+                            .description("The source weight to convert from.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                            .add_string_choice("kg", "kg")
+                            .add_string_choice("g", "g")
+                            .add_string_choice("lb", "lb")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("target_unit")
+                            .description("The target weight to convert to.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                            .add_string_choice("kg", "kg")
+                            .add_string_choice("g", "g")
+                            .add_string_choice("lb", "lb")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("amount")
+                            .description("The amount to convert.")
+                            .kind(ApplicationCommandOptionType::Number)
+                            .required(true)
+                    })
+            })
+            .create_option(|opt| {
+                opt.name("temperature")
+                    .description("Convert temperature.")
+                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .create_sub_option(|opt| {
+                        opt.name("source_unit")
+                            .description("The source temperature to convert from.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                            .add_string_choice("Celsius", "c")
+                            .add_string_choice("Fahrenheit", "f")
+                            .add_string_choice("Kelvin", "k")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("target_unit")
+                            .description("The target temperature to convert to.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                            .add_string_choice("Celsius", "c")
+                            .add_string_choice("Fahrenheit", "f")
+                            .add_string_choice("Kelvin", "k")
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("amount")
+                            .description("The amount to convert.")
+                            .kind(ApplicationCommandOptionType::Number)
+                            .required(true)
+                    })
+            })
+            .create_option(|opt| {
+                opt.name("currency")
+                    .description("Convert currency.")
+                    .kind(ApplicationCommandOptionType::SubCommand)
+                    .create_sub_option(|opt| {
+                        opt.name("source_unit")
+                            .description("The source currency type to convert from, e.g. USD.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("target_unit")
+                            .description("The target currency type to convert to, e.g. JPY.")
+                            .required(true)
+                            .kind(ApplicationCommandOptionType::String)
+                    })
+                    .create_sub_option(|opt| {
+                        opt.name("amount")
+                            .description("The amount to convert.")
+                            .kind(ApplicationCommandOptionType::Number)
+                            .required(true)
+                    })
             })
     })
 }

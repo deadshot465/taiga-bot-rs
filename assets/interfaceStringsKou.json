@@ -45,38 +45,6 @@
     "This command is not right...Something must be wrong! <:KouHeh2:712632145562304582>"
   ],
   "cool_down": "Sorry, but I still need {timeLeft} more second(s) to do the command again...I'm not like Teru-nii... <:KouCry:736061517534855201>",
-  "about": {
-    "description": "Shows information about the Kou bot",
-    "usage": "Show information about the Kou bot.",
-    "errors": {
-    },
-    "infos": {
-    },
-    "result": ""
-  },
-  "comic": {
-    "description": "Make a simple and short Camp Buddy comic.",
-    "usage": "Run `comic` and upload the file at the same time to make a simple manga.",
-    "errors": {
-    },
-    "infos": {},
-    "result": "Here you go~!"
-  },
-  "cvt": {
-    "description": "Helps converting stuff",
-    "usage": "Run `cvt <target unit> <value><origin unit>` to convert `<value>` from `<origin unit>` to `<target unit>`.\nTemperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.",
-    "errors": {
-      "length_too_short": "Temperature units to convert to are `{temps}` from those values.\nHeight units to convert to are `{heights}` from those same values as well.\nThe syntax is `{prefix}cvt <unit-to-convert-to> <value>`",
-      "invalid_unit": "<:KouWTF:705807205366104126> Valid units are `{units}`.",
-      "wrong_pattern": "<:KouLookup:705054323473645659> I'm not sure what you mean by `{input}`...",
-      "operation_not_possible": "<:KouWorryBlush:705037055096389683> I don't think that's possible...Well maybe apparitions can do that.",
-      "is_nan": "<:KouWorryBlush:705037055096389683> I'd have to ask Hanako if that's possible...",
-      "generic": "<:KouSmilingSpeechlessHead:705037054454792214> Guess something just went wrong."
-    },
-    "infos": {
-    },
-    "result": "<:KouBang:705054435667214367> Alright, that's the best calculation I got! {source} is {amount}{target}."
-  },
   "emote": {
     "description": "Register or deregister an emote from the bot. Note that emotes from servers which the bot is not in won't work as expected.",
     "usage": "Run `emote <register|deregister>` to register or deregister an emote.",
