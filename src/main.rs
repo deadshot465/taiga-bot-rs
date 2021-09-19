@@ -17,7 +17,6 @@ use std::collections::HashSet;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    random_response::initialize()?;
     configuration::initialize()?;
     channel_control::initialize()?;
     user_record::initialize()?;

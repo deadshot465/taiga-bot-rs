@@ -1,3 +1,4 @@
+use crate::shared::constants::EMOTE_IS_ANIMATED_REGEX;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
@@ -12,9 +13,6 @@ static EMOTE_REGEX: Lazy<Regex> =
 
 static EMOTE_ID_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(:\w+:)(\d+)").expect("Failed to initialize regular expression."));
-
-static EMOTE_IS_ANIMATED_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(<a)").expect("Failed to initialize regular expression."));
 
 pub fn enlarge_async(
     ctx: Context,

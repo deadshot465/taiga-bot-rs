@@ -1,8 +1,12 @@
 use crate::shared::constants::ASSET_DIRECTORY;
-use once_cell::sync::OnceCell;
+use once_cell::sync::Lazy;
+use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
-pub static RANDOM_RESPONSES: OnceCell<Responses> = OnceCell::new();
+pub static RANDOM_RESPONSES: Lazy<Responses> =
+    Lazy::new(|| initialize().expect("Failed to initialize random responses."));
+pub static RANDOM_RESPONSES_KEYWORDS: Lazy<Vec<String>> =
+    Lazy::new(|| initialize_random_responses_keywords());
 
 const RANDOM_RESPONSES_FILE_NAME: &str = "/random_responses.toml";
 
@@ -24,24 +28,60 @@ impl Responses {
     }
 }
 
-pub fn initialize() -> anyhow::Result<()> {
+pub fn get_random_message(keyword: &str) -> String {
+    let keyword = keyword.trim().to_lowercase();
+    RANDOM_RESPONSES
+        .random_responses
+        .iter()
+        .find(|m| m.keyword.as_str() == &keyword)
+        .and_then(|res| {
+            let mut rng = rand::thread_rng();
+            res.messages.choose(&mut rng)
+        })
+        .cloned()
+        .unwrap_or("Oops...".into())
+}
+
+pub fn get_random_reaction(keyword: &str) -> String {
+    let keyword = keyword.trim().to_lowercase();
+    RANDOM_RESPONSES
+        .random_responses
+        .iter()
+        .find(|m| m.keyword.as_str() == &keyword)
+        .and_then(|res| {
+            let mut rng = rand::thread_rng();
+            res.reactions.choose(&mut rng)
+        })
+        .cloned()
+        .unwrap_or("Oops...".into())
+}
+
+fn initialize() -> anyhow::Result<Responses> {
     if !std::path::Path::new(ASSET_DIRECTORY).exists() {
         std::fs::create_dir(ASSET_DIRECTORY)?;
     }
 
     let random_responses_path = String::from(ASSET_DIRECTORY) + RANDOM_RESPONSES_FILE_NAME;
     if !std::path::Path::new(&random_responses_path).exists() {
-        let json_path = String::from(ASSET_DIRECTORY) + "/json/random_responses.json";
+        let json_path = String::from(ASSET_DIRECTORY) + "/json/backup/random_responses.json";
         let json = std::fs::read(&json_path)?;
         let deserialized_json: Vec<RandomResponse> = serde_json::from_slice(&json)?;
         let responses = Responses::new(deserialized_json);
         let serialized_toml = toml::to_string_pretty(&responses)?;
         std::fs::write(&random_responses_path, serialized_toml)?;
-        RANDOM_RESPONSES.get_or_init(|| responses);
+        Ok(responses)
     } else {
         let toml = std::fs::read(&random_responses_path)?;
         let deserialized_toml: Responses = toml::from_slice(&toml)?;
-        RANDOM_RESPONSES.get_or_init(|| deserialized_toml);
+        Ok(deserialized_toml)
     }
-    Ok(())
+}
+
+fn initialize_random_responses_keywords() -> Vec<String> {
+    RANDOM_RESPONSES
+        .random_responses
+        .iter()
+        .map(|res| &res.keyword)
+        .map(|s| format!(" {} ", s))
+        .collect::<Vec<_>>()
 }
