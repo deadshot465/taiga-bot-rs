@@ -5,6 +5,7 @@ mod commands;
 mod event_handler;
 mod shared;
 use crate::event_handler::Handler;
+use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use serenity::client::bridge::gateway::GatewayIntents;
 use serenity::framework::StandardFramework;
 use serenity::http::Http;
@@ -18,6 +19,7 @@ use std::collections::HashSet;
 async fn main() -> anyhow::Result<()> {
     random_response::initialize()?;
     configuration::initialize()?;
+    channel_control::initialize()?;
     user_record::initialize()?;
     event_handler::commands::initialize();
 
@@ -57,11 +59,17 @@ async fn main() -> anyhow::Result<()> {
         let token = &config.token;
         let prefix = &config.prefix;
         let application_id = &config.application_id;
-        let enabled_channels = config
-            .enabled_channels
-            .iter()
-            .map(|n| ChannelId::from(*n))
-            .collect::<HashSet<_>>();
+        let enabled_channels = {
+            let channel_control = CHANNEL_CONTROL
+                .get()
+                .expect("Failed to get channel control.");
+            let channel_control_read_lock = channel_control.read().await;
+            channel_control_read_lock
+                .enabled_channels
+                .iter()
+                .map(|n| ChannelId::from(*n))
+                .collect::<HashSet<_>>()
+        };
 
         let http = Http::new_with_token(token);
         let app_info = http.get_current_application_info().await?;
