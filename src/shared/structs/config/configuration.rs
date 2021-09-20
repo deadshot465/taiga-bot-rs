@@ -27,6 +27,7 @@ pub struct Configuration {
     pub cat_token: String,
     pub server_endpoint: String,
     pub exchange_rate_api_key: String,
+    pub general_channel_ids: Vec<u64>,
 }
 
 impl Configuration {
@@ -50,6 +51,7 @@ impl Configuration {
             cat_token: "".to_string(),
             server_endpoint: "http://localhost:8080".to_string(),
             exchange_rate_api_key: "".to_string(),
+            general_channel_ids: vec![],
         }
     }
 

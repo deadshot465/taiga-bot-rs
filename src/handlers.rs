@@ -424,68 +424,6 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
 
 #[hook]
 pub async fn message_received(context: &Context, msg: &Message) {
-    let bot_user = context.cache.current_user().await;
-    let guild = msg.guild(&context.cache).await;
-    if msg.author.id.0 == bot_user.id.0 {
-        return;
-    }
-    let channel = msg.channel(&context.cache).await;
-    if channel.is_none() {
-        return;
-    }
-    let private_channel = channel.expect("Failed to retrieve channel.").private();
-    if private_channel.is_none() {
-        let mut guild = guild.clone().expect("Failed to get guild from cache.");
-        let member = guild
-            .members
-            .get_mut(&UserId::from(msg.author.id.0))
-            .expect("Failed to get member from cache.");
-        let mut member = member.clone();
-
-        if msg.channel_id.0 == 722824790972563547_u64 {
-            let has_role: bool = msg
-                .author
-                .has_role(
-                    &context.http,
-                    msg.guild_id
-                        .clone()
-                        .expect("Failed to get guild id from message."),
-                    RoleId(736534226945572884),
-                )
-                .await
-                .expect("Failed to check if user has required role.");
-            if msg.content.as_str() == "I agree with the rule and Kou is the best boi." && !has_role
-            {
-                member
-                    .add_role(&context.http, RoleId(736534226945572884))
-                    .await
-                    .expect("Failed to add a role to the user.");
-                greeting(
-                    context,
-                    msg.guild_id.as_ref().expect("Failed to retrieve guild ID."),
-                    &member,
-                )
-                .await;
-                msg.delete(&context.http)
-                    .await
-                    .expect("Failed to delete the message.");
-            } else if !has_role {
-                msg.delete(&context.http)
-                    .await
-                    .expect("Failed to delete the message.");
-                let reply_message = msg
-                    .reply(&context.http, "Your answer is incorrect. Please try again.")
-                    .await;
-                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-                reply_message
-                    .expect("Failed to retrieve sent message.")
-                    .delete(&context.http)
-                    .await
-                    .expect("Failed to delete the message.");
-            }
-        }
-    }
-
     handle_self_mentions(context, msg).await;
     handle_reactions(context, msg).await;
     handle_replies(context, msg).await;
@@ -494,49 +432,6 @@ pub async fn message_received(context: &Context, msg: &Message) {
     if msg.content.starts_with("/smite") {
         smite_command(context, msg).await;
     }
-
-    let context_data = context.data.read().await;
-    let persistence = context_data
-        .get::<PersistenceService>()
-        .expect("Failed to get assets service.");
-    let interface = context_data
-        .get::<InterfaceService>()
-        .expect("Failed to get interface service.");
-    let persistence_clone = Arc::clone(persistence);
-    let interface_clone = Arc::clone(interface);
-    drop(context_data);
-    let mut persistence_lock = persistence_clone.write().await;
-    let interface_lock = interface_clone.read().await;
-
-    // Update last modified time of assets storage and write data every 5 minutes.
-    let last_modified_time = persistence_lock
-        .last_modified_time
-        .as_ref()
-        .expect("Failed to retrieve last modified time.");
-    if last_modified_time < &Utc::now() {
-        persistence_lock.write();
-        persistence_lock.last_modified_time = Some(Utc::now() + Duration::minutes(5));
-    }
-
-    // Update presence every 60 minutes.
-    let presence_timer = persistence_lock
-        .presence_timer
-        .as_ref()
-        .expect("Failed to retrieve presence timer.");
-    if presence_timer < &Utc::now() {
-        let presences: &[String] = interface_lock
-            .interface_strings
-            .as_ref()
-            .expect("Failed to retrieve interface strings.")
-            .presence
-            .borrow();
-        let activity =
-            Activity::playing(presences[thread_rng().gen_range(0..presences.len())].as_str());
-        let status = OnlineStatus::Online;
-        context.set_presence(Some(activity), status).await;
-        persistence_lock.presence_timer = Some(Utc::now() + Duration::hours(1));
-    }
-    drop(interface_lock);
 
     let mut is_persistence_changed = false;
     let reminders = persistence_lock
@@ -696,59 +591,9 @@ async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
         .get::<CommandGroupCollection>()
         .expect("Failed to retrieve command group collection.")
         .to_vec();
-    let interface = data
-        .get::<InterfaceService>()
-        .expect("Failed to retrieve interface service.");
-    let persistence = data
-        .get::<PersistenceService>()
-        .expect("Failed to retrieve assets service.");
-    let interface_lock = interface.read().await;
-    let persistence_lock = persistence.read().await;
+
     let is_kou = interface_lock.is_kou;
     let mut text = persistence_lock.guide_text.clone();
-    let greetings = interface_lock
-        .interface_strings
-        .as_ref()
-        .expect("Failed to retrieve interface strings.")
-        .greetings
-        .to_vec();
-    drop(persistence_lock);
-    drop(interface_lock);
-    drop(data);
-    let greeting: String;
-    {
-        let mut rng = thread_rng();
-        greeting = greetings
-            .choose(&mut rng)
-            .expect("Failed to choose random greeting message.")
-            .replace("{name}", format!("<@{}>", &member.user.id.0).as_str());
-    }
-    let mut general_channels: Vec<String> = vec![];
-    general_channels.push(env::var("GENCHN").expect("Failed to retrieve general channel ID."));
-    general_channels
-        .push(env::var("TESTGENCHN").expect("Failed to retrieve test general channel ID."));
-    general_channels
-        .push(env::var("KOUGENCHN").expect("Failed to retrieve Kou server's general channel ID."));
-    general_channels
-        .push(env::var("ECC_GENCHAN").expect("Failed to retrieve ECC's general channel ID."));
-
-    let guild_channels: HashMap<ChannelId, GuildChannel> = guild_id
-        .channels(&context.http)
-        .await
-        .expect("Failed to retrieve guild channels.");
-    for channel in general_channels.iter() {
-        let guild = guild_channels.get(&ChannelId::from(
-            channel
-                .parse::<u64>()
-                .expect("Failed to parse u64 from string."),
-        ));
-        if let Some(c) = guild {
-            c.say(&context.http, &greeting)
-                .await
-                .expect("Failed to greet the newly added member.");
-            break;
-        }
-    }
 
     text = text.replace("{user}", &member.user.mention().to_string());
     let guild_name = guild_id.name(&context.cache).await.unwrap_or_default();

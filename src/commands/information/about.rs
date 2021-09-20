@@ -5,8 +5,8 @@ use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
 
-const ABOUT_KOU_PATH: &str = "assets/about_kou.txt";
-const ABOUT_TAIGA_PATH: &str = "assets/about_taiga.txt";
+const ABOUT_KOU_PATH: &str = "assets/txt/about_kou.txt";
+const ABOUT_TAIGA_PATH: &str = "assets/txt/about_taiga.txt";
 
 pub fn about_async(
     ctx: Context,

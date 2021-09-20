@@ -1,4 +1,7 @@
-use once_cell::sync::OnceCell;
+use crate::shared::constants::{
+    KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID, TAIGA_SERVER_ID,
+};
+use once_cell::sync::Lazy;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
 use serenity::model::interactions::application_command::ApplicationCommandPermissionType;
 use serenity::model::prelude::application_command::{
@@ -10,162 +13,194 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 
-const KOU_SERVER_ID: u64 = 705036924330704968;
-const KOU_SERVER_ADMIN_ROLE_ID: u64 = 706778860812894228;
-
-const TAIGA_SERVER_ID: u64 = 696414250406510623;
-const TAIGA_SERVER_ADMIN_ROLE_ID: u64 = 742061690824294520;
-
 pub type T = fn(
     Context,
     ApplicationCommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
 
-pub static AVAILABLE_COMMANDS: OnceCell<
-    HashMap<
-        String,
-        (
-            T,
-            fn(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-        ),
-    >,
-> = OnceCell::new();
+#[derive(Clone)]
+pub struct SlashCommandElements {
+    pub handler: T,
+    pub register: fn(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
+    pub description: String,
+    pub emoji: String,
+}
 
-pub static GLOBAL_COMMANDS: OnceCell<
-    HashMap<
-        String,
-        (
-            T,
-            fn(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-        ),
-    >,
-> = OnceCell::new();
+pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> =
+    Lazy::new(|| initialize());
 
-pub fn initialize() {
-    AVAILABLE_COMMANDS.get_or_init(|| {
-        let mut map: HashMap<
-            String,
-            (
-                T,
-                fn(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-            ),
-        > = HashMap::new();
-        map.insert(
-            "about".to_string(),
-            (
-                crate::commands::information::about::about_async,
-                register_about,
-            ),
-        );
-        map.insert(
-            "admin".to_string(),
-            (crate::commands::admin::dispatch_async, register_admin),
-        );
-        map.insert(
-            "avatar".to_string(),
-            (
-                crate::commands::utility::avatar::avatar_async,
-                register_avatar,
-            ),
-        );
-        map.insert(
-            "convert".to_string(),
-            (
-                crate::commands::utility::convert::convert_async,
-                register_convert,
-            ),
-        );
-        map.insert(
-            "dialog".to_string(),
-            (crate::commands::fun::dialog::dialog_async, register_dialog),
-        );
-        map.insert(
-            "enlarge".to_string(),
-            (
-                crate::commands::utility::enlarge::enlarge_async,
-                register_enlarge,
-            ),
-        );
-        map.insert(
-            "game".to_string(),
-            (crate::commands::game::dispatch_async, register_game),
-        );
-        map.insert(
-            "image".to_string(),
-            (crate::commands::utility::image::image_async, register_image),
-        );
-        map.insert(
-            "meal".to_string(),
-            (
-                crate::commands::information::meal::meal_async,
-                register_meal,
-            ),
-        );
-        map.insert(
-            "oracle".to_string(),
-            (
-                crate::commands::information::oracle::oracle_async,
-                register_oracle,
-            ),
-        );
-        map.insert(
-            "owoify".to_string(),
-            (crate::commands::fun::owoify::owoify_async, register_owoify),
-        );
-        map.insert(
-            "pick".to_string(),
-            (crate::commands::utility::pick::pick_async, register_pick),
-        );
-        map.insert(
-            "ping".to_string(),
-            (
-                crate::commands::information::ping::ping_async,
-                register_ping,
-            ),
-        );
-        map.insert(
-            "route".to_string(),
-            (
-                crate::commands::information::route::route_async,
-                register_route,
-            ),
-        );
-        map.insert(
-            "ship".to_string(),
-            (crate::commands::fun::ship::ship_async, register_ship),
-        );
-        map.insert(
-            "stats".to_string(),
-            (
-                crate::commands::information::stats::stats_async,
-                register_stats,
-            ),
-        );
-        map.insert(
-            "time".to_string(),
-            (
-                crate::commands::information::time::time_async,
-                register_time,
-            ),
-        );
-        map.insert(
-            "valentine".to_string(),
-            (
-                crate::commands::information::valentine::valentine_async,
-                register_valentine,
-            ),
-        );
-        map
-    });
+pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
+    let mut global_commands = AVAILABLE_COMMANDS.clone();
+    global_commands.remove("game");
+    global_commands
+});
 
-    GLOBAL_COMMANDS.get_or_init(|| {
-        let available_commands = AVAILABLE_COMMANDS
-            .get()
-            .expect("Failed to get available commands.");
-        let mut global_commands = available_commands.clone();
-        global_commands.remove("game");
-        global_commands
-    });
+pub fn initialize() -> HashMap<String, SlashCommandElements> {
+    let mut map: HashMap<String, SlashCommandElements> = HashMap::new();
+    map.insert(
+        "about".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::about::about_async,
+            register: register_about,
+            description: "Shows information about the bot.".to_string(),
+            emoji: "ℹ️".to_string(),
+        },
+    );
+    map.insert(
+        "admin".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::admin::dispatch_async,
+            register: register_admin,
+            description: "Administrative commands.".to_string(),
+            emoji: "🚨".to_string(),
+        },
+    );
+    map.insert(
+        "avatar".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::utility::avatar::avatar_async,
+            register: register_avatar,
+            description: "Get avatar/profile image of yourself or another user.".to_string(),
+            emoji: "👤".to_string(),
+        },
+    );
+    map.insert(
+        "convert".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::utility::convert::convert_async,
+            register: register_convert,
+            description: "Helps converting stuff.".to_string(),
+            emoji: "🔄".to_string(),
+        },
+    );
+    map.insert(
+        "dialog".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::fun::dialog::dialog_async,
+            register: register_dialog,
+            description: "Returns an image of a character saying anything you want.".to_string(),
+            emoji: "💬".to_string(),
+        },
+    );
+    map.insert(
+        "enlarge".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::utility::enlarge::enlarge_async,
+            register: register_enlarge,
+            description: "Returns enlarged emote(s).".to_string(),
+            emoji: "🔍".to_string(),
+        },
+    );
+    map.insert(
+        "game".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::game::dispatch_async,
+            register: register_game,
+            description: "Play mini games with Kou/Taiga.".to_string(),
+            emoji: "🎮".to_string(),
+        },
+    );
+    map.insert(
+        "image".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::utility::image::image_async,
+            register: register_image,
+            description: "Get random images based on keywords.".to_string(),
+            emoji: "🖼".to_string(),
+        },
+    );
+    map.insert(
+        "meal".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::meal::meal_async,
+            register: register_meal,
+            description: "Get a random meal recipe.".to_string(),
+            emoji: "🍳".to_string(),
+        },
+    );
+    map.insert(
+        "oracle".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::oracle::oracle_async,
+            register: register_oracle,
+            description: "Draw an oracle and know the future of something on your mind."
+                .to_string(),
+            emoji: "🔮".to_string(),
+        },
+    );
+    map.insert(
+        "owoify".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::fun::owoify::owoify_async,
+            register: register_owoify,
+            description: "This command will owoify your text.".to_string(),
+            emoji: "👶".to_string(),
+        },
+    );
+    map.insert(
+        "pick".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::utility::pick::pick_async,
+            register: register_pick,
+            description: "Pick from several options.".to_string(),
+            emoji: "🔀".to_string(),
+        },
+    );
+    map.insert(
+        "ping".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::ping::ping_async,
+            register: register_ping,
+            description: "Returns latency and API ping.".to_string(),
+            emoji: "🔔".to_string(),
+        },
+    );
+    map.insert(
+        "route".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::route::route_async,
+            register: register_route,
+            description: "Tells you what route to play next.".to_string(),
+            emoji: "❤️".to_string(),
+        },
+    );
+    map.insert(
+        "ship".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::fun::ship::ship_async,
+            register: register_ship,
+            description: "Ship two users.".to_string(),
+            emoji: "🛳".to_string(),
+        },
+    );
+    map.insert(
+        "stats".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::stats::stats_async,
+            register: register_stats,
+            description: "This command will show your records with several commands.".to_string(),
+            emoji: "🧮".to_string(),
+        },
+    );
+    map.insert(
+        "time".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::time::time_async,
+            register: register_time,
+            description: "Query the time of a city based on a city name or an address.".to_string(),
+            emoji: "🕐".to_string(),
+        },
+    );
+    map.insert(
+        "valentine".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::valentine::valentine_async,
+            register: register_valentine,
+            description: "Tells you your next valentine.".to_string(),
+            emoji: "💘".to_string(),
+        },
+    );
+    map
 }
 
 pub async fn build_global_slash_commands(
@@ -184,8 +219,6 @@ pub async fn build_global_slash_commands(
             .map(|cmd| cmd.name)
             .collect::<Vec<_>>();
         let commands_not_registered = GLOBAL_COMMANDS
-            .get()
-            .expect("Failed to get available commands")
             .iter()
             .filter(|(name, _)| !global_commands.contains(*name))
             .collect::<Vec<_>>();
@@ -193,7 +226,7 @@ pub async fn build_global_slash_commands(
         let has_unregistered_commands = !commands_not_registered.is_empty();
 
         if has_unregistered_commands {
-            for (_, (_, register)) in commands_not_registered.into_iter() {
+            for (_, SlashCommandElements { register, .. }) in commands_not_registered.into_iter() {
                 ApplicationCommand::create_global_application_command(&ctx.http, |command| {
                     register(command)
                 })
@@ -254,10 +287,7 @@ async fn set_permission(
 fn register_global_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    let global_commands = GLOBAL_COMMANDS
-        .get()
-        .expect("Failed to get globally available commands.");
-    for (_, (_, register)) in global_commands.iter() {
+    for (_, SlashCommandElements { register, .. }) in GLOBAL_COMMANDS.iter() {
         commands.create_application_command(|command| register(command));
     }
     commands
@@ -270,13 +300,15 @@ fn register_guild_commands(
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("about")
-        .description("Shows information about the bot.")
+    let description = get_command_description("about");
+    cmd.name("about").description(description)
 }
 
 fn register_admin(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("admin");
+
     cmd.name("admin")
-        .description("Administrative commands.")
+        .description(description)
         .default_permission(false)
         .create_option(|opt| {
             opt.name("enable")
@@ -336,8 +368,10 @@ fn register_admin(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
 }
 
 fn register_avatar(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("avatar");
+
     cmd.name("avatar")
-        .description("Get avatar/profile image of yourself or another user.")
+        .description(description)
         .create_option(|opt| {
             opt.name("user")
                 .description("The user whose avatar to get.")
@@ -347,8 +381,10 @@ fn register_avatar(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
 }
 
 fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("convert");
+
     cmd.name("convert")
-        .description("Helps converting stuff.")
+        .description(description)
         .create_option(|opt| {
             opt.name("length")
                 .description("Convert length.")
@@ -470,8 +506,10 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
 }
 
 fn register_dialog(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("dialog");
+
     cmd.name("dialog")
-        .description("Returns an image of a character saying anything you want.")
+        .description(description)
         .create_option(|opt| {
             opt.name("background")
                 .description("The background of the character. A random background if the specified one doesn't exist.")
@@ -493,8 +531,10 @@ fn register_dialog(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
 }
 
 fn register_enlarge(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("enlarge");
+
     cmd.name("enlarge")
-        .description("Returns enlarged emote(s).")
+        .description(description)
         .create_option(|opt| {
             opt.kind(ApplicationCommandOptionType::String)
                 .name("emote")
@@ -504,8 +544,10 @@ fn register_enlarge(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
 }
 
 fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("game");
+
     cmd.name("game")
-        .description("Play mini games with Kou/Taiga.")
+        .description(description)
         .create_option(|opt| {
             opt.kind(ApplicationCommandOptionType::SubCommand)
                 .name("quiz")
@@ -522,8 +564,10 @@ fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 }
 
 fn register_image(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("image");
+
     cmd.name("image")
-        .description("Get random images based on keywords.")
+        .description(description)
         .create_option(|opt| {
             opt.kind(ApplicationCommandOptionType::SubCommand)
                 .name("image")
@@ -560,17 +604,20 @@ fn register_image(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
 }
 
 fn register_meal(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("meal").description("Get a random meal recipe.")
+    let description = get_command_description("meal");
+    cmd.name("meal").description(description)
 }
 
 fn register_oracle(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("oracle")
-        .description("Draw an oracle and know the future of something on your mind.")
+    let description = get_command_description("oracle");
+    cmd.name("oracle").description(description)
 }
 
 fn register_owoify(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("owoify");
+
     cmd.name("owoify")
-        .description("This command will owoify your text.")
+        .description(description)
         .create_option(|opt| {
             opt.kind(ApplicationCommandOptionType::String)
                 .name("level")
@@ -589,8 +636,10 @@ fn register_owoify(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
 }
 
 fn register_pick(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("pick");
+
     cmd.name("pick")
-        .description("Pick from several options.")
+        .description(description)
         .create_option(|opt| {
             opt.name("times")
                 .description("Times to pick. Negative numbers or numbers too big will be ignored.")
@@ -606,18 +655,20 @@ fn register_pick(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 }
 
 fn register_ping(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("ping")
-        .description("Returns latency and API ping.")
+    let description = get_command_description("ping");
+    cmd.name("ping").description(description)
 }
 
 fn register_route(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("route")
-        .description("Tells you what route to play next.")
+    let description = get_command_description("route");
+    cmd.name("route").description(description)
 }
 
 fn register_ship(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("ship");
+
     cmd.name("ship")
-        .description("Ship two users.")
+        .description(description)
         .create_option(|opt| {
             opt.required(true)
                 .name("user_1")
@@ -633,8 +684,10 @@ fn register_ship(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 }
 
 fn register_stats(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("stats");
+
     cmd.name("stats")
-        .description("This command will show your records with several commands.")
+        .description(description)
         .create_option(|opt| {
             opt.required(false)
                 .name("command")
@@ -646,8 +699,10 @@ fn register_stats(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
 }
 
 fn register_time(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("time");
+
     cmd.name("time")
-        .description("Query the time of a city based on a city name or an address.")
+        .description(description)
         .create_option(|opt| {
             opt.name("city_name_or_address")
                 .description("A city name or an address of which to query time.")
@@ -657,6 +712,13 @@ fn register_time(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 }
 
 fn register_valentine(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    cmd.name("valentine")
-        .description("Tells you your next valentine.")
+    let description = get_command_description("valentine");
+    cmd.name("valentine").description(description)
+}
+
+fn get_command_description(name: &str) -> &str {
+    AVAILABLE_COMMANDS
+        .get(name.into())
+        .map(|SlashCommandElements { description, .. }| description.as_str())
+        .unwrap_or_default()
 }

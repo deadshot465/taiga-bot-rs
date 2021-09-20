@@ -1,0 +1,35 @@
+use crate::shared::structs::config::common_settings::COMMON_SETTINGS;
+use crate::shared::structs::config::configuration::CONFIGURATION;
+use rand::prelude::*;
+use serenity::model::prelude::*;
+use serenity::prelude::*;
+
+pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Result<()> {
+    let guild_channels = &guild.channels;
+    let greeting_message = {
+        let mut rng = rand::thread_rng();
+        COMMON_SETTINGS
+            .greetings
+            .choose(&mut rng)
+            .map(|s| s.replace("{name}", &member.mention().to_string()))
+            .unwrap_or_default()
+    };
+
+    let general_channels = CONFIGURATION
+        .get()
+        .map(|c| &c.general_channel_ids)
+        .map(|ids| ids.iter().map(|id| ChannelId(*id)).collect::<Vec<_>>())
+        .unwrap_or_default();
+
+    for general_channel_id in general_channels.into_iter() {
+        if let Some((_, guild_channel)) = guild_channels
+            .iter()
+            .find(|(channel_id, guild_channel)| **channel_id == general_channel_id)
+        {
+            guild_channel.say(&ctx.http, greeting_message).await?;
+            break;
+        }
+    }
+
+    Ok(())
+}

@@ -4,6 +4,7 @@ use log::LevelFilter;
 mod commands;
 mod event_handler;
 mod shared;
+use crate::event_handler::hooks::normal_message::normal_message_hook;
 use crate::event_handler::Handler;
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use serenity::client::bridge::gateway::GatewayIntents;
@@ -79,12 +80,16 @@ async fn main() -> anyhow::Result<()> {
             .event_handler(Handler)
             .intents(GatewayIntents::all())
             .application_id(*application_id)
-            .framework(StandardFramework::new().configure(|c| {
-                c.prefix(prefix)
-                    .allow_dm(false)
-                    .allowed_channels(enabled_channels)
-                    .owners(owners)
-            }))
+            .framework(
+                StandardFramework::new()
+                    .configure(|c| {
+                        c.prefix(prefix)
+                            .allow_dm(false)
+                            .allowed_channels(enabled_channels)
+                            .owners(owners)
+                    })
+                    .normal_message(normal_message_hook),
+            )
             .await?
     };
 

@@ -1,15 +1,18 @@
-use crate::event_handler::commands::{set_admin_commands_permission, AVAILABLE_COMMANDS};
+use crate::event_handler::commands::{
+    set_admin_commands_permission, SlashCommandElements, AVAILABLE_COMMANDS,
+};
 use crate::event_handler::presences::set_initial_presence;
+use crate::event_handler::responses::greet::greet;
 use crate::event_handler::responses::mention::handle_mention_self;
 use crate::event_handler::responses::reaction::handle_reactions;
+use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use rand::Rng;
-use serenity::model::channel::Message;
-use serenity::model::gateway::Ready;
-use serenity::model::interactions::Interaction;
+use serenity::model::prelude::*;
 use serenity::{async_trait, prelude::*};
 
 pub mod commands;
+pub mod hooks;
 pub mod presences;
 pub mod responses;
 
@@ -17,6 +20,18 @@ pub struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    async fn guild_member_addition(&self, ctx: Context, guild_id: GuildId, new_member: Member) {
+        if guild_id.0 == KOU_SERVER_ID {
+            return;
+        }
+
+        if let Some(guild) = ctx.cache.guild(guild_id).await {
+            if let Err(e) = greet(&ctx, guild, new_member).await {
+                log::error!("Error when greeting a new member: {}", e);
+            }
+        }
+    }
+
     async fn message(&self, ctx: Context, new_message: Message) {
         if let Err(e) = handle_mention_self(&ctx, &new_message).await {
             log::error!("Failed to reply to self mention: {}", e);
@@ -54,23 +69,23 @@ impl EventHandler for Handler {
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
-            if let Some(commands) = AVAILABLE_COMMANDS.get() {
-                if let Some((cmd, _)) = commands.get(&command.data.name) {
-                    let execution_result = cmd(ctx, command).await;
-                    if let Err(e) = execution_result {
-                        log::error!("Failed to execute slash command. Error: {}", e);
-                    }
-                } else {
-                    let result = command
-                        .create_interaction_response(&ctx.http, |response| {
-                            response.interaction_response_data(|data| {
-                                data.content("Sorry, this command is not yet implemented!")
-                            })
+            if let Some(SlashCommandElements { handler, .. }) =
+                AVAILABLE_COMMANDS.get(&command.data.name)
+            {
+                let execution_result = handler(ctx, command).await;
+                if let Err(e) = execution_result {
+                    log::error!("Failed to execute slash command. Error: {}", e);
+                }
+            } else {
+                let result = command
+                    .create_interaction_response(&ctx.http, |response| {
+                        response.interaction_response_data(|data| {
+                            data.content("Sorry, this command is not yet implemented!")
                         })
-                        .await;
-                    if let Err(e) = result {
-                        log::error!("Failed to execute slash command. Error: {}", e);
-                    }
+                    })
+                    .await;
+                if let Err(e) = result {
+                    log::error!("Failed to execute slash command. Error: {}", e);
                 }
             }
         }
