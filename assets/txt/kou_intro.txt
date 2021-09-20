@@ -12,6 +12,8 @@ Because there are not many members here, currently we don't really have specific
 5. Again, be nice. A rule of thumb is that if you don't want people to do the same thing to you, don't do this to them yourself, either.
 
 I also provide some of fun stuffs! <:KouSugoi:705613007119450172>
-The stuffs I provide are listed below. Select each command's name to learn what they do! <:KouExcited:713920132216389632>
+The stuffs I provide are listed below. You can use slash `/` and the command's name in the server to ask for my stuffs!
+Select each command's name to learn what they do! <:KouExcited:713920132216389632>
 
-You can select other commands to see their usages. Type `end` to end the guide! I'll see you around! <:KouSmile2:705182851817144330>
+You can select other commands to see their usages.
+Press `End Tour` button to end the guide! I'll see you around! <:KouSmile2:705182851817144330>

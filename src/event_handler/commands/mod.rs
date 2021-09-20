@@ -32,6 +32,7 @@ pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> =
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
     let mut global_commands = AVAILABLE_COMMANDS.clone();
     global_commands.remove("game");
+    global_commands.remove("guide");
     global_commands
 });
 
@@ -43,7 +44,7 @@ pub fn initialize() -> HashMap<String, SlashCommandElements> {
             handler: crate::commands::information::about::about_async,
             register: register_about,
             description: "Shows information about the bot.".to_string(),
-            emoji: "ℹ️".to_string(),
+            emoji: "❓".to_string(),
         },
     );
     map.insert(
@@ -98,6 +99,15 @@ pub fn initialize() -> HashMap<String, SlashCommandElements> {
             register: register_game,
             description: "Play mini games with Kou/Taiga.".to_string(),
             emoji: "🎮".to_string(),
+        },
+    );
+    map.insert(
+        "guide".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::information::guide::guide_async,
+            register: register_guide,
+            description: "Start a step-by-step guide.".to_string(),
+            emoji: "ℹ️".to_string(),
         },
     );
     map.insert(
@@ -296,7 +306,9 @@ fn register_global_commands(
 fn register_guild_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    commands.create_application_command(|command| register_game(command))
+    commands
+        .create_application_command(|command| register_game(command))
+        .create_application_command(|command| register_guide(command))
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -561,6 +573,11 @@ fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
                         .required(false)
                 })
         })
+}
+
+fn register_guide(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("guide");
+    cmd.name("guide").description(description)
 }
 
 fn register_image(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
