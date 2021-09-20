@@ -1,5 +1,6 @@
 use crate::shared::constants::{KOU_SERVER_SMOTE_ROLE_ID, TAIGA_SERVER_SMOTE_ROLE_ID};
-use crate::shared::structs::smite::SMITE_GIF_LINKS;
+use crate::shared::structs::smite::{SmoteUser, SMITE_GIF_LINKS, SMOTE_USERS};
+use chrono::Utc;
 use rand::prelude::*;
 use serenity::model::interactions::application_command::ApplicationCommandInteractionDataOptionValue;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
@@ -31,7 +32,7 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
 
     let smote_member = if let Some(smote_user) = smote_user {
         if let Some(guild_id) = command.guild_id {
-            ctx.cache.member(guild_id, smote_user.id).await
+            ctx.http.get_member(guild_id.0, smote_user.id.0).await.ok()
         } else {
             None
         }
@@ -55,6 +56,45 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                         response.interaction_response_data(|data| data.content(gif_link))
                     })
                     .await?;
+
+                {
+                    let mut smote_users_write_lock = SMOTE_USERS.write().await;
+                    smote_users_write_lock.smote_users.push(SmoteUser {
+                        user_id: member.user.id.0,
+                        due_time: Utc::now() + chrono::Duration::seconds(120),
+                        guild_id: command.guild_id.unwrap_or_default().0,
+                    });
+                    smote_users_write_lock.write_smote_user_list()?;
+                }
+
+                let ctx_clone = ctx.clone();
+                tokio::spawn(async move {
+                    let ctx = ctx_clone;
+                    tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+
+                    match member.remove_role(&ctx.http, RoleId(role_id)).await {
+                        Ok(_) => {
+                            let mut smote_users_write_lock = SMOTE_USERS.write().await;
+                            let filtered_user_list = smote_users_write_lock
+                                .smote_users
+                                .clone()
+                                .into_iter()
+                                .filter(|u| u.user_id != member.user.id.0)
+                                .collect::<Vec<_>>();
+                            smote_users_write_lock.smote_users = filtered_user_list;
+                            if let Err(e) = smote_users_write_lock.write_smote_user_list() {
+                                log::error!(
+                                    "Error when writing smote user list to local disk: {}",
+                                    e
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            log::error!("Error when remove smote role from user: {}", e);
+                        }
+                    }
+                });
+
                 break;
             }
         }

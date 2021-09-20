@@ -8,6 +8,7 @@ use crate::event_handler::responses::reaction::handle_reactions;
 use crate::event_handler::responses::response::handle_responses;
 use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::structs::config::configuration::CONFIGURATION;
+use crate::shared::structs::smite::schedule_unsmite;
 use rand::Rng;
 use serenity::model::prelude::*;
 use serenity::{async_trait, prelude::*};
@@ -68,6 +69,7 @@ impl EventHandler for Handler {
         }
 
         set_initial_presence(&ctx).await;
+        schedule_unsmite(&ctx).await;
 
         log::info!("{} is now online.", ready.user.name);
     }

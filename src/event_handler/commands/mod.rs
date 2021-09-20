@@ -711,7 +711,7 @@ fn register_smite(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
     let description = get_command_description("smite");
     cmd.name("smite")
         .description(description)
-        .default_permission(false)
+        //.default_permission(false)
         .create_option(|opt| {
             opt.name("member")
                 .description("Bad behaving member to smite.")

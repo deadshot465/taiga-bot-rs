@@ -31,7 +31,7 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn new() -> Self {
+    pub(self) fn new() -> Self {
         Configuration {
             prefix: "ta!".to_string(),
             token: "".to_string(),
