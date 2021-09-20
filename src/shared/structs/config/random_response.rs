@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub static RANDOM_RESPONSES: Lazy<Responses> =
     Lazy::new(|| initialize().expect("Failed to initialize random responses."));
 pub static RANDOM_RESPONSES_KEYWORDS: Lazy<Vec<String>> =
-    Lazy::new(|| initialize_random_responses_keywords());
+    Lazy::new(initialize_random_responses_keywords);
 
 const RANDOM_RESPONSES_FILE_NAME: &str = "/random_responses.toml";
 
@@ -33,13 +33,13 @@ pub fn get_random_message(keyword: &str) -> String {
     RANDOM_RESPONSES
         .random_responses
         .iter()
-        .find(|m| m.keyword.as_str() == &keyword)
+        .find(|m| m.keyword.as_str() == keyword)
         .and_then(|res| {
             let mut rng = rand::thread_rng();
             res.messages.choose(&mut rng)
         })
         .cloned()
-        .unwrap_or("Oops...".into())
+        .unwrap_or_else(|| "Oops...".into())
 }
 
 pub fn get_random_reaction(keyword: &str) -> String {
@@ -47,13 +47,13 @@ pub fn get_random_reaction(keyword: &str) -> String {
     RANDOM_RESPONSES
         .random_responses
         .iter()
-        .find(|m| m.keyword.as_str() == &keyword)
+        .find(|m| m.keyword.as_str() == keyword)
         .and_then(|res| {
             let mut rng = rand::thread_rng();
             res.reactions.choose(&mut rng)
         })
         .cloned()
-        .unwrap_or("Oops...".into())
+        .unwrap_or_else(|| "Oops...".into())
 }
 
 fn initialize() -> anyhow::Result<Responses> {

@@ -101,7 +101,7 @@ async fn build_component(
                                 .custom_id("command")
                                 .placeholder("Select a command!")
                                 .options(|opts| {
-                                    for (name, (_, emoji)) in available_commands.into_iter() {
+                                    for (name, (_, emoji)) in available_commands.iter() {
                                         opts.create_option(|opt| {
                                             opt.emoji(ReactionType::Unicode(emoji.clone()))
                                                 .value(&name)

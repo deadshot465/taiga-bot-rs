@@ -26,8 +26,7 @@ pub struct SlashCommandElements {
     pub emoji: String,
 }
 
-pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> =
-    Lazy::new(|| initialize());
+pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(initialize);
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
     let mut global_commands = AVAILABLE_COMMANDS.clone();
@@ -573,6 +572,11 @@ fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
                         .required(false)
                 })
         })
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::SubCommand)
+                .name("hangman")
+                .description("Play a hangman game with Taiga or Kou.")
+        })
 }
 
 fn register_guide(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -735,7 +739,7 @@ fn register_valentine(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicat
 
 fn get_command_description(name: &str) -> &str {
     AVAILABLE_COMMANDS
-        .get(name.into())
+        .get(name)
         .map(|SlashCommandElements { description, .. }| description.as_str())
         .unwrap_or_default()
 }

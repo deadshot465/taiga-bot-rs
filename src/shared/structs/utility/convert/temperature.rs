@@ -1,3 +1,4 @@
+#![allow(clippy::from_over_into)]
 use crate::shared::structs::utility::convert::{
     ConverterType, FromStrToConverter, ParseConverterError,
 };

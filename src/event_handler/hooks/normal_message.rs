@@ -18,7 +18,7 @@ pub async fn normal_message_hook(ctx: &Context, message: &Message) {
             return;
         }
 
-        if let Err(e) = certify_user(&ctx, &message).await {
+        if let Err(e) = certify_user(ctx, message).await {
             log::error!("An error occurred when certifying the user: {}", e);
         }
     }
