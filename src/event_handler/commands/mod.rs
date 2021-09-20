@@ -1,5 +1,6 @@
 use crate::shared::constants::{
     KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID, TAIGA_SERVER_ID,
+    TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
 };
 use once_cell::sync::Lazy;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
@@ -30,8 +31,7 @@ pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Laz
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
     let mut global_commands = AVAILABLE_COMMANDS.clone();
-    global_commands.remove("game");
-    global_commands.remove("guide");
+    global_commands.remove("smite");
     global_commands
 });
 
@@ -183,6 +183,15 @@ pub fn initialize() -> HashMap<String, SlashCommandElements> {
         },
     );
     map.insert(
+        "smite".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::smite::smite_async,
+            register: register_smite,
+            description: "Smite bad behaving members.".to_string(),
+            emoji: "⚡️".to_string(),
+        },
+    );
+    map.insert(
         "stats".to_string(),
         SlashCommandElements {
             handler: crate::commands::information::stats::stats_async,
@@ -252,7 +261,7 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
         .await?)
 }
 
-pub async fn set_admin_commands_permission(ctx: &Context) -> anyhow::Result<()> {
+pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
     let global_commands = ApplicationCommand::get_global_application_commands(&ctx.http).await?;
     let admin_command = global_commands
         .iter()
@@ -262,6 +271,21 @@ pub async fn set_admin_commands_permission(ctx: &Context) -> anyhow::Result<()> 
         let guilds = vec![
             (KOU_SERVER_ID, KOU_SERVER_ADMIN_ROLE_ID),
             (TAIGA_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID),
+        ];
+
+        for (server_id, role_id) in guilds.into_iter() {
+            set_permission(ctx, server_id, cmd.id.0, role_id).await?;
+        }
+    }
+
+    let smite_command = global_commands
+        .iter()
+        .find(|cmd| cmd.name.as_str() == "smite");
+    if let Some(cmd) = smite_command {
+        let guilds = vec![
+            (KOU_SERVER_ID, KOU_SERVER_ADMIN_ROLE_ID),
+            (TAIGA_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID),
+            (TAIGA_SERVER_ID, TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID),
         ];
 
         for (server_id, role_id) in guilds.into_iter() {
@@ -305,9 +329,7 @@ fn register_global_commands(
 fn register_guild_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    commands
-        .create_application_command(|command| register_game(command))
-        .create_application_command(|command| register_guide(command))
+    commands.create_application_command(|command| register_smite(command))
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -683,6 +705,19 @@ fn register_ping(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 fn register_route(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     let description = get_command_description("route");
     cmd.name("route").description(description)
+}
+
+fn register_smite(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("smite");
+    cmd.name("smite")
+        .description(description)
+        .default_permission(false)
+        .create_option(|opt| {
+            opt.name("member")
+                .description("Bad behaving member to smite.")
+                .kind(ApplicationCommandOptionType::User)
+                .required(true)
+        })
 }
 
 fn register_ship(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

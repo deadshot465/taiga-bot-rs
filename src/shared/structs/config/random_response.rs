@@ -56,6 +56,13 @@ pub fn get_random_reaction(keyword: &str) -> String {
         .unwrap_or_else(|| "Oops...".into())
 }
 
+pub fn get_shuffled_keywords() -> Vec<String> {
+    let mut keywords = RANDOM_RESPONSES_KEYWORDS.to_vec();
+    let mut rng = rand::thread_rng();
+    keywords.shuffle(&mut rng);
+    keywords
+}
+
 fn initialize() -> anyhow::Result<Responses> {
     if !std::path::Path::new(ASSET_DIRECTORY).exists() {
         std::fs::create_dir(ASSET_DIRECTORY)?;

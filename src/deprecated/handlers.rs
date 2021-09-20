@@ -15,10 +15,6 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::sync::Arc;
 
-const SMITE_ROLE_IDS: [u64; 3] = [766023350287335465, 769101869489979422, 771070164363903028];
-
-pub struct Handler;
-
 async fn handle_user_replies(context: &Context, msg: &Message) {
     let lock = context.data.read().await;
     let persistence = lock
@@ -121,140 +117,6 @@ async fn handle_user_replies(context: &Context, msg: &Message) {
     }
 }
 
-async fn handle_replies(context: &Context, msg: &Message) {
-    let lock = context.data.read().await;
-    let persistence = lock
-        .get::<PersistenceService>()
-        .expect("Failed to retrieve assets service.");
-    let interface = lock
-        .get::<InterfaceService>()
-        .expect("Failed to retrieve interface service.");
-    let _persistence = Arc::clone(persistence);
-    let persistence_lock = _persistence.read().await;
-    let interface_lock = interface.read().await;
-    let is_kou = interface_lock.is_kou;
-    drop(interface_lock);
-    drop(lock);
-    if persistence_lock
-        .channel_settings
-        .as_ref()
-        .expect("Failed to get channel settings.")
-        .ignored_channels
-        .contains(&msg.channel_id.0)
-    {
-        return;
-    }
-    if msg.author.bot {
-        return;
-    }
-    let lower_case = msg.content.to_lowercase();
-    let all_messages = persistence_lock
-        .random_messages
-        .as_ref()
-        .expect("Failed to retrieve random messages.");
-    let random_reply_chance: u8 = env::var("RDM_REPLY_CHANCE")
-        .expect("Failed to get random reply chance from environment variables.")
-        .parse::<u8>()
-        .expect("Failed to parse u8 from string.");
-
-    let should_reply = all_messages
-        .iter()
-        .any(|m| lower_case.contains(m.keyword.as_str()));
-    if !should_reply {
-        return;
-    }
-
-    let should_reply = hit_or_miss(random_reply_chance);
-    if !should_reply {
-        return;
-    }
-
-    if is_kou {
-        if lower_case.contains("kou") && !lower_case.contains("mikkou") {
-            let messages = all_messages
-                .iter()
-                .find(|m| m.keyword.as_str() == "kou")
-                .expect("Failed to find Kou's random messages.");
-            let english_msgs = &messages.messages["en"];
-            let index = thread_rng().gen_range(0..english_msgs.len());
-            msg.channel_id
-                .say(&context.http, english_msgs[index].as_str())
-                .await
-                .expect("Failed to perform random reply.");
-            return;
-        }
-    } else {
-        let specialized_reply_chance: u8 = env::var("SPECIALIZED_CHANCE")
-            .expect("Failed to retrieve specialized reply chance from environment variables.")
-            .parse::<u8>()
-            .expect("Failed to parse u8 from string.");
-        if hit_or_miss(specialized_reply_chance) {
-            let backgrounds = persistence_lock
-                .dialog_backgrounds
-                .as_ref()
-                .expect("Failed to retrieve dialog backgrounds.");
-            let index = thread_rng().gen_range(0..backgrounds.len());
-            let background = backgrounds[index].as_str();
-            if lower_case.contains("hiro") && !lower_case.contains("shiro") {
-                let character = "taiga";
-                let text = "Hiro will be terribly wrong if he thinks he can steal Keitaro from me!";
-                let bytes = get_dialog(background, character, text)
-                    .await
-                    .expect("Failed to generate dialog.");
-                let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
-                msg.channel_id
-                    .send_files(&context.http, files, |m| m.content(""))
-                    .await
-                    .expect("Failed to send specialized reply for Hiro.");
-
-                return;
-            } else if lower_case.contains("aiden") {
-                let bytes = get_image("hamburger")
-                    .await
-                    .expect("Failed to get hamburger image.");
-                let files: Vec<(&[u8], &str)> = vec![(bytes.borrow(), "result.png")];
-                msg.channel_id
-                    .say(&context.http, "Three orders of double-quarter-pounder cheeseburgers! Two large fries and one large soda!\nBurger patties well-done, three slices of pickles for each! No mayonnaise! Just ketchup and mustard!")
-                    .await
-                    .expect("Failed to send specialized reply for Aiden.");
-                msg.channel_id
-                    .send_files(&context.http, files, |m| m.content(""))
-                    .await
-                    .expect("Failed to send specialized photo for Aiden.");
-                return;
-            }
-        } else {
-            let mut shuffled_messages = (*all_messages).to_vec();
-            {
-                let mut rng = thread_rng();
-                shuffled_messages.shuffle(&mut rng);
-            }
-            for message in shuffled_messages.iter() {
-                if !lower_case.contains(&message.keyword) {
-                    continue;
-                }
-                if message.keyword.as_str() == "lee" && lower_case.contains("sleep") {
-                    continue;
-                }
-                if message.keyword.as_str() == "kou" && lower_case.contains("kou") {
-                    continue;
-                }
-                let m = message
-                    .messages
-                    .get("en")
-                    .expect("Failed to get Taiga's messages.");
-                let index = thread_rng().gen_range(0..m.len());
-                msg.channel_id
-                    .say(&context.http, m[index].as_str())
-                    .await
-                    .expect("Failed to perform random reply.");
-                break;
-            }
-        }
-    }
-    drop(persistence_lock);
-}
-
 async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
     let mut cmd = std::env::var("PREFIX").expect("Failed to retrieve bot's prefix.");
     cmd += emote.name.as_str();
@@ -280,105 +142,6 @@ async fn emote_command(context: &Context, msg: &Message, emote: &Emote) {
             .say(&context.http, &emote.link)
             .await
             .expect("Failed to send the emote link.");
-    }
-}
-
-async fn smite_command(context: &Context, msg: &Message) {
-    let valid_users = [
-        263348633280315395,
-        677249244842950684,
-        617978701962805249,
-        457393417287368706,
-        297195101753573380,
-        215526684797960192,
-    ];
-    if !valid_users.contains(&msg.author.id.0) {
-        return;
-    }
-    let cmd = "/smite ";
-    let user_query = &msg.content[cmd.len()..];
-    let mut guild = msg.guild(&context.cache).await;
-    let mut smite_author = false;
-    if let Some(found_guild) = guild.as_mut() {
-        let user = search_user(context, &found_guild, user_query).await;
-        match user {
-            Ok(mut found_user) => {
-                let mut user = &mut found_user[0];
-                if user.user.id.0
-                    == context
-                        .http
-                        .get_current_application_info()
-                        .await
-                        .expect("Failed to get current application's info.")
-                        .id
-                        .0
-                {
-                    user = found_guild
-                        .members
-                        .get_mut(&msg.author.id)
-                        .expect("Failed to fetch message author's member identity.");
-                    smite_author = true;
-                }
-                let due_time = Local::now() + chrono::Duration::days(1);
-                let context_data = context.data.read().await;
-                let persistence = context_data
-                    .get::<PersistenceService>()
-                    .expect("Failed to get assets service.");
-                let interface = context_data
-                    .get::<InterfaceService>()
-                    .expect("Failed to get interface service.");
-                let is_kou = interface.read().await.is_kou;
-                let persistence = persistence.clone();
-                drop(context_data);
-                let mut persistence_lock = persistence.write().await;
-                let gif: String;
-                {
-                    let mut rng = thread_rng();
-                    gif = persistence_lock
-                        .smite_links
-                        .choose(&mut rng)
-                        .expect("Failed to get smite gif link.")
-                        .clone();
-                }
-                let entry = persistence_lock
-                    .smote_users
-                    .entry(user.user.id.0)
-                    .or_insert_with(Local::now);
-                *entry = due_time;
-                persistence_lock.write();
-                drop(persistence_lock);
-                drop(persistence);
-                for role_id in SMITE_ROLE_IDS.iter() {
-                    let result: serenity::Result<()> =
-                        user.add_role(&context.http, RoleId::from(*role_id)).await;
-                    if result.is_ok() {
-                        break;
-                    }
-                }
-                let message = if smite_author {
-                    if is_kou {
-                        format!("What an evil apparition! As a member of Minamoto family, I should exorcise you! <:KouBrave:705182851397845193> {}", &gif)
-                    } else {
-                        format!("You dare to smite me? I, THE GREAT TAIGA AKATORA WILL SMITE YOU INSTEAD!! {}", &gif)
-                    }
-                } else {
-                    format!("SMITE! {}", &gif)
-                };
-                msg.channel_id
-                    .say(&context.http, message.as_str())
-                    .await
-                    .expect("Failed to send message to the channel.");
-            }
-            Err(e) => {
-                msg.channel_id
-                    .say(
-                        &context.http,
-                        &format!("Error when searching for user: {}", e.to_string()),
-                    )
-                    .await
-                    .expect("Failed to send message to the channel.");
-            }
-        }
     }
 }
 
@@ -424,14 +187,7 @@ pub async fn unknown_command(context: &Context, msg: &Message, cmd: &str) {
 
 #[hook]
 pub async fn message_received(context: &Context, msg: &Message) {
-    handle_self_mentions(context, msg).await;
-    handle_reactions(context, msg).await;
-    handle_replies(context, msg).await;
     handle_user_replies(context, msg).await;
-
-    if msg.content.starts_with("/smite") {
-        smite_command(context, msg).await;
-    }
 
     let mut is_persistence_changed = false;
     let reminders = persistence_lock
@@ -573,44 +329,4 @@ pub async fn dispatch_error(context: &Context, msg: &Message, error: DispatchErr
                 .expect("Failed to reply to a generic error.");
         }
     }
-}
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn guild_member_addition(&self, context: Context, guild_id: GuildId, member: Member) {
-        if guild_id.0 == KOU_SERVER_ID {
-            return;
-        }
-        greeting(&context, &guild_id, &member).await;
-    }
-}
-
-async fn greeting(context: &Context, guild_id: &GuildId, member: &Member) {
-    let data = context.data.read().await;
-    let command_groups = data
-        .get::<CommandGroupCollection>()
-        .expect("Failed to retrieve command group collection.")
-        .to_vec();
-
-    let is_kou = interface_lock.is_kou;
-    let mut text = persistence_lock.guide_text.clone();
-
-    text = text.replace("{user}", &member.user.mention().to_string());
-    let guild_name = guild_id.name(&context.cache).await.unwrap_or_default();
-    text = text.replace("{guildName}", &guild_name);
-    let color_code = u32::from_str_radix(if is_kou { "a4d0da" } else { "e81615" }, 16)
-        .expect("Failed to create u32 value from string.");
-    let color = Color::new(color_code);
-
-    build_embed(
-        context,
-        member,
-        &command_groups,
-        color,
-        text.as_str(),
-        is_kou,
-        guild_name.as_str(),
-    )
-    .await
-    .expect("Failed to send DM to the newcomer.");
 }

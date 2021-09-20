@@ -1,11 +1,8 @@
 /target
 .env
 .vs/
-/assets/channelSettings.json
-/assets/userRecords.json
 /assets/reminders.json
 /assets/userReplies.json
-/assets/config.json
 /assets/smite.json
 .DS_Store
 **/*/.DS_Store
