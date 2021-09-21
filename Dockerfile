@@ -15,4 +15,4 @@ RUN apt-get update && apt-get install -y apt-transport-https wget curl gnupg && 
 WORKDIR /app
 COPY --from=builder /src/target/release/ .
 
-ENTRYPOINT [ "taiga-bot-rs" ]
+ENTRYPOINT [ "/app/taiga-bot-rs" ]
