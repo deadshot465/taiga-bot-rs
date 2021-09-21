@@ -69,7 +69,7 @@ impl EventHandler for Handler {
             log::error!("Failed to override guild commands. Error: {}", e);
         }
 
-        if let Err(e) = set_commands_permission(&ctx).await {
+        if let Err(e) = set_commands_permission(&ctx, recreate_global_slash_commands).await {
             log::error!("Failed to set admin commands permission. Error: {}", e);
         }
 

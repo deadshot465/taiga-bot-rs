@@ -8,7 +8,7 @@ use serenity::model::interactions::application_command::ApplicationCommandPermis
 use serenity::model::prelude::application_command::{
     ApplicationCommand, ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
-use serenity::model::prelude::GuildId;
+use serenity::model::prelude::{CommandId, GuildId};
 use serenity::prelude::Context;
 use std::collections::HashMap;
 use std::future::Future;
@@ -30,8 +30,8 @@ pub struct SlashCommandElements {
 pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(initialize);
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
-    let mut global_commands = AVAILABLE_COMMANDS.clone();
-    global_commands.remove("emote");
+    let global_commands = AVAILABLE_COMMANDS.clone();
+    // Placeholder for testing with guild commands.
     global_commands
 });
 
@@ -270,7 +270,7 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
         .await?)
 }
 
-pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
+pub async fn set_commands_permission(ctx: &Context, force_recreate: bool) -> anyhow::Result<()> {
     let global_commands = ApplicationCommand::get_global_application_commands(&ctx.http).await?;
     let admin_command = global_commands
         .iter()
@@ -283,7 +283,10 @@ pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
         ];
 
         for (server_id, role_id) in guilds.into_iter() {
-            set_permission(ctx, server_id, cmd.id.0, role_id).await?;
+            if let Err(e) = set_permission(ctx, server_id, cmd.id.0, role_id, force_recreate).await
+            {
+                log::error!("Error when setting permissions for admin command: {}", e);
+            }
         }
     }
 
@@ -298,7 +301,10 @@ pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
         ];
 
         for (server_id, role_id) in guilds.into_iter() {
-            set_permission(ctx, server_id, cmd.id.0, role_id).await?;
+            if let Err(e) = set_permission(ctx, server_id, cmd.id.0, role_id, force_recreate).await
+            {
+                log::error!("Error when setting permissions for smite command: {}", e);
+            }
         }
     }
 
@@ -310,7 +316,18 @@ async fn set_permission(
     guild_id: u64,
     command_id: u64,
     admin_role_id: u64,
+    force_recreate: bool,
 ) -> anyhow::Result<()> {
+    let guild = GuildId(guild_id);
+    let permission = guild
+        .get_application_command_permissions(&ctx.http, CommandId(command_id))
+        .await;
+    if let Ok(permission) = permission {
+        if !force_recreate && !permission.permissions.is_empty() {
+            return Ok(());
+        }
+    }
+
     GuildId(guild_id)
         .set_application_commands_permissions(&ctx.http, |permissions| {
             permissions.create_application_command(|permission| {
@@ -338,7 +355,7 @@ fn register_global_commands(
 fn register_guild_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    commands.create_application_command(|command| register_emote(command))
+    commands
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
