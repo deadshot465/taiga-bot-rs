@@ -1,10 +1,8 @@
-pub mod authentication;
+use once_cell::sync::Lazy;
+
 pub mod dialog_service;
 pub mod image_service;
-pub mod interface;
-pub mod persistence;
-pub use authentication::*;
-pub use dialog_service::*;
-pub use image_service::get_image;
-pub use interface::*;
-pub use persistence::*;
+pub mod ship_service;
+//pub mod persistence;
+
+pub static HTTP_CLIENT: Lazy<reqwest::Client> = Lazy::new(reqwest::Client::new);
