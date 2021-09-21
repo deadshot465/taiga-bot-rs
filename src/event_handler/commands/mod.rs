@@ -30,9 +30,9 @@ pub struct SlashCommandElements {
 pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(initialize);
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
-    let global_commands = AVAILABLE_COMMANDS.clone();
     // Placeholder for testing with guild commands.
-    global_commands
+    AVAILABLE_COMMANDS.clone()
+    //global_commands
 });
 
 pub fn initialize() -> HashMap<String, SlashCommandElements> {

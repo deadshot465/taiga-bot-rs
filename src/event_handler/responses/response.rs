@@ -32,8 +32,6 @@ pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::R
         let trimmed_keyword = keyword.trim();
         if !is_kou && trimmed_keyword == "kou" {
             continue;
-        } else if is_kou && trimmed_keyword != "kou" {
-            continue;
         }
 
         let response = get_random_message(trimmed_keyword);

@@ -63,8 +63,7 @@ async fn add(
             .await
             .emotes
             .iter()
-            .find(|emote| emote.name.as_str() == emote_name.as_str())
-            .is_some()
+            .any(|emote| emote.name.as_str() == emote_name.as_str())
     };
 
     if emote_exists {
