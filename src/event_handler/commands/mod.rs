@@ -315,14 +315,14 @@ async fn set_permission(
         .set_application_commands_permissions(&ctx.http, |permissions| {
             for cmd in cmds.iter() {
                 permissions.create_application_command(|permission| {
-                    permission.id(cmd.0).create_permissions(|data| {
-                        for role_id in role_ids.iter() {
+                    for role_id in role_ids.iter() {
+                        permission.id(cmd.0).create_permissions(|data| {
                             data.kind(ApplicationCommandPermissionType::Role)
                                 .permission(true)
-                                .id(*role_id);
-                        }
-                        data
-                    })
+                                .id(*role_id)
+                        });
+                    }
+                    permission
                 });
             }
             permissions
