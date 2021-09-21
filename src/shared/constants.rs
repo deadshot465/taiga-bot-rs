@@ -22,5 +22,15 @@ pub const TAIGA_SERVER_ADMIN_ROLE_ID: u64 = 742061690824294520;
 pub const TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID: u64 = 697879312988241981;
 pub const TAIGA_SERVER_SMOTE_ROLE_ID: u64 = 766023350287335465;
 
+pub const SHIBA_KEK_ICON: &str = "https://cdn.discordapp.com/emojis/730239295155077251.png";
+
+pub const EMOTE_BASE_LINK: &str = "https://cdn.discordapp.com/emojis/";
+
+pub static EMOTE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(<a?:\w+:\d+>)").expect("Failed to initialize regular expression."));
+
+pub static EMOTE_ID_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(:\w+:)(\d+)").expect("Failed to initialize regular expression."));
+
 pub static EMOTE_IS_ANIMATED_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(<a)").expect("Failed to initialize regular expression."));

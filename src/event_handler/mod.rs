@@ -2,6 +2,7 @@ use crate::event_handler::commands::{
     set_commands_permission, SlashCommandElements, AVAILABLE_COMMANDS,
 };
 use crate::event_handler::presences::set_initial_presence;
+use crate::event_handler::responses::emote::handle_emote;
 use crate::event_handler::responses::greet::greet;
 use crate::event_handler::responses::mention::handle_mention_self;
 use crate::event_handler::responses::reaction::handle_reactions;
@@ -45,6 +46,10 @@ impl EventHandler for Handler {
 
         if let Err(e) = handle_responses(&ctx, &new_message).await {
             log::error!("Failed to reply to the message: {}", e);
+        }
+
+        if let Err(e) = handle_emote(&ctx, &new_message).await {
+            log::error!("Failed to send emote: {}", e);
         }
     }
 

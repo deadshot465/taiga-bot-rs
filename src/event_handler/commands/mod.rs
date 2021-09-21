@@ -31,7 +31,7 @@ pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Laz
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
     let mut global_commands = AVAILABLE_COMMANDS.clone();
-    global_commands.remove("smite");
+    global_commands.remove("emote");
     global_commands
 });
 
@@ -81,6 +81,15 @@ pub fn initialize() -> HashMap<String, SlashCommandElements> {
             description: "Returns an image of a character saying anything you want.".to_string(),
             emoji: "💬".to_string(),
         },
+    );
+    map.insert(
+        "emote".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::fun::emote::emote_async,
+            register: register_emote,
+            description: "Add or remove an emote from the bot. Emotes from servers which the bot is not in won't work.".to_string(),
+            emoji: "🤡".to_string()
+        }
     );
     map.insert(
         "enlarge".to_string(),
@@ -329,7 +338,7 @@ fn register_global_commands(
 fn register_guild_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    commands.create_application_command(|command| register_smite(command))
+    commands.create_application_command(|command| register_emote(command))
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -563,6 +572,46 @@ fn register_dialog(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
         })
 }
 
+fn register_emote(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("emote");
+
+    cmd.name("emote")
+        .description(description)
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::SubCommand)
+                .name("list")
+                .description("List registered emotes in this server.")
+        })
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::SubCommand)
+                .name("add")
+                .description("Add an emote to the emote list to be used with Kou/Taiga.")
+                .create_sub_option(|opt| {
+                    opt.name("name")
+                        .description("The name of the emote to be used with prefix.")
+                        .kind(ApplicationCommandOptionType::String)
+                        .required(true)
+                })
+                .create_sub_option(|opt| {
+                    opt.name("emote")
+                        .description("The emote to register.")
+                        .kind(ApplicationCommandOptionType::String)
+                        .required(true)
+                })
+        })
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::SubCommand)
+                .name("remove")
+                .description("Remove an emote from the emote list.")
+                .create_sub_option(|opt| {
+                    opt.name("name")
+                        .description("The name of the emote to be removed.")
+                        .kind(ApplicationCommandOptionType::String)
+                        .required(true)
+                })
+        })
+}
+
 fn register_enlarge(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     let description = get_command_description("enlarge");
 
@@ -711,7 +760,7 @@ fn register_smite(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
     let description = get_command_description("smite");
     cmd.name("smite")
         .description(description)
-        //.default_permission(false)
+        .default_permission(false)
         .create_option(|opt| {
             opt.name("member")
                 .description("Bad behaving member to smite.")

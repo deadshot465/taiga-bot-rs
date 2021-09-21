@@ -1,18 +1,10 @@
-use crate::shared::constants::EMOTE_IS_ANIMATED_REGEX;
-use once_cell::sync::Lazy;
-use regex::Regex;
+use crate::shared::constants::{
+    EMOTE_BASE_LINK, EMOTE_ID_REGEX, EMOTE_IS_ANIMATED_REGEX, EMOTE_REGEX,
+};
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
-
-const EMOTE_BASE_LINK: &str = "https://cdn.discordapp.com/emojis/";
-
-static EMOTE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(<a?:\w+:\d+>)").expect("Failed to initialize regular expression."));
-
-static EMOTE_ID_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(:\w+:)(\d+)").expect("Failed to initialize regular expression."));
 
 pub fn enlarge_async(
     ctx: Context,
