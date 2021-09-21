@@ -14,6 +14,8 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 
+pub const SKIP_CHANNEL_CHECK_COMMANDS: [&str; 3] = ["admin", "convert", "smite"];
+
 pub type T = fn(
     Context,
     ApplicationCommandInteraction,
@@ -34,6 +36,8 @@ pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::
     AVAILABLE_COMMANDS.clone()
     //global_commands
 });
+
+const ADMINISTRATIVE_COMMANDS: [&str; 2] = ["admin", "smite"];
 
 pub fn initialize() -> HashMap<String, SlashCommandElements> {
     let mut map: HashMap<String, SlashCommandElements> = HashMap::new();
@@ -270,41 +274,31 @@ pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<App
         .await?)
 }
 
-pub async fn set_commands_permission(ctx: &Context, force_recreate: bool) -> anyhow::Result<()> {
+pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
     let global_commands = ApplicationCommand::get_global_application_commands(&ctx.http).await?;
-    let admin_command = global_commands
+    let commands = ADMINISTRATIVE_COMMANDS
         .iter()
-        .find(|cmd| cmd.name.as_str() == "admin");
+        .map(|s| global_commands.iter().find(|cmd| cmd.name.as_str() == *s))
+        .map(|opt| opt.map(|cmd| cmd.id))
+        .collect::<Vec<_>>()
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
+        .unwrap_or_default();
 
-    if let Some(cmd) = admin_command {
-        let guilds = vec![
-            (KOU_SERVER_ID, KOU_SERVER_ADMIN_ROLE_ID),
-            (TAIGA_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID),
-        ];
+    let guilds = vec![
+        (KOU_SERVER_ID, vec![KOU_SERVER_ADMIN_ROLE_ID]),
+        (
+            TAIGA_SERVER_ID,
+            vec![
+                TAIGA_SERVER_ADMIN_ROLE_ID,
+                TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
+            ],
+        ),
+    ];
 
-        for (server_id, role_id) in guilds.into_iter() {
-            if let Err(e) = set_permission(ctx, server_id, cmd.id.0, role_id, force_recreate).await
-            {
-                log::error!("Error when setting permissions for admin command: {}", e);
-            }
-        }
-    }
-
-    let smite_command = global_commands
-        .iter()
-        .find(|cmd| cmd.name.as_str() == "smite");
-    if let Some(cmd) = smite_command {
-        let guilds = vec![
-            (KOU_SERVER_ID, KOU_SERVER_ADMIN_ROLE_ID),
-            (TAIGA_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID),
-            (TAIGA_SERVER_ID, TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID),
-        ];
-
-        for (server_id, role_id) in guilds.into_iter() {
-            if let Err(e) = set_permission(ctx, server_id, cmd.id.0, role_id, force_recreate).await
-            {
-                log::error!("Error when setting permissions for smite command: {}", e);
-            }
+    for (guild_id, role_ids) in guilds.into_iter() {
+        if let Err(e) = set_permission(ctx, guild_id, &commands, &role_ids).await {
+            log::error!("Error when setting permissions for commands: {}", e);
         }
     }
 
@@ -314,29 +308,24 @@ pub async fn set_commands_permission(ctx: &Context, force_recreate: bool) -> any
 async fn set_permission(
     ctx: &Context,
     guild_id: u64,
-    command_id: u64,
-    admin_role_id: u64,
-    force_recreate: bool,
+    cmds: &[CommandId],
+    role_ids: &[u64],
 ) -> anyhow::Result<()> {
-    let guild = GuildId(guild_id);
-    let permission = guild
-        .get_application_command_permissions(&ctx.http, CommandId(command_id))
-        .await;
-    if let Ok(permission) = permission {
-        if !force_recreate && !permission.permissions.is_empty() {
-            return Ok(());
-        }
-    }
-
     GuildId(guild_id)
         .set_application_commands_permissions(&ctx.http, |permissions| {
-            permissions.create_application_command(|permission| {
-                permission.id(command_id).create_permissions(|data| {
-                    data.kind(ApplicationCommandPermissionType::Role)
-                        .permission(true)
-                        .id(admin_role_id)
-                })
-            })
+            for cmd in cmds.iter() {
+                permissions.create_application_command(|permission| {
+                    permission.id(cmd.0).create_permissions(|data| {
+                        for role_id in role_ids.iter() {
+                            data.kind(ApplicationCommandPermissionType::Role)
+                                .permission(true)
+                                .id(*role_id);
+                        }
+                        data
+                    })
+                });
+            }
+            permissions
         })
         .await?;
 

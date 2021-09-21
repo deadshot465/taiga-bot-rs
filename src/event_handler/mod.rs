@@ -1,5 +1,5 @@
 use crate::event_handler::commands::{
-    set_commands_permission, SlashCommandElements, AVAILABLE_COMMANDS,
+    set_commands_permission, SlashCommandElements, AVAILABLE_COMMANDS, SKIP_CHANNEL_CHECK_COMMANDS,
 };
 use crate::event_handler::presences::set_initial_presence;
 use crate::event_handler::responses::emote::handle_emote;
@@ -8,6 +8,7 @@ use crate::event_handler::responses::mention::handle_mention_self;
 use crate::event_handler::responses::reaction::handle_reactions;
 use crate::event_handler::responses::response::handle_responses;
 use crate::shared::constants::KOU_SERVER_ID;
+use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
 use rand::Rng;
@@ -36,6 +37,21 @@ impl EventHandler for Handler {
     }
 
     async fn message(&self, ctx: Context, new_message: Message) {
+        let is_channel_ignored = {
+            CHANNEL_CONTROL
+                .get()
+                .expect("Failed to get channel control.")
+                .read()
+                .await
+                .ignored_channels
+                .iter()
+                .any(|channel_id| *channel_id == new_message.channel_id.0)
+        };
+
+        if is_channel_ignored {
+            return;
+        }
+
         if let Err(e) = handle_mention_self(&ctx, &new_message).await {
             log::error!("Failed to reply to self mention: {}", e);
         }
@@ -69,7 +85,7 @@ impl EventHandler for Handler {
             log::error!("Failed to override guild commands. Error: {}", e);
         }
 
-        if let Err(e) = set_commands_permission(&ctx, recreate_global_slash_commands).await {
+        if let Err(e) = set_commands_permission(&ctx).await {
             log::error!("Failed to set admin commands permission. Error: {}", e);
         }
 
@@ -81,6 +97,40 @@ impl EventHandler for Handler {
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(command) = interaction {
+            let channel_enabled = {
+                CHANNEL_CONTROL
+                    .get()
+                    .expect("Failed to get channel control.")
+                    .read()
+                    .await
+                    .enabled_channels
+                    .iter()
+                    .any(|channel_id| *channel_id == command.channel_id.0)
+            };
+
+            if !channel_enabled
+                && !SKIP_CHANNEL_CHECK_COMMANDS.contains(&command.data.name.as_str())
+            {
+                if let Err(e) = command.create_interaction_response(&ctx.http, |responses| responses
+                    .interaction_response_data(|data| data
+                        .content("This channel has to be enabled first before you can use command here!")))
+                    .await {
+                    log::error!("Error when responding to slash command: {}", e);
+                }
+
+                tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+                if let Err(e) = command
+                    .delete_original_interaction_response(&ctx.http)
+                    .await
+                {
+                    log::error!(
+                        "Error when deleting original response to slash command: {}",
+                        e
+                    );
+                }
+                return;
+            }
+
             if let Some(SlashCommandElements { handler, .. }) =
                 AVAILABLE_COMMANDS.get(&command.data.name)
             {

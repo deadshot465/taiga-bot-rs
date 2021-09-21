@@ -449,18 +449,20 @@ async fn build_multiple_choice_question(
                         if value.as_str() == answer {
                             let random_response = get_random_response(is_kou);
 
-                            command.create_followup_message(&ctx.http, |response| {
-                                response.content(format!("{} {}", interaction.user.mention(), random_response))
-                            }).await?;
+                            interaction.create_interaction_response(&ctx.http, |response| response
+                                .interaction_response_data(|data| data
+                                    .content(format!("{} {}", interaction.user.mention(), random_response))))
+                                .await?;
 
                             let score_entry = score_board.entry(interaction.user.id.0).or_default();
                             *score_entry += 1;
                             command.delete_followup_message(&ctx.http, &sent_msg.id).await?;
                             return Ok(());
                         } else {
-                            command.create_followup_message(&ctx.http, |response| {
-                                response.content(format!("{}, that's not the correct answer!", interaction.user.mention()))
-                            }).await?;
+                            interaction.create_interaction_response(&ctx.http, |response| response
+                                .interaction_response_data(|data| data
+                                    .content(format!("{}, that's not the correct answer!", interaction.user.mention()))))
+                                .await?;
                         }
                     }
                 }

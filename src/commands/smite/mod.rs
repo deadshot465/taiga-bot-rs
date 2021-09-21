@@ -61,7 +61,7 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                     let mut smote_users_write_lock = SMOTE_USERS.write().await;
                     smote_users_write_lock.smote_users.push(SmoteUser {
                         user_id: member.user.id.0,
-                        due_time: Utc::now() + chrono::Duration::seconds(120),
+                        due_time: Utc::now() + chrono::Duration::days(1),
                         guild_id: command.guild_id.unwrap_or_default().0,
                     });
                     smote_users_write_lock.write_smote_user_list()?;
@@ -70,7 +70,7 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                 let ctx_clone = ctx.clone();
                 tokio::spawn(async move {
                     let ctx = ctx_clone;
-                    tokio::time::sleep(std::time::Duration::from_secs(120)).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(86400)).await;
 
                     match member.remove_role(&ctx.http, RoleId(role_id)).await {
                         Ok(_) => {
