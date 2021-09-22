@@ -13,7 +13,7 @@
   },
   {
     "max_score": 49,
-    "message": "My magic beach ball says that you shouldn't count on it."
+    "message": "Don't sweat it. It's not going to work."
   },
   {
     "max_score": 64,
@@ -37,6 +37,6 @@
   },
   {
     "max_score": 100,
-    "message": "$1 and $2 are like me and volleyball, a perfect match!"
+    "message": "$1 and $2 are like me and Keitaro, a perfect match!"
   }
 ]

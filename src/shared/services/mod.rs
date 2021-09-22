@@ -1,5 +1,6 @@
 use once_cell::sync::Lazy;
 
+pub mod credit_service;
 pub mod dialog_service;
 pub mod image_service;
 pub mod ship_service;

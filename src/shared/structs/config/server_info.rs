@@ -1,6 +1,6 @@
 use crate::shared::constants::{
-    CONFIG_DIRECTORY, KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID,
-    TAIGA_SERVER_ID, TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
+    CONFIG_DIRECTORY, KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, KOU_SERVER_QOTD_CHANNEL_ID,
+    TAIGA_SERVER_ADMIN_ROLE_ID, TAIGA_SERVER_ID, TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -19,6 +19,7 @@ pub struct ServerInfos {
 pub struct ServerInfo {
     pub server_id: u64,
     pub admin_role_ids: Vec<u64>,
+    pub qotd_channel_ids: Vec<u64>,
 }
 
 impl ServerInfos {
@@ -42,6 +43,7 @@ fn initialize() -> anyhow::Result<ServerInfos> {
                 ServerInfo {
                     server_id: KOU_SERVER_ID,
                     admin_role_ids: vec![KOU_SERVER_ADMIN_ROLE_ID],
+                    qotd_channel_ids: vec![KOU_SERVER_QOTD_CHANNEL_ID],
                 },
                 ServerInfo {
                     server_id: TAIGA_SERVER_ID,
@@ -49,6 +51,7 @@ fn initialize() -> anyhow::Result<ServerInfos> {
                         TAIGA_SERVER_ADMIN_ROLE_ID,
                         TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
                     ],
+                    qotd_channel_ids: vec![],
                 },
             ],
         };

@@ -31,8 +31,9 @@ pub static AVAILABLE_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Laz
 
 pub static GLOBAL_COMMANDS: Lazy<HashMap<String, SlashCommandElements>> = Lazy::new(|| {
     // Placeholder for testing with guild commands.
-    AVAILABLE_COMMANDS.clone()
-    //global_commands
+    let mut global_commands = AVAILABLE_COMMANDS.clone();
+    global_commands.remove("qotd");
+    global_commands
 });
 
 const ADMINISTRATIVE_COMMANDS: [&str; 2] = ["admin", "smite"];
@@ -173,6 +174,15 @@ pub fn initialize() -> HashMap<String, SlashCommandElements> {
             register: register_ping,
             description: "Returns latency and API ping.".to_string(),
             emoji: "🔔".to_string(),
+        },
+    );
+    map.insert(
+        "qotd".to_string(),
+        SlashCommandElements {
+            handler: crate::commands::fun::qotd::qotd_async,
+            register: register_qotd,
+            description: "Ask a question of the day and earn 25 credits.".to_string(),
+            emoji: "🤔".to_string(),
         },
     );
     map.insert(
@@ -336,7 +346,7 @@ fn register_global_commands(
 fn register_guild_commands(
     commands: &mut CreateApplicationCommands,
 ) -> &mut CreateApplicationCommands {
-    commands
+    commands.create_application_command(|command| register_qotd(command))
 }
 
 fn register_about(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
@@ -747,6 +757,19 @@ fn register_pick(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
 fn register_ping(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     let description = get_command_description("ping");
     cmd.name("ping").description(description)
+}
+
+fn register_qotd(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    let description = get_command_description("qotd");
+
+    cmd.name("qotd")
+        .description(description)
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::String)
+                .name("question")
+                .description("The question of the day to ask.")
+                .required(true)
+        })
 }
 
 fn register_route(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
