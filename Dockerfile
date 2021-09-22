@@ -4,7 +4,7 @@ COPY . .
 RUN cargo build --release
 COPY ./assets/ ./target/release/assets/
 WORKDIR /src/target/release
-RUN rm -rf ./build && rm -rf ./deps && rm -rf ./examples
+RUN rm -rf ./build && rm -rf ./deps && rm -rf ./examples && rm -rf ./incremental
 WORKDIR /src
 
 FROM debian:buster-slim

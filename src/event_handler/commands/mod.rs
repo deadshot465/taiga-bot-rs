@@ -1,7 +1,5 @@
-use crate::shared::constants::{
-    KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, TAIGA_SERVER_ADMIN_ROLE_ID, TAIGA_SERVER_ID,
-    TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
-};
+use crate::shared::constants::KOU_SERVER_ID;
+use crate::shared::structs::config::server_info::SERVER_INFOS;
 use once_cell::sync::Lazy;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
 use serenity::model::interactions::application_command::ApplicationCommandPermissionType;
@@ -285,16 +283,10 @@ pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
         .collect::<Option<Vec<_>>>()
         .unwrap_or_default();
 
-    let guilds = vec![
-        (KOU_SERVER_ID, vec![KOU_SERVER_ADMIN_ROLE_ID]),
-        (
-            TAIGA_SERVER_ID,
-            vec![
-                TAIGA_SERVER_ADMIN_ROLE_ID,
-                TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
-            ],
-        ),
-    ];
+    let guilds = SERVER_INFOS
+        .server_infos
+        .iter()
+        .map(|info| (info.server_id, info.admin_role_ids.clone()));
 
     for (guild_id, role_ids) in guilds.into_iter() {
         if let Err(e) = set_permission(ctx, guild_id, &commands, &role_ids).await {
