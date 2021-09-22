@@ -2,16 +2,14 @@ use crate::event_handler::commands::{
     set_commands_permission, SlashCommandElements, AVAILABLE_COMMANDS, SKIP_CHANNEL_CHECK_COMMANDS,
 };
 use crate::event_handler::presences::set_initial_presence;
-use crate::event_handler::responses::emote::handle_emote;
 use crate::event_handler::responses::greet::greet;
-use crate::event_handler::responses::mention::handle_mention_self;
-use crate::event_handler::responses::reaction::handle_reactions;
-use crate::event_handler::responses::response::handle_responses;
+use crate::event_handler::responses::handle_bot_responses;
+use crate::event_handler::responses::qotd::handle_qotd;
 use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
-use rand::Rng;
+use rand::prelude::*;
 use serenity::model::prelude::*;
 use serenity::{async_trait, prelude::*};
 
@@ -37,35 +35,12 @@ impl EventHandler for Handler {
     }
 
     async fn message(&self, ctx: Context, new_message: Message) {
-        let is_channel_ignored = {
-            CHANNEL_CONTROL
-                .get()
-                .expect("Failed to get channel control.")
-                .read()
-                .await
-                .ignored_channels
-                .iter()
-                .any(|channel_id| *channel_id == new_message.channel_id.0)
-        };
-
-        if is_channel_ignored {
-            return;
+        if let Err(e) = handle_qotd(&ctx, &new_message).await {
+            log::error!("Error when handling qotd: {}", e);
         }
 
-        if let Err(e) = handle_mention_self(&ctx, &new_message).await {
-            log::error!("Failed to reply to self mention: {}", e);
-        }
-
-        if let Err(e) = handle_reactions(&ctx, &new_message).await {
-            log::error!("Failed to react to the message: {}", e);
-        }
-
-        if let Err(e) = handle_responses(&ctx, &new_message).await {
-            log::error!("Failed to reply to the message: {}", e);
-        }
-
-        if let Err(e) = handle_emote(&ctx, &new_message).await {
-            log::error!("Failed to send emote: {}", e);
+        if let Err(e) = handle_bot_responses(&ctx, &new_message).await {
+            log::error!("Error when handling bot responses: {}", e);
         }
     }
 

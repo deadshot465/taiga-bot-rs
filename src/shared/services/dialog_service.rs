@@ -32,8 +32,8 @@ pub async fn get_dialog(
 
     let server_endpoint = CONFIGURATION
         .get()
-        .map(|c| &c.server_endpoint)
-        .expect("Failed to get server endpoint from configuration.");
+        .map(|c| c.server_endpoint.as_str())
+        .unwrap_or_default();
 
     let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
     let token = AUTHENTICATION.read().await.token.clone();
