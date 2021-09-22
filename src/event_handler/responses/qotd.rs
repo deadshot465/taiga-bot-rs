@@ -27,11 +27,10 @@ pub async fn handle_qotd(ctx: &Context, new_message: &Message) -> anyhow::Result
     let author_name = get_author_name(&new_message.author, &member);
 
     if let Some(qotd_info) = qotd_exists {
-        if Utc::now() > qotd_info.expiry {
-            Ok(())
-        } else if qotd_info
-            .participated_members
-            .contains(&new_message.author.id.0)
+        if Utc::now() > qotd_info.expiry
+            || qotd_info
+                .participated_members
+                .contains(&new_message.author.id.0)
         {
             Ok(())
         } else {

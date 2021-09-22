@@ -29,19 +29,19 @@ pub async fn handle_bot_responses(ctx: &Context, new_message: &Message) -> anyho
         return Ok(());
     }
 
-    if let Err(e) = handle_mention_self(&ctx, &new_message).await {
+    if let Err(e) = handle_mention_self(ctx, new_message).await {
         log::error!("Failed to reply to self mention: {}", e);
     }
 
-    if let Err(e) = handle_reactions(&ctx, &new_message).await {
+    if let Err(e) = handle_reactions(ctx, new_message).await {
         log::error!("Failed to react to the message: {}", e);
     }
 
-    if let Err(e) = handle_responses(&ctx, &new_message).await {
+    if let Err(e) = handle_responses(ctx, new_message).await {
         log::error!("Failed to reply to the message: {}", e);
     }
 
-    if let Err(e) = handle_emote(&ctx, &new_message).await {
+    if let Err(e) = handle_emote(ctx, new_message).await {
         log::error!("Failed to send emote: {}", e);
     }
 

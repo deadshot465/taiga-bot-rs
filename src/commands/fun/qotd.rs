@@ -36,7 +36,7 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         let current_user = ctx.http.get_current_user().await?;
         let avatar_url = current_user
             .avatar_url()
-            .unwrap_or(current_user.default_avatar_url());
+            .unwrap_or_else(|| current_user.default_avatar_url());
 
         for server_info in SERVER_INFOS.server_infos.iter() {
             for qotd_channel_id in server_info.qotd_channel_ids.iter() {
