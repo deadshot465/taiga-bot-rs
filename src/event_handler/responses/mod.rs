@@ -14,6 +14,10 @@ pub mod reaction;
 pub mod response;
 
 pub async fn handle_bot_responses(ctx: &Context, new_message: &Message) -> anyhow::Result<()> {
+    if let Err(e) = handle_emote(ctx, new_message).await {
+        log::error!("Failed to send emote: {}", e);
+    }
+
     let is_channel_ignored = {
         CHANNEL_CONTROL
             .get()
@@ -39,10 +43,6 @@ pub async fn handle_bot_responses(ctx: &Context, new_message: &Message) -> anyho
 
     if let Err(e) = handle_responses(ctx, new_message).await {
         log::error!("Failed to reply to the message: {}", e);
-    }
-
-    if let Err(e) = handle_emote(ctx, new_message).await {
-        log::error!("Failed to send emote: {}", e);
     }
 
     Ok(())

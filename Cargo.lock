@@ -1450,6 +1450,7 @@ name = "taiga-bot-rs"
 version = "4.0.0"
 dependencies = [
  "anyhow",
+ "base64 0.13.0",
  "chrono",
  "env_logger",
  "image",

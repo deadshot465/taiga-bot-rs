@@ -4,17 +4,24 @@ use log::LevelFilter;
 mod commands;
 mod event_handler;
 mod shared;
+use crate::commands::utility::eval::EVAL_COMMAND;
 use crate::event_handler::hooks::normal_message::normal_message_hook;
 use crate::event_handler::Handler;
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use serenity::client::bridge::gateway::GatewayIntents;
-use serenity::framework::StandardFramework;
+use serenity::framework::{standard::macros::group, StandardFramework};
 use serenity::http::Http;
 use serenity::model::prelude::ChannelId;
 use serenity::Client;
 use shared::structs::config::*;
 use shared::structs::record::*;
 use std::collections::HashSet;
+
+#[group]
+#[description = "Utility functions that basically serve as tools."]
+#[only_in("guilds")]
+#[commands(eval)]
+struct Utility;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -88,7 +95,8 @@ async fn main() -> anyhow::Result<()> {
                             .allowed_channels(enabled_channels)
                             .owners(owners)
                     })
-                    .normal_message(normal_message_hook),
+                    .normal_message(normal_message_hook)
+                    .group(&UTILITY_GROUP),
             )
             .await?
     };
