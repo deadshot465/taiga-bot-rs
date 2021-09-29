@@ -4,6 +4,7 @@ use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use crate::shared::structs::utility::judge_zero::{
     JudgeZeroGetResponse, JudgeZeroPostRequest, JudgeZeroPostResponse, JudgeZeroRequestResult,
 };
+use base64::{CharacterSet, Config};
 use once_cell::sync::Lazy;
 use reqwest::header::HeaderMap;
 use serenity::builder::CreateEmbed;
@@ -47,9 +48,9 @@ pub fn build_embed(
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let content = if is_kou {
-        format!("Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust", author_name)
+        format!("Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n", author_name)
     } else {
-        format!("Guess I have to lend my hand to you because you're just like Eduard and Lee, {}! <:TaigaSmug:702210822310723614>\n```rust", author_name)
+        format!("Guess I have to lend my hand to you because you're just like Eduard and Lee, {}! <:TaigaSmug:702210822310723614>\n```rust\n", author_name)
     };
 
     let content = response
@@ -157,7 +158,11 @@ fn handle_response(response: JudgeZeroGetResponse) -> JudgeZeroGetResponse {
 
 fn decode_base64(s: String) -> String {
     if !s.is_empty() && s.chars().count() > 0 {
-        let decode_result = base64::decode_config(s, base64::STANDARD_NO_PAD);
+        let sanitized_string = s.trim().replace("\n", "");
+        let decode_result = base64::decode_config(
+            sanitized_string,
+            Config::new(CharacterSet::Standard, true).decode_allow_trailing_bits(true),
+        );
         let bytes = if let Err(ref e) = decode_result {
             log::error!("Error when decoding base64 text: {}", e);
             vec![]
