@@ -248,20 +248,6 @@ fn hangman_loop(
             .collect::<Vec<_>>()
             .join(" ");
 
-        if hangman_data.failures == 0 {
-            hangman_data
-                .command
-                .delete_followup_message(&hangman_data.ctx.http, sent_msg.id)
-                .await?;
-            return Ok(HangmanResult::Win);
-        } else if hangman_data.attempts_remained == 0 {
-            hangman_data
-                .command
-                .delete_followup_message(&hangman_data.ctx.http, sent_msg.id)
-                .await?;
-            return Ok(HangmanResult::Lose);
-        }
-
         if !hangman_data.answer.contains(user_guess) {
             hangman_data.attempts_remained -= 1;
         }
@@ -295,6 +281,12 @@ fn hangman_loop(
                 })
             })
             .await?;
+
+        if hangman_data.failures == 0 {
+            return Ok(HangmanResult::Win);
+        } else if hangman_data.attempts_remained == 0 {
+            return Ok(HangmanResult::Lose);
+        }
 
         hangman_loop(hangman_data).await
     }
