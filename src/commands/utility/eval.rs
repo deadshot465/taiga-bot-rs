@@ -97,7 +97,3 @@ async fn handle_result(
     }
     Ok(())
 }
-
-fn log_error(error: Error) {
-    log::error!("Error when evaluating Rust code: {}", error);
-}

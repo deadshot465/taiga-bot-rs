@@ -56,7 +56,20 @@ async fn convert(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
     let converter_type = ConverterType::new(source_unit, target_unit, amount);
     let result = match converter_type {
         ConverterType::Temperature(s, t, n) => compute_temperature(s, t, n),
-        ConverterType::Currency(n) => compute_currency(source_unit, target_unit, n).await?,
+        ConverterType::Currency(n) => match compute_currency(source_unit, target_unit, n).await {
+            Ok(res) => res,
+            Err(e) => {
+                command
+                    .edit_original_interaction_response(&ctx.http, |response| {
+                        response.content(format!(
+                            "Sorry, but I can't seem to find the currency you specified! {}",
+                            e
+                        ))
+                    })
+                    .await?;
+                return Ok(());
+            }
+        },
         _ => compute_length_or_weight(converter_type),
     };
 
