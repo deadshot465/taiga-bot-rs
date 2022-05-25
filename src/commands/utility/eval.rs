@@ -7,7 +7,6 @@ use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{Args, CommandResult};
 use serenity::model::channel::Message;
 use serenity::prelude::*;
-use serenity::Error;
 
 #[command]
 #[description = "Evaluate Rust codes. This command will let share some Rust codes with Taiga/Kou and ask him for help in evaluating those codes."]

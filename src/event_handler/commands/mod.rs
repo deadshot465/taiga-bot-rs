@@ -11,6 +11,7 @@ use serenity::prelude::Context;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
+use serenity::model::Permissions;
 
 pub const SKIP_CHANNEL_CHECK_COMMANDS: [&str; 3] = ["admin", "convert", "smite"];
 
@@ -359,7 +360,7 @@ fn register_admin(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
 
     cmd.name("admin")
         .description(description)
-        .default_permission(false)
+        .default_member_permissions(Permissions::ADMINISTRATOR)
         .create_option(|opt| {
             opt.name("enable")
                 .description("Enable a specific channel for bot usage.")
@@ -781,7 +782,7 @@ fn register_smite(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
     let description = get_command_description("smite");
     cmd.name("smite")
         .description(description)
-        .default_permission(false)
+        .default_member_permissions(Permissions::ADMINISTRATOR)
         .create_option(|opt| {
             opt.name("member")
                 .description("Bad behaving member to smite.")

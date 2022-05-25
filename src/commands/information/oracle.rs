@@ -29,7 +29,7 @@ async fn oracle(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| {
-                data.create_embed(|embed| {
+                data.embed(|embed| {
                     embed
                         .author(|author| author.name(&author_name).icon_url(&author_icon))
                         .color(Color::new(0xff0000))

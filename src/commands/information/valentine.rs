@@ -53,7 +53,7 @@ async fn valentine(ctx: Context, command: ApplicationCommandInteraction) -> anyh
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| {
-                let d = data.create_embed(|embed| {
+                let d = data.embed(|embed| {
                     embed
                         .author(|author| author.name(&author_name).icon_url(&author_icon))
                         .color(color)

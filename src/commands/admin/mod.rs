@@ -195,7 +195,7 @@ async fn purge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
         .map(|v| if v > 100 { 100 } else { v })
         .unwrap_or(10);
 
-    if let Some(channel) = ctx.cache.guild_channel(command.channel_id).await {
+    if let Some(channel) = ctx.cache.guild_channel(command.channel_id) {
         let sent_msg = command
             .edit_original_interaction_response(&ctx.http, |response| {
                 response.content("Retrieving messages...")

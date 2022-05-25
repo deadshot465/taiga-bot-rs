@@ -87,7 +87,7 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
 
     command
         .edit_original_interaction_response(&ctx.http, |response| {
-            response.content("").create_embed(|embed| {
+            response.content("").embed(|embed| {
                 embed
                     .author(|author| author.name(&author_name).icon_url(&author_avatar_url))
                     .description(format!("You have {} attempts left.", DEFAULT_MAX_ATTEMPTS))
@@ -263,7 +263,7 @@ fn hangman_loop(
         hangman_data
             .command
             .edit_followup_message(&hangman_data.ctx.http, sent_msg.id, |response| {
-                response.content("").create_embed(|embed| {
+                response.content("").embed(|embed| {
                     embed
                         .author(|author| {
                             author

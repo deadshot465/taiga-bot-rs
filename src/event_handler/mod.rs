@@ -22,12 +22,12 @@ pub struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn guild_member_addition(&self, ctx: Context, guild_id: GuildId, new_member: Member) {
-        if guild_id.0 == KOU_SERVER_ID {
+    async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
+        if new_member.guild_id.0 == KOU_SERVER_ID {
             return;
         }
 
-        if let Some(guild) = ctx.cache.guild(guild_id).await {
+        if let Some(guild) = ctx.cache.guild(new_member.guild_id) {
             if let Err(e) = greet(&ctx, guild, new_member).await {
                 log::error!("Error when greeting a new member: {}", e);
             }

@@ -23,11 +23,11 @@ pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Resul
         .unwrap_or_default();
 
     for general_channel_id in general_channels.into_iter() {
-        if let Some((_, guild_channel)) = guild_channels
+        if let Some((channel_id, _)) = guild_channels
             .iter()
             .find(|(channel_id, _)| **channel_id == general_channel_id)
         {
-            guild_channel.say(&ctx.http, greeting_message).await?;
+            channel_id.say(&ctx.http, greeting_message).await?;
             break;
         }
     }

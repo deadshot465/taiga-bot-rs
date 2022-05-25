@@ -39,7 +39,6 @@ async fn certify_user(ctx: &Context, message: &Message) -> anyhow::Result<()> {
 
         let guild = message
             .guild(&ctx.cache)
-            .await
             .expect("Failed to retrieve guild from cache.");
         let mut member = message.member(&ctx.http).await?;
 

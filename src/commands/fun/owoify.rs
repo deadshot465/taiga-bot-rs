@@ -69,10 +69,10 @@ async fn owoify(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
                     "<:KouCry:705054435826597928> I'm not really smart so I can't owoify such a long sentence..."
                 } else {
                     "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
-                }, trimmed_text.owoify(&level))
+                }, trimmed_text.owoify(level))
             } else {
                 let author_name = get_author_name(&command.user, &command.member);
-                format!("OwO-ified for {}~!\n\n{}", author_name, trimmed_text.owoify(&level))
+                format!("OwO-ified for {}~!\n\n{}", author_name, trimmed_text.owoify(level))
             })
         })).await?;
 

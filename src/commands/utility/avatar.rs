@@ -37,7 +37,7 @@ async fn avatar(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
             command
                 .create_interaction_response(&ctx.http, |response| {
                     response.interaction_response_data(|data| {
-                        data.create_embed(|embed| {
+                        data.embed(|embed| {
                             embed
                                 .title(&user_name)
                                 .description(format!(

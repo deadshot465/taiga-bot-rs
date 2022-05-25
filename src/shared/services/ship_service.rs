@@ -1,3 +1,4 @@
+use std::io::{BufWriter, Cursor};
 use crate::shared::constants::ASSET_DIRECTORY;
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::fun::ship_message::SHIP_MESSAGES;
@@ -46,12 +47,13 @@ pub fn generate_ship_image(avatar_1: &[u8], avatar_2: &[u8]) -> anyhow::Result<V
 
     let mut buffer = DynamicImage::new_rgba8(DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT);
     overlay(&mut buffer, &image_1, 0, 0);
-    overlay(&mut buffer, &image_heart, DEFAULT_IMAGE_HEIGHT, 0);
-    overlay(&mut buffer, &image_2, DEFAULT_IMAGE_HEIGHT * 2, 0);
+    overlay(&mut buffer, &image_heart, DEFAULT_IMAGE_HEIGHT as i64, 0);
+    overlay(&mut buffer, &image_2, (DEFAULT_IMAGE_HEIGHT * 2) as i64, 0);
     let length = buffer.as_bytes().len();
-    let mut image = Vec::with_capacity(length);
-    buffer.write_to(&mut image, image::ImageOutputFormat::Png)?;
-    Ok(image)
+    let image = Vec::with_capacity(length);
+    let mut writer = BufWriter::new(Cursor::new(image));
+    buffer.write_to(&mut writer, image::ImageOutputFormat::Png)?;
+    Ok(writer.into_inner().unwrap_or_default().into_inner())
 }
 
 pub fn get_ship_message(score: u64) -> &'static str {

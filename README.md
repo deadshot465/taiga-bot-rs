@@ -41,65 +41,6 @@ However, as the developers of Yuuto started seeking more robust languages than J
 
 C# is a robust language and Discord.Net is a powerful framework for writing Discord bots, so there's really no strong reasons to rewrite Taiga again. Therefore, initially the Rust version of Taiga was meant to be my first project in Rust and a simple practice for me to get familiar with Rust. Nonetheless, due to the nature of Rust being a high performance and system programming language, plus the async, non-blocking functionality powered by [Tokio](https://tokio.rs/), the performance of the resulting rewritten version of Taiga is inherently better than C# version. Also, its emphasis on memory safety, strict borrow checker and lifetime, and the lack of `null` make the final result even safer and predictable.
 
-### Setup steps
-
-This repo doesn't include compiled files, which usually are stored under the `target` folder of the project root directory. Therefore, whether you are interested in hosting Taiga bot on your own or are just interested in the code, there are some required steps before you can compile the code.
-
-1. [Install Rust](https://www.rust-lang.org/) with methods that apply to your operating system. Using [JetBrains CLion](https://www.jetbrains.com/clion/) or [JetBrains IntelliJ IDEA](https://www.jetbrains.com/idea/) with [Rust plugin](https://plugins.jetbrains.com/plugin/8182-rust?_ga=2.189013035.1679919971.1594635449-1551243450.1584093519) is strongly recommended, as Taiga is developed with these IDEs. If you prefer installing Rust via command line, assuming you're using Ubuntu, you can use the following commands to install Rust:
-
-   ```bash
-   curl https://sh.rustup.rs -sSf | sh
-   ```
-   
-2. Clone this repository with:
-
-   ```bash
-   git clone https://github.com/deadshot465/taiga-bot-rs.git
-   ```
-
-3. Assuming you're using IntelliJ IDEA or CLion, open up the project directory, the IDE should take care and download required Crate packages for you. Alternatively, use the following commands to either restore Crate packages, build the project, or run the project via command line. **Please be advised that the project will not run when the `.env` file is not present.**
-
-   ```bash
-   cd <path-to-the-root-directory-of-the-repo>
-   
-   # This will only build the project but not run it
-   # Omitting --release will result in building with Debug configuration
-   cargo build --release
-   
-   # This will build and run immediately
-   cargo run --release
-   ```
-   
-4. Provided that you have created your own application on Discord, you can manually create a file named `.env` in the same location as the compiled executable named `TaigaBotCS.exe` (Windows) or the respective files on other platforms, as the program will read required tokens and environment variables from this file. An unmodified version of Taiga bot expects the following variables/tokens from `.env`:
-
-   ```
-   TOKEN = <Your Discord application token here>
-   PREFIX = <The bot's command prefix>
-   GENCHN = <The primary general channel's id>
-   BOTCHN = <Dedicated bot commands channel's id>
-   BOTMODCHN = <Dedicated bot commands channel's id that is only accessible by mods>
-   TESTGENCHN = <Another personal test server's general channel id>
-   TESTCHN = <Another personal test server's test channel id>
-   VENTCHN = <Venting center channel id, as some channels are not meant for bot's random response>
-   KOUGENCHN = <The primary general channel's id in Kou stan server>
-   ECC_GENCHN = <Only for personal use. You can remove the need for it by editing the source file>
-   UNSPLASH_TOKEN = <This bot uses Unsplash's API to acquire certain images. This is the token of your Unsplash application>
-   BOT_ID = <Your Discord bot's ID. This is different from the token>
-   MENTION_REACTION_CHANCE = <When Taiga is mentioned/pinged, the chance of he responding to the message>
-   REACTION_CHANCE = <The probability of Taiga reacting to messages related to certain characters using emote/emojis>
-   RDM_REPLY_CHANCE = <The probability of Taiga replying to messages related to certain characters>
-   RDM_REPLY_USER_CHANCE = <The probability of Taiga replying to users (a.k.a. personalized replies)>
-   SPECIALIZED_CHANCE = <The probability of Taiga replying to messages related to certain characters using specialized messages>
-   TECHCHN = <The channel id of the tech club channel in Taiga stan server>
-   LOGIN_NAME = <Required user name to authenticate with the API endpoint for dialog/say/comic>
-   LOGIN_PASS = <Required user password to authenticate with the API endpoint for dialog/say/comic>
-   ```
-
-   **All placeholder texts should be replaced with your own content, without quotation marks (`"` and `'`) and greater than/less than (`<` and `>`) symbols.**
-
-5. Once you set up, compile the program to run the bot.
-
-
 ## Differences between Taiga Bot and Yuuto Bot
 
 The main difference is, without a doubt, that Taiga bot is written in Rust, while Yuuto bot is written in JavaScript and later in Kotlin. Since Rust is profoundly different from OOP languages, some detailed descriptions include, but not limited to, the following:

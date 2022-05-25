@@ -151,7 +151,7 @@ async fn list(
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| {
-                data.create_embed(|embed| {
+                data.embed(|embed| {
                     embed
                         .description(format!(
                             "The following is a list of currently registered emotes:\n\n{}",

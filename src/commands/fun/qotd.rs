@@ -3,7 +3,7 @@ use crate::shared::structs::config::configuration::KOU;
 use crate::shared::structs::config::server_info::SERVER_INFOS;
 use crate::shared::structs::fun::qotd::{QotdInfo, QOTD_INFOS};
 use crate::shared::utility::extract_string_option;
-use chrono::Utc;
+use chrono::{TimeZone, Utc};
 use serenity::model::channel::ChannelType;
 use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
@@ -27,8 +27,8 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
             })
             .await?;
 
-        let guild_creation_date = guild_id.created_at();
-        let elapsed = Utc::now() - guild_creation_date;
+        let guild_creation_date = guild_id.created_at().naive_utc();
+        let elapsed = Utc::now() - Utc.from_utc_datetime(&guild_creation_date);
         let elapsed_days = elapsed.num_days();
         let question = extract_string_option(&command, 0);
         let is_kou = KOU.get().copied().unwrap_or(false);
@@ -40,7 +40,7 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
         for server_info in SERVER_INFOS.server_infos.iter() {
             for qotd_channel_id in server_info.qotd_channel_ids.iter() {
-                if let Some(channel) = ctx.cache.guild_channel(*qotd_channel_id).await {
+                if let Some(channel) = ctx.cache.guild_channel(*qotd_channel_id) {
                     let msg = channel
                         .send_message(&ctx.http, |msg| {
                             msg.embed(|embed| {

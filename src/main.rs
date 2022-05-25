@@ -8,7 +8,6 @@ use crate::commands::utility::eval::EVAL_COMMAND;
 use crate::event_handler::hooks::normal_message::normal_message_hook;
 use crate::event_handler::Handler;
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
-use serenity::client::bridge::gateway::GatewayIntents;
 use serenity::framework::{standard::macros::group, StandardFramework};
 use serenity::http::Http;
 use serenity::model::prelude::ChannelId;
@@ -16,6 +15,7 @@ use serenity::Client;
 use shared::structs::config::*;
 use shared::structs::record::*;
 use std::collections::HashSet;
+use serenity::prelude::GatewayIntents;
 
 #[group]
 #[description = "Utility functions that basically serve as tools."]
@@ -78,14 +78,13 @@ async fn main() -> anyhow::Result<()> {
                 .collect::<HashSet<_>>()
         };
 
-        let http = Http::new_with_token(token);
+        let http = Http::new(token);
         let app_info = http.get_current_application_info().await?;
         let mut owners = HashSet::new();
         owners.insert(app_info.owner.id);
 
-        Client::builder(token)
+        Client::builder(token, GatewayIntents::all())
             .event_handler(Handler)
-            .intents(GatewayIntents::all())
             .application_id(*application_id)
             .framework(
                 StandardFramework::new()

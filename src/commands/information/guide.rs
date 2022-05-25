@@ -156,7 +156,7 @@ async fn guide(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
 
     if let Some(guild_id) = command.guild_id {
         if let Some(member) = command.member {
-            if let Some(guild) = ctx.cache.guild(guild_id).await {
+            if let Some(guild) = ctx.cache.guild(guild_id) {
                 inner_guide(&ctx, guild, member).await?;
             }
         }

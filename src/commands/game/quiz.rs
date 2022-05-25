@@ -179,7 +179,7 @@ async fn join_game(
         let sent_msg = command
             .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
                 let embed = build_embed("Minigame Starting!", &description, color, None);
-                response.embeds(vec![embed])
+                response.set_embeds(vec![embed])
             })
             .await?;
 
@@ -187,7 +187,7 @@ async fn join_game(
             .await_reactions(&ctx)
             .timeout(std::time::Duration::from_secs(2))
             .removed(true)
-            .await;
+            .build();
 
         while let Some(reaction) = reactions_collector.next().await {
             let emoji = &reaction.as_inner_ref().emoji;
@@ -248,7 +248,7 @@ async fn start_game(
                     Some("https://cdn.discordapp.com/emojis/702210822310723614.png")
                 },
             );
-            response.embeds(vec![embed])
+            response.set_embeds(vec![embed])
         })
         .await?;
     Ok(())
@@ -273,7 +273,7 @@ async fn cancel_game(
                     Some("https://cdn.discordapp.com/emojis/701226059726585866.png")
                 },
             );
-            response.embeds(vec![embed])
+            response.set_embeds(vec![embed])
         })
         .await?;
     Ok(())
@@ -296,7 +296,7 @@ async fn progress_game(
         .channel_id(command.channel_id.0)
         .guild_id(command.guild_id.unwrap_or_default().0)
         .filter(move |m| cloned_player_ids.contains(&m.author.id.0))
-        .await;
+        .build();
 
     let quiz_questions = {
         let mut rng = rand::thread_rng();
@@ -515,7 +515,7 @@ async fn finalize(
 
         command
             .create_followup_message(&ctx.http, |response| {
-                response.create_embed(|embed| {
+                response.embed(|embed| {
                     embed
                         .title("Minigame ended!")
                         .description(format!("Total points:\n{}", result_string.join("\n")))

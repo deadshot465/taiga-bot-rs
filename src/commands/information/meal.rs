@@ -27,7 +27,7 @@ async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
     if let Some(meal_data) = meal_data.meals.get(0) {
         command
             .edit_original_interaction_response(&ctx.http, |response| {
-                response.content("").create_embed(|embed| {
+                response.content("").embed(|embed| {
                     embed
                         .color(Color::new(0xfd9b3b))
                         .description(if meal_data.str_instructions.len() >= 1900 {
