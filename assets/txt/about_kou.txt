@@ -1,6 +1,6 @@
 Kou was inspired by the anime/manga Jibaku Shōnen Hanako-kun (a.k.a. Toilet-Bound Hanako-kun).
 It was also inspired and based on [Taiga](https://www.github.com/deadshot465/TaigaBotCS) and inspired by the [Yuuto project](http://iamdeja.github.io/yuuto-docs/).
-Kou version 4.0.1 was made and developed by:
+Kou version 4.1.0 was made and developed by:
 **Tetsuki Syu#1250**, **Arch#0226**
 Taiga version 4.0.1 by:
 **Tetsuki Syu#1250**
