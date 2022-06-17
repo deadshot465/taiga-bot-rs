@@ -7,11 +7,11 @@ use serenity::model::prelude::application_command::{
     ApplicationCommand, ApplicationCommandInteraction, ApplicationCommandOptionType,
 };
 use serenity::model::prelude::{CommandId, GuildId};
+use serenity::model::Permissions;
 use serenity::prelude::Context;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
-use serenity::model::Permissions;
 
 pub const SKIP_CHANNEL_CHECK_COMMANDS: [&str; 3] = ["admin", "convert", "smite"];
 
@@ -770,6 +770,12 @@ fn register_qotd(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
                 .name("question")
                 .description("The question of the day to ask.")
                 .required(true)
+        })
+        .create_option(|opt| {
+            opt.kind(ApplicationCommandOptionType::Attachment)
+                .name("attachment")
+                .description("The attachment to add to the question of the day.")
+                .required(false)
         })
 }
 
