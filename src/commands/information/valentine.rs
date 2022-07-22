@@ -5,7 +5,7 @@ use crate::shared::utility::{
     get_author_avatar, get_author_name, get_first_name, get_static_emote_url,
 };
 use rand::prelude::*;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;

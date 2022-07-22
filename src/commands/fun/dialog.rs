@@ -2,7 +2,7 @@ use crate::shared::services::dialog_service::{get_dialog, validate_dialog};
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::extract_string_option;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

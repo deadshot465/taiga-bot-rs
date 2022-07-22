@@ -1,5 +1,7 @@
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
-use serenity::model::prelude::application_command::*;
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
+};
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -233,7 +235,7 @@ fn extract_channel_id(command: &ApplicationCommandInteraction) -> u64 {
         .and_then(|opt| opt.options.get(0))
         .and_then(|opt| opt.resolved.as_ref())
         .map(|resolved| {
-            if let ApplicationCommandInteractionDataOptionValue::Channel(channel) = resolved {
+            if let CommandDataOptionValue::Channel(channel) = resolved {
                 channel.id.0
             } else {
                 0

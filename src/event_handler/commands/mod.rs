@@ -2,10 +2,8 @@ use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::structs::config::server_info::SERVER_INFOS;
 use once_cell::sync::Lazy;
 use serenity::builder::{CreateApplicationCommand, CreateApplicationCommands};
-use serenity::model::interactions::application_command::ApplicationCommandPermissionType;
-use serenity::model::prelude::application_command::{
-    ApplicationCommand, ApplicationCommandInteraction, ApplicationCommandOptionType,
-};
+use serenity::model::application::command::{Command, CommandOptionType, CommandPermissionType};
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::prelude::{CommandId, GuildId};
 use serenity::model::Permissions;
 use serenity::prelude::Context;
@@ -248,12 +246,12 @@ pub async fn build_global_slash_commands(
     force_recreate: bool,
 ) -> anyhow::Result<()> {
     if force_recreate {
-        ApplicationCommand::set_global_application_commands(&ctx.http, |commands| {
+        Command::set_global_application_commands(&ctx.http, |commands| {
             register_global_commands(commands)
         })
         .await?;
     } else {
-        let global_commands = ApplicationCommand::get_global_application_commands(&ctx.http)
+        let global_commands = Command::get_global_application_commands(&ctx.http)
             .await?
             .into_iter()
             .map(|cmd| cmd.name)
@@ -267,24 +265,22 @@ pub async fn build_global_slash_commands(
 
         if has_unregistered_commands {
             for (_, SlashCommandElements { register, .. }) in commands_not_registered.into_iter() {
-                ApplicationCommand::create_global_application_command(&ctx.http, |command| {
-                    register(command)
-                })
-                .await?;
+                Command::create_global_application_command(&ctx.http, |command| register(command))
+                    .await?;
             }
         }
     }
     Ok(())
 }
 
-pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<ApplicationCommand>> {
+pub async fn build_guild_slash_commands(ctx: &Context) -> anyhow::Result<Vec<Command>> {
     Ok(GuildId(KOU_SERVER_ID)
         .set_application_commands(&ctx.http, |commands| register_guild_commands(commands))
         .await?)
 }
 
 pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
-    let global_commands = ApplicationCommand::get_global_application_commands(&ctx.http).await?;
+    let global_commands = Command::get_global_application_commands(&ctx.http).await?;
     let commands = ADMINISTRATIVE_COMMANDS
         .iter()
         .map(|s| global_commands.iter().find(|cmd| cmd.name.as_str() == *s))
@@ -320,7 +316,7 @@ async fn set_permission(
                 permissions.create_application_command(|permission| {
                     for role_id in role_ids.iter() {
                         permission.id(cmd.0).create_permissions(|data| {
-                            data.kind(ApplicationCommandPermissionType::Role)
+                            data.kind(CommandPermissionType::Role)
                                 .permission(true)
                                 .id(*role_id)
                         });
@@ -364,56 +360,56 @@ fn register_admin(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
         .create_option(|opt| {
             opt.name("enable")
                 .description("Enable a specific channel for bot usage.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("channel")
                         .description("The channel to enable for bot usage.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::Channel)
+                        .kind(CommandOptionType::Channel)
                 })
         })
         .create_option(|opt| {
             opt.name("disable")
                 .description("Disable a specific channel for bot usage.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("channel")
                         .description("The channel to disable for bot usage.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::Channel)
+                        .kind(CommandOptionType::Channel)
                 })
         })
         .create_option(|opt| {
             opt.name("allow")
                 .description("Allow a specific channel for random responses of bot.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("channel")
                         .description("The channel to allow for random responses.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::Channel)
+                        .kind(CommandOptionType::Channel)
                 })
         })
         .create_option(|opt| {
             opt.name("disallow")
                 .description("Disallow a specific channel for random responses of bot.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("channel")
                         .description("The channel to disallow for random responses.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::Channel)
+                        .kind(CommandOptionType::Channel)
                 })
         })
         .create_option(|opt| {
             opt.name("purge")
                 .description("Purge messages from this channel. Default to 10 most recent messages. Maximum 100 messages.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("amount")
                         .description("The number of messages to purge.")
                         .required(false)
-                        .kind(ApplicationCommandOptionType::Integer)
+                        .kind(CommandOptionType::Integer)
                 })
         })
 }
@@ -427,7 +423,7 @@ fn register_avatar(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
             opt.name("user")
                 .description("The user whose avatar to get.")
                 .required(true)
-                .kind(ApplicationCommandOptionType::User)
+                .kind(CommandOptionType::User)
         })
 }
 
@@ -439,11 +435,11 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
         .create_option(|opt| {
             opt.name("length")
                 .description("Convert length.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("source_unit")
                         .description("The source length to convert from.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(true)
                         .add_string_choice("km", "km")
                         .add_string_choice("m", "m")
@@ -456,7 +452,7 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .create_sub_option(|opt| {
                     opt.name("target_unit")
                         .description("The target length to convert to.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(true)
                         .add_string_choice("km", "km")
                         .add_string_choice("m", "m")
@@ -469,19 +465,19 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .create_sub_option(|opt| {
                     opt.name("amount")
                         .description("The amount to convert.")
-                        .kind(ApplicationCommandOptionType::Number)
+                        .kind(CommandOptionType::Number)
                         .required(true)
                 })
         })
         .create_option(|opt| {
             opt.name("weight")
                 .description("Convert weight.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("source_unit")
                         .description("The source weight to convert from.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .add_string_choice("kg", "kg")
                         .add_string_choice("g", "g")
                         .add_string_choice("lb", "lb")
@@ -490,7 +486,7 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                     opt.name("target_unit")
                         .description("The target weight to convert to.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .add_string_choice("kg", "kg")
                         .add_string_choice("g", "g")
                         .add_string_choice("lb", "lb")
@@ -498,19 +494,19 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .create_sub_option(|opt| {
                     opt.name("amount")
                         .description("The amount to convert.")
-                        .kind(ApplicationCommandOptionType::Number)
+                        .kind(CommandOptionType::Number)
                         .required(true)
                 })
         })
         .create_option(|opt| {
             opt.name("temperature")
                 .description("Convert temperature.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("source_unit")
                         .description("The source temperature to convert from.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .add_string_choice("Celsius", "c")
                         .add_string_choice("Fahrenheit", "f")
                         .add_string_choice("Kelvin", "k")
@@ -519,7 +515,7 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                     opt.name("target_unit")
                         .description("The target temperature to convert to.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .add_string_choice("Celsius", "c")
                         .add_string_choice("Fahrenheit", "f")
                         .add_string_choice("Kelvin", "k")
@@ -527,30 +523,30 @@ fn register_convert(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
                 .create_sub_option(|opt| {
                     opt.name("amount")
                         .description("The amount to convert.")
-                        .kind(ApplicationCommandOptionType::Number)
+                        .kind(CommandOptionType::Number)
                         .required(true)
                 })
         })
         .create_option(|opt| {
             opt.name("currency")
                 .description("Convert currency.")
-                .kind(ApplicationCommandOptionType::SubCommand)
+                .kind(CommandOptionType::SubCommand)
                 .create_sub_option(|opt| {
                     opt.name("source_unit")
                         .description("The source currency type to convert from, e.g. USD.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                 })
                 .create_sub_option(|opt| {
                     opt.name("target_unit")
                         .description("The target currency type to convert to, e.g. JPY.")
                         .required(true)
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                 })
                 .create_sub_option(|opt| {
                     opt.name("amount")
                         .description("The amount to convert.")
-                        .kind(ApplicationCommandOptionType::Number)
+                        .kind(CommandOptionType::Number)
                         .required(true)
                 })
         })
@@ -565,19 +561,19 @@ fn register_dialog(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
             opt.name("background")
                 .description("The background of the character. A random background if the specified one doesn't exist.")
                 .required(true)
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
         })
         .create_option(|opt| {
             opt.name("character")
                 .description("The character whom you want to make saying something.")
                 .required(true)
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
         })
         .create_option(|opt| {
             opt.name("text")
                 .description("The text of the dialog. Cannot be over 180 characters.")
                 .required(true)
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
         })
 }
 
@@ -587,35 +583,35 @@ fn register_emote(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
     cmd.name("emote")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("list")
                 .description("List registered emotes in this server.")
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("add")
                 .description("Add an emote to the emote list to be used with Kou/Taiga.")
                 .create_sub_option(|opt| {
                     opt.name("name")
                         .description("The name of the emote to be used with prefix.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(true)
                 })
                 .create_sub_option(|opt| {
                     opt.name("emote")
                         .description("The emote to register.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(true)
                 })
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("remove")
                 .description("Remove an emote from the emote list.")
                 .create_sub_option(|opt| {
                     opt.name("name")
                         .description("The name of the emote to be removed.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(true)
                 })
         })
@@ -627,7 +623,7 @@ fn register_enlarge(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicatio
     cmd.name("enlarge")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::String)
+            opt.kind(CommandOptionType::String)
                 .name("emote")
                 .description("One or more emotes to enlarge.")
                 .required(true)
@@ -640,7 +636,7 @@ fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
     cmd.name("game")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("quiz")
                 .description(
                     "Play a fun quiz with your friends. Optionally specify rounds (default 7).",
@@ -648,12 +644,12 @@ fn register_game(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
                 .create_sub_option(|opt| {
                     opt.name("rounds")
                         .description("Rounds you want to play.")
-                        .kind(ApplicationCommandOptionType::Integer)
+                        .kind(CommandOptionType::Integer)
                         .required(false)
                 })
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("hangman")
                 .description("Play a hangman game with Taiga or Kou.")
         })
@@ -670,35 +666,35 @@ fn register_image(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
     cmd.name("image")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("image")
                 .description("Get random images based on keywords.")
                 .create_sub_option(|opt| {
                     opt.name("keyword")
                         .description("Keyword to search for.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(false)
                 })
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("cat")
                 .description("Get cat images.")
                 .create_sub_option(|opt| {
                     opt.name("keyword")
                         .description("Keyword to search for.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(false)
                 })
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::SubCommand)
+            opt.kind(CommandOptionType::SubCommand)
                 .name("dog")
                 .description("Get dog images.")
                 .create_sub_option(|opt| {
                     opt.name("keyword")
                         .description("Keyword to search for.")
-                        .kind(ApplicationCommandOptionType::String)
+                        .kind(CommandOptionType::String)
                         .required(false)
                 })
         })
@@ -720,7 +716,7 @@ fn register_owoify(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
     cmd.name("owoify")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::String)
+            opt.kind(CommandOptionType::String)
                 .name("level")
                 .description("The owoiness you want to owoify your text.")
                 .required(true)
@@ -729,7 +725,7 @@ fn register_owoify(cmd: &mut CreateApplicationCommand) -> &mut CreateApplication
                 .add_string_choice("hard", "hard")
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::String)
+            opt.kind(CommandOptionType::String)
                 .name("text")
                 .description("The text to owoify.")
                 .required(true)
@@ -744,13 +740,13 @@ fn register_pick(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
         .create_option(|opt| {
             opt.name("times")
                 .description("Times to pick. Negative numbers or numbers too big will be ignored.")
-                .kind(ApplicationCommandOptionType::Integer)
+                .kind(CommandOptionType::Integer)
                 .required(true)
         })
         .create_option(|opt| {
             opt.name("choices")
                 .description("Choices to pick from, separated by pipe (|).")
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
                 .required(true)
         })
 }
@@ -766,13 +762,13 @@ fn register_qotd(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
     cmd.name("qotd")
         .description(description)
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::String)
+            opt.kind(CommandOptionType::String)
                 .name("question")
                 .description("The question of the day to ask.")
                 .required(true)
         })
         .create_option(|opt| {
-            opt.kind(ApplicationCommandOptionType::Attachment)
+            opt.kind(CommandOptionType::Attachment)
                 .name("attachment")
                 .description("The attachment to add to the question of the day.")
                 .required(false)
@@ -792,7 +788,7 @@ fn register_smite(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
         .create_option(|opt| {
             opt.name("member")
                 .description("Bad behaving member to smite.")
-                .kind(ApplicationCommandOptionType::User)
+                .kind(CommandOptionType::User)
                 .required(true)
         })
 }
@@ -806,13 +802,13 @@ fn register_ship(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
             opt.required(true)
                 .name("user_1")
                 .description("The first user to ship with the second user.")
-                .kind(ApplicationCommandOptionType::User)
+                .kind(CommandOptionType::User)
         })
         .create_option(|opt| {
             opt.required(true)
                 .name("user_2")
                 .description("The second user to ship with the first user.")
-                .kind(ApplicationCommandOptionType::User)
+                .kind(CommandOptionType::User)
         })
 }
 
@@ -827,7 +823,7 @@ fn register_stats(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationC
                 .description("(Optional) The command of which you want to query the record.")
                 .add_string_choice("route", "route")
                 .add_string_choice("valentine", "valentine")
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
         })
 }
 
@@ -840,7 +836,7 @@ fn register_time(cmd: &mut CreateApplicationCommand) -> &mut CreateApplicationCo
             opt.name("city_name_or_address")
                 .description("A city name or an address of which to query time.")
                 .required(true)
-                .kind(ApplicationCommandOptionType::String)
+                .kind(CommandOptionType::String)
         })
 }
 

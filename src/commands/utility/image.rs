@@ -5,7 +5,7 @@ use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
 use serenity::builder::CreateEmbed;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

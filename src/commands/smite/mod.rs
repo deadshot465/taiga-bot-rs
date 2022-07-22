@@ -2,8 +2,9 @@ use crate::shared::constants::{KOU_SERVER_SMOTE_ROLE_ID, TAIGA_SERVER_SMOTE_ROLE
 use crate::shared::structs::smite::{SmoteUser, SMITE_GIF_LINKS, SMOTE_USERS};
 use chrono::Utc;
 use rand::prelude::*;
-use serenity::model::interactions::application_command::ApplicationCommandInteractionDataOptionValue;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
+};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::future::Future;
@@ -23,7 +24,7 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
         .get(0)
         .and_then(|opt| opt.resolved.as_ref())
         .and_then(|value| {
-            if let ApplicationCommandInteractionDataOptionValue::User(user, _) = value {
+            if let CommandDataOptionValue::User(user, _) = value {
                 Some(user)
             } else {
                 None

@@ -1,5 +1,5 @@
 use crate::shared::structs::config::configuration::KOU;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;

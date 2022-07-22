@@ -1,6 +1,6 @@
 use crate::shared::constants::{CAMP_BUDDY_STAR, KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;

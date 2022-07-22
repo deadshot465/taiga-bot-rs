@@ -1,6 +1,6 @@
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::information::meal::MealData;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::Context;
 use serenity::utils::Color;
 use std::future::Future;

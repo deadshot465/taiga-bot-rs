@@ -1,4 +1,4 @@
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

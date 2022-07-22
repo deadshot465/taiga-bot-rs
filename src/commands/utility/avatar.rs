@@ -1,7 +1,7 @@
 use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::KOU;
-use serenity::model::prelude::application_command::{
-    ApplicationCommandInteraction, ApplicationCommandInteractionDataOptionValue,
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
 };
 use serenity::prelude::*;
 use std::future::Future;
@@ -24,7 +24,7 @@ async fn avatar(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
     };
 
     if let Some(option) = command.data.options.get(0) {
-        if let ApplicationCommandInteractionDataOptionValue::User(user, _) = option
+        if let CommandDataOptionValue::User(user, _) = option
             .resolved
             .as_ref()
             .expect("Failed to resolve option value.")

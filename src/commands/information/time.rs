@@ -3,7 +3,7 @@ use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::information::time::{GeocodeResponse, TimeData, TimezoneResponse};
 use crate::shared::utility::extract_string_option;
 use chrono::{DateTime, FixedOffset};
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

@@ -1,6 +1,6 @@
 use crate::shared::structs::config::configuration::KOU;
 use rand::prelude::*;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::collections::HashMap;
 use std::future::Future;

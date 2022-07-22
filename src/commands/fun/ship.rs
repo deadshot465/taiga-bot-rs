@@ -6,10 +6,10 @@ use crate::shared::services::ship_service::{
 };
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{find_user_in_members, get_author_avatar, get_author_name};
-use serenity::model::id::UserId;
-use serenity::model::prelude::application_command::{
-    ApplicationCommandInteraction, ApplicationCommandInteractionDataOptionValue,
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
 };
+use serenity::model::id::UserId;
 use serenity::model::prelude::User;
 use serenity::prelude::*;
 use serenity::utils::Color;
@@ -36,7 +36,7 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         .get(0)
         .and_then(|opt| opt.resolved.as_ref())
         .map(|resolved| {
-            if let ApplicationCommandInteractionDataOptionValue::User(u, _) = resolved {
+            if let CommandDataOptionValue::User(u, _) = resolved {
                 u.clone()
             } else {
                 User::default()
@@ -49,7 +49,7 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         .get(1)
         .and_then(|opt| opt.resolved.as_ref())
         .map(|resolved| {
-            if let ApplicationCommandInteractionDataOptionValue::User(u, _) = resolved {
+            if let CommandDataOptionValue::User(u, _) = resolved {
                 u.clone()
             } else {
                 User::default()

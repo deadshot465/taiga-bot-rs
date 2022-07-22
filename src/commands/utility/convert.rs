@@ -4,7 +4,7 @@ use crate::shared::structs::utility::convert::conversion_table::CONVERSION_TABLE
 use crate::shared::structs::utility::convert::exchange_rate_api_response::ExchangeRateAPIResponse;
 use crate::shared::structs::utility::convert::temperature::Temperature;
 use crate::shared::structs::utility::convert::ConverterType;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

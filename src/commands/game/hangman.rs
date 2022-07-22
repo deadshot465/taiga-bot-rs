@@ -2,7 +2,7 @@ use crate::shared::structs::game::hangman_question::HANGMAN_QUESTIONS;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
 use serenity::futures::prelude::future::BoxFuture;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::prelude::User;
 use serenity::prelude::*;
 use serenity::utils::Color;

@@ -8,7 +8,7 @@ use rand::prelude::*;
 use serenity::builder::CreateEmbed;
 use serenity::collector::{MessageCollector, MessageCollectorBuilder};
 use serenity::futures::StreamExt;
-use serenity::model::prelude::application_command::*;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::Color;

@@ -1,5 +1,5 @@
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::model::guild::Member;
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
 use serenity::model::prelude::User;
 
 pub fn extract_string_option(command: &ApplicationCommandInteraction, index: usize) -> &str {

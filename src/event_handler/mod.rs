@@ -10,7 +10,8 @@ use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
 use rand::prelude::*;
-use serenity::model::prelude::*;
+use serenity::model::application::interaction::Interaction;
+use serenity::model::prelude::{Member, Message, Ready};
 use serenity::{async_trait, prelude::*};
 
 pub mod commands;

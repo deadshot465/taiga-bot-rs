@@ -1,7 +1,7 @@
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::get_author_name;
 use owoify_rs::{Owoifiable, OwoifyLevel};
-use serenity::model::prelude::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;

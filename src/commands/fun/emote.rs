@@ -7,7 +7,7 @@ use crate::shared::structs::fun::emote::{Emote, EMOTE_LIST};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serenity::model::interactions::application_command::ApplicationCommandInteraction;
+use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
 use serenity::prelude::*;
 use serenity::utils::Color;
 use std::future::Future;

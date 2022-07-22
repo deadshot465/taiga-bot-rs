@@ -4,10 +4,10 @@ use crate::shared::structs::config::server_info::SERVER_INFOS;
 use crate::shared::structs::fun::qotd::{QotdInfo, QOTD_INFOS};
 use crate::shared::utility::extract_string_option;
 use chrono::{TimeZone, Utc};
-use serenity::model::channel::ChannelType;
-use serenity::model::prelude::application_command::{
-    ApplicationCommandInteraction, ApplicationCommandInteractionDataOptionValue,
+use serenity::model::application::interaction::application_command::{
+    ApplicationCommandInteraction, CommandDataOptionValue,
 };
+use serenity::model::channel::ChannelType;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -40,8 +40,7 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
             .get(1)
             .and_then(|opt| opt.resolved.as_ref())
             .and_then(|value| {
-                if let ApplicationCommandInteractionDataOptionValue::Attachment(attachment) = value
-                {
+                if let CommandDataOptionValue::Attachment(attachment) = value {
                     Some(attachment)
                 } else {
                     None
