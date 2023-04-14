@@ -104,7 +104,7 @@ async fn build_component(
                                     for (name, (_, emoji)) in available_commands.iter() {
                                         opts.create_option(|opt| {
                                             opt.emoji(ReactionType::Unicode(emoji.clone()))
-                                                .value(&name)
+                                                .value(name)
                                                 .label(name)
                                         });
                                     }

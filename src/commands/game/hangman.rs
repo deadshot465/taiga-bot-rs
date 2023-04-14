@@ -128,7 +128,7 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                         })
                         .await
                     {
-                        log::error!("{}", e);
+                        tracing::error!("{}", e);
                     }
                 }
                 HangmanResult::Lose => {
@@ -144,7 +144,7 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                         })
                         .await
                     {
-                        log::error!("{}", e);
+                        tracing::error!("{}", e);
                     }
                 }
                 HangmanResult::Aborted => {
@@ -158,12 +158,12 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                         })
                         .await
                     {
-                        log::error!("{}", e);
+                        tracing::error!("{}", e);
                     }
                 }
             },
             Err(e) => {
-                log::error!("An error occurred during a hangman game: {}", e);
+                tracing::error!("An error occurred during a hangman game: {}", e);
             }
         }
     });
@@ -256,7 +256,7 @@ fn hangman_loop(
             .guesses
             .clone()
             .into_iter()
-            .map(|c| format!("'{}'", c.to_string()))
+            .map(|c| format!("'{}'", c))
             .collect::<Vec<_>>()
             .join(", ");
 

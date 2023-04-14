@@ -44,12 +44,12 @@ async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                 if keyword.is_empty() {
                     keyword = "burger".into();
                 }
-                get_normal_image(&keyword, &*HTTP_CLIENT, &author_name, &author_avatar_url, color).await
+                get_normal_image(&keyword, &HTTP_CLIENT, &author_name, &author_avatar_url, color).await
             }
             "cat" => {
                 if thread_rng().gen_range(0..2) > 0 {
                     // Invoke the Cat API
-                    get_cat_image(&keyword, &*HTTP_CLIENT, &author_name, &author_avatar_url, color).await
+                    get_cat_image(&keyword, &HTTP_CLIENT, &author_name, &author_avatar_url, color).await
                 } else {
                     // Invoke Unsplash API
                     keyword = if keyword.is_empty() {
@@ -57,14 +57,14 @@ async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                     } else {
                         "cat ".to_string() + &keyword
                     };
-                    get_normal_image(&keyword, &*HTTP_CLIENT, &author_name, &author_avatar_url, color)
+                    get_normal_image(&keyword, &HTTP_CLIENT, &author_name, &author_avatar_url, color)
                         .await
                 }
             }
             "dog" => {
                 if thread_rng().gen_range(0..2) > 0 {
                     // Invoke Dog API
-                    get_dog_image(&keyword, &*HTTP_CLIENT, &author_name, &author_avatar_url, color).await
+                    get_dog_image(&keyword, &HTTP_CLIENT, &author_name, &author_avatar_url, color).await
                 } else {
                     // Invoke Unsplash API
                     keyword = if keyword.is_empty() {
@@ -72,14 +72,14 @@ async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                     } else {
                         "dog ".to_string() + &keyword
                     };
-                    get_normal_image(&keyword, &*HTTP_CLIENT, &author_name, &author_avatar_url, color)
+                    get_normal_image(&keyword, &HTTP_CLIENT, &author_name, &author_avatar_url, color)
                         .await
                 }
             }
             _ => Err(anyhow::anyhow!("Failed to execute the image command.")),
         }
         .unwrap_or_else(|e| {
-            log::error!("{}", e);
+            tracing::error!("{}", e);
             let mut embed = CreateEmbed::default();
             embed.description(if is_kou {
                 "Sorry...I don't understand the keyword and cannot find anything... <:KouCry:705054435826597928>"

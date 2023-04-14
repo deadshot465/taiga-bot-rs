@@ -184,7 +184,7 @@ async fn join_game(
             .await?;
 
         let mut reactions_collector = sent_msg
-            .await_reactions(&ctx)
+            .await_reactions(ctx)
             .timeout(std::time::Duration::from_secs(2))
             .removed(true)
             .build();
@@ -495,7 +495,7 @@ async fn finalize(
                 (
                     players
                         .iter()
-                        .find(|u| (*u).id.0 == user_id)
+                        .find(|u| u.id.0 == user_id)
                         .expect("Failed to map user ID to an user.")
                         .mention()
                         .to_string(),
@@ -509,7 +509,6 @@ async fn finalize(
         let result_string = score_board
             .into_iter()
             .enumerate()
-            .into_iter()
             .map(|(rank, (name, score))| format!("{}) {} with {} points", rank + 1, name, score))
             .collect::<Vec<_>>();
 

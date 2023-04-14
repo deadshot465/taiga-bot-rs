@@ -58,7 +58,7 @@ fn initialize() -> anyhow::Result<ServerInfos> {
         new_server_infos.write_server_infos()?;
         Ok(new_server_infos)
     } else {
-        let toml = std::fs::read(&server_infos_path)?;
-        Ok(toml::from_slice(&toml)?)
+        let toml = std::fs::read_to_string(&server_infos_path)?;
+        Ok(toml::from_str(&toml)?)
     }
 }

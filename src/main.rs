@@ -1,6 +1,3 @@
-use env_logger::Builder;
-use log::LevelFilter;
-
 mod commands;
 mod event_handler;
 mod shared;
@@ -11,11 +8,12 @@ use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use serenity::framework::{standard::macros::group, StandardFramework};
 use serenity::http::Http;
 use serenity::model::prelude::ChannelId;
+use serenity::prelude::GatewayIntents;
 use serenity::Client;
 use shared::structs::config::*;
 use shared::structs::record::*;
 use std::collections::HashSet;
-use serenity::prelude::GatewayIntents;
+use tracing::Level;
 
 #[group]
 #[description = "Utility functions that basically serve as tools."]
@@ -36,8 +34,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_default()
         .is_empty()
     {
-        log::error!("Discord token cannot be empty.");
-        return Ok(());
+        return Err(anyhow::anyhow!("Discord token cannot be empty."));
     }
 
     let mut client = {
@@ -45,19 +42,22 @@ async fn main() -> anyhow::Result<()> {
             .get()
             .expect("Configuration is not initialized.");
         let log_level = match config.log_level.as_str() {
-            "DEBUG" => LevelFilter::Debug,
-            "INFO" => LevelFilter::Info,
-            "WARN" => LevelFilter::Warn,
-            "ERROR" => LevelFilter::Error,
-            "TRACE" => LevelFilter::Trace,
-            "OFF" => LevelFilter::Off,
-            _ => LevelFilter::Debug,
+            "DEBUG" => Level::DEBUG,
+            "INFO" => Level::INFO,
+            "WARN" => Level::WARN,
+            "ERROR" => Level::ERROR,
+            "TRACE" => Level::TRACE,
+            _ => Level::DEBUG,
         };
 
-        Builder::new()
-            .filter(None, log_level)
-            .default_format()
-            .init();
+        let subscriber = tracing_subscriber::FmtSubscriber::builder()
+            .with_max_level(log_level)
+            .pretty()
+            .finish();
+
+        if let Err(e) = tracing::subscriber::set_global_default(subscriber) {
+            return Err(anyhow::anyhow!("Initializing tracing failed: {}", e));
+        }
 
         let args = std::env::args()
             .map(|arg| arg.to_lowercase())
@@ -101,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     if let Err(e) = client.start().await {
-        log::error!("Error when starting the bot: {}", e.to_string());
+        tracing::error!("Error when starting the bot: {}", e.to_string());
     }
 
     Ok(())

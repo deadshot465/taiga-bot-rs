@@ -1,6 +1,5 @@
 extern crate taiga_bot_rs;
 use env_logger::Builder;
-use log::{error, LevelFilter};
 use serenity::framework::standard::CommandGroup;
 use serenity::{
     client::{bridge::gateway::GatewayIntents, Client},

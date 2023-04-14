@@ -1,4 +1,5 @@
 use crate::event_handler::hit_or_miss;
+use crate::shared::services::openai_service::build_openai_message;
 use crate::shared::structs::config::common_settings::COMMON_SETTINGS;
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use crate::shared::structs::config::random_response::{get_random_message, get_shuffled_keywords};
@@ -19,6 +20,13 @@ pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::R
     if !hit_or_miss(random_reply_chance) {
         return Ok(());
     }
+
+    let openai_reply_chance = CONFIGURATION
+        .get()
+        .map(|c| c.openai_reply_chance)
+        .unwrap_or_default();
+
+    let reply_with_openai = hit_or_miss(openai_reply_chance);
 
     let is_kou = KOU.get().copied().unwrap_or(false);
     let message_content = new_message.content.to_lowercase();
@@ -41,16 +49,22 @@ pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::R
     }
 
     if !replied {
-        let random_common_response = {
+        let random_common_response = if reply_with_openai {
+            build_openai_message(message_content)
+                .await
+                .unwrap_or_default()
+        } else {
             let mut rng = rand::thread_rng();
             COMMON_SETTINGS
                 .common_responses
                 .choose(&mut rng)
-                .map(|s| s.as_str())
+                .cloned()
                 .unwrap_or_default()
         };
 
-        new_message.reply(&ctx.http, random_common_response).await?;
+        if !random_common_response.is_empty() {
+            new_message.reply(&ctx.http, random_common_response).await?;
+        }
     }
 
     Ok(())

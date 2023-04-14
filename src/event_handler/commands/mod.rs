@@ -297,7 +297,7 @@ pub async fn set_commands_permission(ctx: &Context) -> anyhow::Result<()> {
 
     for (guild_id, role_ids) in guilds.into_iter() {
         if let Err(e) = set_permission(ctx, guild_id, &commands, &role_ids).await {
-            log::error!("Error when setting permissions for commands: {}", e);
+            tracing::error!("Error when setting permissions for commands: {}", e);
         }
     }
 

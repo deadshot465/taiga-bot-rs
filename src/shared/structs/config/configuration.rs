@@ -28,6 +28,8 @@ pub struct Configuration {
     pub server_endpoint: String,
     pub exchange_rate_api_key: String,
     pub general_channel_ids: Vec<u64>,
+    pub openai_api_key: String,
+    pub openai_reply_chance: i32,
 }
 
 impl Configuration {
@@ -52,13 +54,15 @@ impl Configuration {
             server_endpoint: "http://localhost:8080".to_string(),
             exchange_rate_api_key: "".to_string(),
             general_channel_ids: vec![],
+            openai_api_key: "".to_string(),
+            openai_reply_chance: 25,
         }
     }
 
     pub fn write_config(&self) -> anyhow::Result<()> {
         let config_path = String::from(CONFIG_DIRECTORY) + CONFIG_FILE_NAME;
         let serialized_toml = toml::to_string_pretty(self)?;
-        std::fs::write(&config_path, serialized_toml)?;
+        std::fs::write(config_path, serialized_toml)?;
         Ok(())
     }
 }
@@ -74,8 +78,8 @@ pub fn initialize() -> anyhow::Result<()> {
         new_config.write_config()?;
         CONFIGURATION.get_or_init(|| new_config);
     } else {
-        let toml = std::fs::read(&config_path)?;
-        let deserialized_toml: Configuration = toml::from_slice(&toml)?;
+        let toml = std::fs::read_to_string(config_path)?;
+        let deserialized_toml: Configuration = toml::from_str(&toml)?;
         CONFIGURATION.get_or_init(|| deserialized_toml);
     }
 

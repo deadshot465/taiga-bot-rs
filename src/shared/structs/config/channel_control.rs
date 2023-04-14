@@ -24,7 +24,7 @@ impl ChannelControl {
     pub fn write_channel_control(&self) -> anyhow::Result<()> {
         let channel_control_path = String::from(CONFIG_DIRECTORY) + CHANNEL_CONTROL_FILE_NAME;
         let serialized_toml = toml::to_string_pretty(self)?;
-        std::fs::write(&channel_control_path, serialized_toml)?;
+        std::fs::write(channel_control_path, serialized_toml)?;
         Ok(())
     }
 }
@@ -40,8 +40,8 @@ pub fn initialize() -> anyhow::Result<()> {
         new_channel_control.write_channel_control()?;
         CHANNEL_CONTROL.get_or_init(|| RwLock::new(new_channel_control));
     } else {
-        let toml = std::fs::read(&channel_control_path)?;
-        let deserialized_toml: ChannelControl = toml::from_slice(&toml)?;
+        let toml = std::fs::read_to_string(&channel_control_path)?;
+        let deserialized_toml: ChannelControl = toml::from_str(&toml)?;
         CHANNEL_CONTROL.get_or_init(|| RwLock::new(deserialized_toml));
     }
 

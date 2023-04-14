@@ -10,7 +10,7 @@ use tokio::sync::RwLock;
 
 pub static SMITE_GIF_LINKS: Lazy<Vec<String>> = Lazy::new(|| {
     let smite_gif_links_path = String::from(ASSET_DIRECTORY) + SMITE_GIF_LINKS_FILE_NAME;
-    let json = std::fs::read(&smite_gif_links_path)
+    let json = std::fs::read(smite_gif_links_path)
         .expect("Failed to read smite gif links from local disk.");
     serde_json::from_slice(&json).expect("Failed to deserialize smite gif links.")
 });
@@ -44,7 +44,7 @@ impl SmoteUserList {
     pub fn write_smote_user_list(&self) -> anyhow::Result<()> {
         let smote_user_list_path = String::from(CONFIG_DIRECTORY) + SMOTE_USER_LIST_FILE_NAME;
         let serialized_toml = toml::to_string_pretty(self)?;
-        std::fs::write(&smote_user_list_path, serialized_toml)?;
+        std::fs::write(smote_user_list_path, serialized_toml)?;
         Ok(())
     }
 }
@@ -59,7 +59,7 @@ pub async fn schedule_unsmite(ctx: &Context) {
 
             if time_remained.num_seconds() < 0 {
                 if let Err(e) = remove_smote_user(ctx_clone, smote_user).await {
-                    log::error!("Error occurred when removing smote user: {}", e);
+                    tracing::error!("Error occurred when removing smote user: {}", e);
                 }
             } else {
                 let std_duration = time_remained
@@ -67,7 +67,7 @@ pub async fn schedule_unsmite(ctx: &Context) {
                     .expect("Failed to cast chrono duration to std duration.");
                 tokio::time::sleep(std_duration).await;
                 if let Err(e) = remove_smote_user(ctx_clone, smote_user).await {
-                    log::error!("Error occurred when removing smote user: {}", e);
+                    tracing::error!("Error occurred when removing smote user: {}", e);
                 }
             }
         });
@@ -85,8 +85,8 @@ fn initialize_smote_user_list() -> anyhow::Result<SmoteUserList> {
         new_smote_user_list.write_smote_user_list()?;
         Ok(new_smote_user_list)
     } else {
-        let toml = std::fs::read(&smote_user_list_path)?;
-        Ok(toml::from_slice(&toml)?)
+        let toml = std::fs::read_to_string(&smote_user_list_path)?;
+        Ok(toml::from_str(&toml)?)
     }
 }
 
@@ -115,7 +115,7 @@ async fn remove_smote_user(ctx: Context, smote_user: SmoteUser) -> anyhow::Resul
                     break;
                 }
                 Err(e) => {
-                    log::error!("Error when removing smote role from user: {}", e);
+                    tracing::error!("Error when removing smote role from user: {}", e);
                 }
             }
         }

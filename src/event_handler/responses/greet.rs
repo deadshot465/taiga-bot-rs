@@ -36,7 +36,7 @@ pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Resul
     tokio::spawn(async move {
         let ctx = ctx_clone;
         if let Err(e) = inner_guide(&ctx, guild, member).await {
-            log::error!("Error occurred when guiding a new user: {}", e);
+            tracing::error!("Error occurred when guiding a new user: {}", e);
         }
     });
 

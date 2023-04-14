@@ -4,7 +4,8 @@ use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use crate::shared::structs::utility::judge_zero::{
     JudgeZeroGetResponse, JudgeZeroPostRequest, JudgeZeroPostResponse, JudgeZeroRequestResult,
 };
-use base64::{CharacterSet, Config};
+use base64::engine::{general_purpose, GeneralPurpose, GeneralPurposeConfig};
+use base64::Engine;
 use once_cell::sync::Lazy;
 use reqwest::header::HeaderMap;
 use serenity::builder::CreateEmbed;
@@ -85,7 +86,7 @@ pub fn build_embed(
 pub async fn create_eval_request(source_code: String) -> anyhow::Result<String> {
     let request = JudgeZeroPostRequest {
         language_id: RUST_LANG_CODE,
-        source_code: base64::encode(source_code),
+        source_code: general_purpose::STANDARD.encode(&source_code),
     };
 
     let response = HTTP_CLIENT
@@ -158,13 +159,13 @@ fn handle_response(response: JudgeZeroGetResponse) -> JudgeZeroGetResponse {
 
 fn decode_base64(s: String) -> String {
     if !s.is_empty() && s.chars().count() > 0 {
-        let sanitized_string = s.trim().replace("\n", "");
-        let decode_result = base64::decode_config(
-            sanitized_string,
-            Config::new(CharacterSet::Standard, true).decode_allow_trailing_bits(true),
-        );
+        let config = GeneralPurposeConfig::new().with_decode_allow_trailing_bits(true);
+        let alphabets = base64::alphabet::STANDARD;
+        let engine = GeneralPurpose::new(&alphabets, config);
+        let sanitized_string = s.trim().replace('\n', "");
+        let decode_result = engine.decode(sanitized_string);
         let bytes = if let Err(ref e) = decode_result {
-            log::error!("Error when decoding base64 text: {}", e);
+            tracing::error!("Error when decoding base64 text: {}", e);
             vec![]
         } else {
             decode_result.unwrap_or_default()
@@ -172,7 +173,7 @@ fn decode_base64(s: String) -> String {
 
         let string_result = String::from_utf8(bytes);
         if let Err(ref e) = string_result {
-            log::error!("Error when building string from utf8 vector: {}", e);
+            tracing::error!("Error when building string from utf8 vector: {}", e);
             String::new()
         } else {
             string_result.unwrap_or_default()

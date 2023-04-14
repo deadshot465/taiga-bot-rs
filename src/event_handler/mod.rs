@@ -30,18 +30,18 @@ impl EventHandler for Handler {
 
         if let Some(guild) = ctx.cache.guild(new_member.guild_id) {
             if let Err(e) = greet(&ctx, guild, new_member).await {
-                log::error!("Error when greeting a new member: {}", e);
+                tracing::error!("Error when greeting a new member: {}", e);
             }
         }
     }
 
     async fn message(&self, ctx: Context, new_message: Message) {
         if let Err(e) = handle_qotd(&ctx, &new_message).await {
-            log::error!("Error when handling qotd: {}", e);
+            tracing::error!("Error when handling qotd: {}", e);
         }
 
         if let Err(e) = handle_bot_responses(&ctx, &new_message).await {
-            log::error!("Error when handling bot responses: {}", e);
+            tracing::error!("Error when handling bot responses: {}", e);
         }
     }
 
@@ -54,21 +54,21 @@ impl EventHandler for Handler {
         if let Err(e) =
             commands::build_global_slash_commands(&ctx, recreate_global_slash_commands).await
         {
-            log::error!("Failed to override global commands. Error: {}", e);
+            tracing::error!("Failed to override global commands. Error: {}", e);
         }
 
         if let Err(e) = commands::build_guild_slash_commands(&ctx).await {
-            log::error!("Failed to override guild commands. Error: {}", e);
+            tracing::error!("Failed to override guild commands. Error: {}", e);
         }
 
         if let Err(e) = set_commands_permission(&ctx).await {
-            log::error!("Failed to set admin commands permission. Error: {}", e);
+            tracing::error!("Failed to set admin commands permission. Error: {}", e);
         }
 
         set_initial_presence(&ctx).await;
         schedule_unsmite(&ctx).await;
 
-        log::info!("{} is now online.", ready.user.name);
+        tracing::info!("{} is now online.", ready.user.name);
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
@@ -91,7 +91,7 @@ impl EventHandler for Handler {
                     .interaction_response_data(|data| data
                         .content("This channel has to be enabled first before you can use command here!")))
                     .await {
-                    log::error!("Error when responding to slash command: {}", e);
+                    tracing::error!("Error when responding to slash command: {}", e);
                 }
 
                 tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
@@ -99,7 +99,7 @@ impl EventHandler for Handler {
                     .delete_original_interaction_response(&ctx.http)
                     .await
                 {
-                    log::error!(
+                    tracing::error!(
                         "Error when deleting original response to slash command: {}",
                         e
                     );
@@ -112,7 +112,7 @@ impl EventHandler for Handler {
             {
                 let execution_result = handler(ctx, command).await;
                 if let Err(e) = execution_result {
-                    log::error!("Failed to execute slash command. Error: {}", e);
+                    tracing::error!("Failed to execute slash command. Error: {}", e);
                 }
             } else {
                 let result = command
@@ -123,7 +123,7 @@ impl EventHandler for Handler {
                     })
                     .await;
                 if let Err(e) = result {
-                    log::error!("Failed to execute slash command. Error: {}", e);
+                    tracing::error!("Failed to execute slash command. Error: {}", e);
                 }
             }
         }

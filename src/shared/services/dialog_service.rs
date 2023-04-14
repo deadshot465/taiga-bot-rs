@@ -48,7 +48,7 @@ pub async fn get_dialog(
     match response.bytes().await {
         Ok(bytes) => Ok(bytes.to_vec()),
         Err(e) => {
-            log::error!("Error when getting bytes data of dialog.");
+            tracing::error!("Error when getting bytes data of dialog.");
             Err(anyhow::anyhow!("{}", e))
         }
     }

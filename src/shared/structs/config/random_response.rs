@@ -71,15 +71,15 @@ fn initialize() -> anyhow::Result<Responses> {
     let random_responses_path = String::from(ASSET_DIRECTORY) + RANDOM_RESPONSES_FILE_NAME;
     if !std::path::Path::new(&random_responses_path).exists() {
         let json_path = String::from(ASSET_DIRECTORY) + "/json/backup/random_responses.json";
-        let json = std::fs::read(&json_path)?;
+        let json = std::fs::read(json_path)?;
         let deserialized_json: Vec<RandomResponse> = serde_json::from_slice(&json)?;
         let responses = Responses::new(deserialized_json);
         let serialized_toml = toml::to_string_pretty(&responses)?;
         std::fs::write(&random_responses_path, serialized_toml)?;
         Ok(responses)
     } else {
-        let toml = std::fs::read(&random_responses_path)?;
-        let deserialized_toml: Responses = toml::from_slice(&toml)?;
+        let toml = std::fs::read_to_string(&random_responses_path)?;
+        let deserialized_toml: Responses = toml::from_str(&toml)?;
         Ok(deserialized_toml)
     }
 }

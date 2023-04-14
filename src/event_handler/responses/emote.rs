@@ -14,10 +14,10 @@ pub async fn handle_emote(ctx: &Context, new_message: &Message) -> anyhow::Resul
         return Ok(());
     }
 
-    let arguments = (&message_content[prefix.chars().count()..])
+    let arguments = (message_content[prefix.chars().count()..])
         .split(' ')
         .collect::<Vec<_>>();
-    let emote_name = arguments.get(0).copied().unwrap_or_default();
+    let emote_name = arguments.first().copied().unwrap_or_default();
     let count = arguments
         .get(1)
         .copied()

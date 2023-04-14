@@ -76,7 +76,7 @@ pub async fn get_normal_image(
         .expect("Failed to get image token.");
 
     // Substitute spaces with plus signs for URL
-    let keyword = keyword.replace(" ", "+");
+    let keyword = keyword.replace(' ', "+");
 
     // Get available page count for the keyword
     let response = client
@@ -122,7 +122,7 @@ pub async fn get_normal_image(
         // Construct the embed.
         let description = format!(
             "Here is your result for **{}**!\nPhoto by [{}]({}) on [Unsplash]({})",
-            keyword.replace("+", " "),
+            keyword.replace('+', " "),
             query.user.name,
             query.user.links.html,
             "https://unsplash.com/?utm_source=Taiga&utm_medium=referral"
@@ -174,7 +174,7 @@ pub async fn get_cat_image(
         Ok(result)
     } else {
         // Substitute spaces with plus signs for URL
-        let keyword = keyword.replace(" ", "+");
+        let keyword = keyword.replace(' ', "+");
 
         // Try searching for the breed.
         let response = client
@@ -245,7 +245,7 @@ pub async fn get_dog_image(
     let keyword = keyword
         .split(' ')
         .collect::<Vec<_>>()
-        .get(0)
+        .first()
         .copied()
         .unwrap_or_default();
 

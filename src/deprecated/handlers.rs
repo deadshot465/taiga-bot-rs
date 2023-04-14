@@ -4,7 +4,6 @@ use crate::{
     PersistenceService, UserRecords,
 };
 use chrono::{Duration, Local, Utc};
-use log::info;
 use rand::{prelude::*, thread_rng, Rng};
 use regex::Regex;
 use serenity::framework::standard::DispatchError;

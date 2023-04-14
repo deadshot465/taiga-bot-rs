@@ -30,7 +30,7 @@ pub async fn eval(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
         .split('\n')
         .skip(1)
         .collect::<Vec<_>>();
-    let actual_code: String = (&code_block[..code_block.len() - 1]).join("\n");
+    let actual_code: String = (code_block[..code_block.len() - 1]).join("\n");
 
     let token = create_eval_request(actual_code).await.unwrap_or_default();
     let eval_result_handle = tokio::spawn(async move { try_get_eval_result(token).await });
@@ -41,11 +41,11 @@ pub async fn eval(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
                 handle_result(ctx, msg, sent_msg, result).await?;
             }
             Err(e) => {
-                log::error!("Error when getting response from JudgeZero: {}", e);
+                tracing::error!("Error when getting response from JudgeZero: {}", e);
             }
         },
         Err(e) => {
-            log::error!("Failed to join eval result handle: {}", e);
+            tracing::error!("Failed to join eval result handle: {}", e);
         }
     }
     Ok(())

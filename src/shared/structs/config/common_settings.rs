@@ -32,14 +32,14 @@ fn initialize() -> anyhow::Result<CommonSettings> {
                 "/json/backup/common_taiga.json"
             };
 
-        let json = std::fs::read(&json_path)?;
+        let json = std::fs::read(json_path)?;
         let deserialized_json: CommonSettings = serde_json::from_slice(&json)?;
         let serialized_toml = toml::to_string_pretty(&deserialized_json)?;
         std::fs::write(&common_settings_path, serialized_toml)?;
         Ok(deserialized_json)
     } else {
-        let toml = std::fs::read(&common_settings_path)?;
-        let deserialized_toml: CommonSettings = toml::from_slice(&toml)?;
+        let toml = std::fs::read_to_string(&common_settings_path)?;
+        let deserialized_toml: CommonSettings = toml::from_str(&toml)?;
         Ok(deserialized_toml)
     }
 }

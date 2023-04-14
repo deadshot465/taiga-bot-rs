@@ -56,8 +56,8 @@ fn initialize() -> anyhow::Result<QotdInfos> {
         new_qotd_infos.write_qotd_infos()?;
         Ok(new_qotd_infos)
     } else {
-        let toml = std::fs::read(qotd_infos_path)?;
-        let mut deserialized_toml = toml::from_slice::<QotdInfos>(&toml)?;
+        let toml = std::fs::read_to_string(qotd_infos_path)?;
+        let mut deserialized_toml = toml::from_str::<QotdInfos>(&toml)?;
         deserialized_toml.purge_expired_qotds();
         deserialized_toml.write_qotd_infos()?;
         Ok(deserialized_toml)

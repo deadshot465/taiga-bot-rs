@@ -49,8 +49,8 @@ async fn time(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
                 .edit_original_interaction_response(&ctx.http, |response| {
                     response.content(format!(
                         "The current local time of **{}** is: {}.",
-                        timezone_name.replace("_", " "),
-                        result.format("%Y-%m-%d %H:%M:%S").to_string()
+                        timezone_name.replace('_', " "),
+                        result.format("%Y-%m-%d %H:%M:%S")
                     ))
                 })
                 .await?;
@@ -67,7 +67,7 @@ async fn time(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 }
 
 async fn search_from_endpoint(query: &str) -> anyhow::Result<Option<String>> {
-    let city_name = query.replace(" ", "_").to_lowercase();
+    let city_name = query.replace(' ', "_").to_lowercase();
 
     let response = HTTP_CLIENT.get(WORLD_TIME_API_ENDPOINT).send().await?;
 

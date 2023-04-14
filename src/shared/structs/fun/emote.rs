@@ -8,7 +8,7 @@ pub static EMOTE_LIST: Lazy<RwLock<EmoteList>> =
 
 const EMOTE_LIST_FILE_NAME: &str = "/emote_list.toml";
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Default)]
 pub struct EmoteList {
     pub emotes: Vec<Emote>,
 }
@@ -27,12 +27,6 @@ impl EmoteList {
         let serialized_toml = toml::to_string_pretty(self)?;
         std::fs::write(emote_list_path, serialized_toml)?;
         Ok(())
-    }
-}
-
-impl Default for EmoteList {
-    fn default() -> Self {
-        EmoteList { emotes: vec![] }
     }
 }
 
@@ -56,8 +50,8 @@ fn initialize() -> anyhow::Result<EmoteList> {
         deserialized_json.write_emote_list()?;
         Ok(deserialized_json)
     } else {
-        let toml = std::fs::read(&emote_list_path)?;
-        let mut deserialized_toml = toml::from_slice::<EmoteList>(&toml)?;
+        let toml = std::fs::read_to_string(&emote_list_path)?;
+        let mut deserialized_toml = toml::from_str::<EmoteList>(&toml)?;
         deserialized_toml
             .emotes
             .sort_unstable_by(|a, b| a.name.cmp(&b.name));

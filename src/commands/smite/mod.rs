@@ -84,14 +84,14 @@ async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                                 .collect::<Vec<_>>();
                             smote_users_write_lock.smote_users = filtered_user_list;
                             if let Err(e) = smote_users_write_lock.write_smote_user_list() {
-                                log::error!(
+                                tracing::error!(
                                     "Error when writing smote user list to local disk: {}",
                                     e
                                 );
                             }
                         }
                         Err(e) => {
-                            log::error!("Error when remove smote role from user: {}", e);
+                            tracing::error!("Error when remove smote role from user: {}", e);
                         }
                     }
                 });

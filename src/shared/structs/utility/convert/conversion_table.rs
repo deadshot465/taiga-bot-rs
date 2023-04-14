@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 pub static CONVERSION_TABLE: Lazy<ConversionTable> = Lazy::new(|| {
     let conversion_table_path = String::from(ASSET_DIRECTORY) + CONVERSION_TABLE_FILE_NAME;
-    let json = std::fs::read(&conversion_table_path)
+    let json = std::fs::read(conversion_table_path)
         .expect("Failed to read conversion table from local disk.");
     serde_json::from_slice(&json).expect("Failed to deserialize conversion table.")
 });

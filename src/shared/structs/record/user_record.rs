@@ -54,6 +54,6 @@ pub fn initialize() -> anyhow::Result<()> {
 pub fn write_user_records(user_records: &HashMap<String, UserRecord>) -> anyhow::Result<()> {
     let user_records_path = String::from(RECORD_DIRECTORY) + USER_RECORDS_FILE_NAME;
     let serialized_user_records = serde_json::to_string_pretty(user_records)?;
-    std::fs::write(&user_records_path, &serialized_user_records)?;
+    std::fs::write(user_records_path, serialized_user_records)?;
     Ok(())
 }

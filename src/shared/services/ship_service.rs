@@ -1,9 +1,9 @@
-use std::io::{BufWriter, Cursor};
 use crate::shared::constants::ASSET_DIRECTORY;
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::fun::ship_message::SHIP_MESSAGES;
 use image::imageops::{overlay, FilterType};
 use image::DynamicImage;
+use std::io::{BufWriter, Cursor};
 
 const HEART_FILE_NAME: &str = "/png/heart2.png";
 const DEFAULT_IMAGE_HEIGHT: u32 = 150;
@@ -39,7 +39,7 @@ pub fn generate_ship_image(avatar_1: &[u8], avatar_2: &[u8]) -> anyhow::Result<V
         DEFAULT_IMAGE_HEIGHT,
         FilterType::Nearest,
     );
-    let image_heart = image::open(&heart_path)?.resize_exact(
+    let image_heart = image::open(heart_path)?.resize_exact(
         DEFAULT_IMAGE_HEIGHT,
         DEFAULT_IMAGE_HEIGHT,
         FilterType::Nearest,

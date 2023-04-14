@@ -121,7 +121,7 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
             .await?
         }
         Err(e) => {
-            log::warn!("{}. Retrying with PNG...", e.to_string());
+            tracing::warn!("{}. Retrying with PNG...", e.to_string());
 
             match retry_with_png_if_error(&user_1_avatar_url, &user_2_avatar_url).await {
                 Ok(result) => {
@@ -138,7 +138,7 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
                     .await?
                 }
                 Err(e) => {
-                    log::error!("{}", e.to_string());
+                    tracing::error!("{}", e.to_string());
                     command
                         .edit_original_interaction_response(&ctx.http, |response| {
                             response.content(format!("Sorry, an occurred! Error: {}", e))

@@ -59,7 +59,7 @@ async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
             response.interaction_response_data(|data| {
                 data.embed(|embed| {
                     embed
-                        .author(|author| author.name(&author_name).icon_url(&author_icon))
+                        .author(|author| author.name(author_name).icon_url(&author_icon))
                         .color(color)
                         .footer(|f| f.text(footer))
                         .description(description)
