@@ -30,6 +30,7 @@ pub struct Configuration {
     pub general_channel_ids: Vec<u64>,
     pub openai_api_key: String,
     pub openai_reply_chance: i32,
+    pub skip_user_ids: Vec<u64>,
 }
 
 impl Configuration {
@@ -56,6 +57,7 @@ impl Configuration {
             general_channel_ids: vec![],
             openai_api_key: "".to_string(),
             openai_reply_chance: 25,
+            skip_user_ids: vec![],
         }
     }
 
