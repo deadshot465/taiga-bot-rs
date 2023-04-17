@@ -1,7 +1,7 @@
 Taiga was inspired and loosely based on the [Yuuto project](http://iamdeja.github.io/yuuto-docs/).
 You can check out more information on the [project's website](http://iamdeja.github.io/yuuto-docs/).
 
-Taiga version 5.0.1 was made and developed by:
+Taiga version {VERSION} was made and developed by:
 **Tetsuki Syu#1250**, **Arch#0226**
 Japanese oracle co-translated with:
 **Kirito#9286**

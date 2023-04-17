@@ -17,16 +17,16 @@ pub fn about_async(
 
 async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
-
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
+    let configuration = CONFIGURATION.get().expect("Failed to get configuration.");
 
     let description = std::fs::read_to_string(if is_kou {
         ABOUT_KOU_PATH
     } else {
         ABOUT_TAIGA_PATH
-    })?;
+    })?
+    .replace("{VERSION}", &configuration.version_number);
 
-    let configuration = CONFIGURATION.get().expect("Failed to get configuration.");
     let footer = if is_kou {
         format!(
             "Kou Bot: Release {} | {}",
