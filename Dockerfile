@@ -9,7 +9,7 @@ WORKDIR /src
 
 FROM debian:bullseye-slim
 WORKDIR /root
-RUN apt-get update && apt-get install -y apt-transport-https wget curl gnupg && \
+RUN apt-get update && apt-get install -y apt-transport-https wget curl gnupg openssl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
