@@ -5,8 +5,12 @@ use crate::shared::structs::game::quiz_question::QUIZ_QUESTIONS;
 use chrono::{Duration, Utc};
 use once_cell::sync::OnceCell;
 use rand::prelude::*;
-use serenity::builder::CreateEmbed;
-use serenity::collector::{MessageCollector, MessageCollectorBuilder};
+use serenity::all::{
+    CreateActionRow, CreateInteractionResponseFollowup, CreateSelectMenuKind,
+    CreateSelectMenuOption,
+};
+use serenity::builder::{CreateEmbed, CreateSelectMenu};
+use serenity::collector::MessageCollector;
 use serenity::futures::StreamExt;
 use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
@@ -51,7 +55,7 @@ async fn quiz(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         let ongoing_quizzes = ONGOING_QUIZZES.get_or_init(|| RwLock::new(HashSet::new()));
 
         let ongoing_quizzes_read_lock = ongoing_quizzes.read().await;
-        if ongoing_quizzes_read_lock.contains(&command.channel_id.0) {
+        if ongoing_quizzes_read_lock.contains(&command.channel_id.get()) {
             command
                 .create_interaction_response(&ctx.http, |response| {
                     response.interaction_response_data(|data| {
@@ -121,9 +125,8 @@ fn extract_rounds(command: &CommandInteraction) -> u64 {
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.options.get(0))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_u64())
+        .and_then(|opt| opt.value.as_i64())
+        .and_then(|value| u64::from_i64(value))
         .map(|rounds| {
             if !(2..=10).contains(&rounds) {
                 DEFAULT_ROUNDS
@@ -145,7 +148,7 @@ async fn join_game(
             .get()
             .expect("Failed to get ongoing quizzes.");
         let mut ongoing_quizzes_write_lock = ongoing_quizzes.write().await;
-        ongoing_quizzes_write_lock.insert(command.channel_id.0);
+        ongoing_quizzes_write_lock.insert(command.channel_id.get());
     }
 
     let joining_end_time = Utc::now() + Duration::seconds(10);
@@ -221,12 +224,15 @@ fn build_embed(
     color: Color,
     thumbnail: Option<&str>,
 ) -> CreateEmbed {
-    let mut embed = CreateEmbed::default();
-    embed.title(title).color(color).description(description);
+    let embed = CreateEmbed::new()
+        .title(title)
+        .color(color)
+        .description(description);
     if let Some(t) = thumbnail {
-        embed.thumbnail(t);
+        embed.thumbnail(t)
+    } else {
+        embed
     }
-    embed
 }
 
 async fn start_game(
@@ -286,20 +292,19 @@ async fn progress_game(
     players: &[User],
     max_rounds: u64,
 ) -> anyhow::Result<HashMap<u64, u8>> {
-    let player_ids = players.iter().map(|u| u.id.0).collect::<Vec<_>>();
+    let player_ids = players.iter().map(|u| u.id.get()).collect::<Vec<_>>();
     let mut score_board = player_ids
         .iter()
         .map(|id| (*id, 0_u8))
         .collect::<HashMap<_, _>>();
     let cloned_player_ids = player_ids.clone();
-    let mut collector = MessageCollectorBuilder::new(ctx)
-        .channel_id(command.channel_id.0)
-        .guild_id(command.guild_id.unwrap_or_default().0)
-        .filter(move |m| cloned_player_ids.contains(&m.author.id.0))
-        .build();
+    let mut collector = MessageCollector::new(ctx)
+        .channel_id(command.channel_id)
+        .guild_id(command.guild_id.unwrap_or_default())
+        .filter(move |m| cloned_player_ids.contains(&m.author.id.get()));
 
     let quiz_questions = {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         QUIZ_QUESTIONS
             .choose_multiple(&mut rng, max_rounds as usize)
             .zip(1..=max_rounds)
@@ -366,7 +371,7 @@ async fn build_fill_question(
                 return Err(anyhow::anyhow!("Game is cancelled."));
             }
             maybe_v = collector.next() => {
-                if let Some(msg) = maybe_v {
+                if let Some(ref msg) = maybe_v {
                     if answers.iter()
                     .map(|s| s.to_lowercase())
                     .any(|s| s == msg.content.to_lowercase()) {
@@ -375,7 +380,7 @@ async fn build_fill_question(
                         command.create_followup_message(&ctx.http, |response| {
                             response.content(format!("{} {}", msg.author.mention(), random_response))
                         }).await?;
-                        let score_entry = score_board.entry(msg.author.id.0).or_default();
+                        let score_entry = score_board.entry(msg.author.id.get()).or_default();
                         *score_entry += 1;
                         return Ok(());
                     }
@@ -398,31 +403,33 @@ async fn build_multiple_choice_question(
     let mut shuffled_answers = wrong_answers.to_vec();
     shuffled_answers.push(answer.into());
     {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         shuffled_answers.shuffle(&mut rng);
     }
 
+    let answer_options = shuffled_answers
+        .into_iter()
+        .enumerate()
+        .map(|(no, choice)| CreateSelectMenuOption::new(format!("{}. {}", no + 1, choice), choice))
+        .collect::<Vec<_>>();
+
     let sent_msg = command
-        .create_followup_message(&ctx.http, |response| {
-            response.content(question).components(|component| {
-                component.create_action_row(|row| {
-                    row.create_select_menu(|menu| {
-                        menu.min_values(1)
-                            .max_values(1)
-                            .placeholder("Pick an answer!")
-                            .custom_id("multiple_choice")
-                            .options(|opts| {
-                                for (no, choice) in shuffled_answers.iter().enumerate() {
-                                    opts.create_option(|opt| {
-                                        opt.label(format!("{}. {}", no + 1, choice)).value(choice)
-                                    });
-                                }
-                                opts
-                            })
-                    })
-                })
-            })
-        })
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new()
+                .content(question)
+                .components(vec![CreateActionRow::SelectMenu(
+                    CreateSelectMenu::new(
+                        "multiple_choice",
+                        CreateSelectMenuKind::String {
+                            options: answer_options,
+                        },
+                    )
+                    .min_values(1)
+                    .max_values(1)
+                    .placeholder("Pick an answer!"),
+                )]),
+        )
         .await?;
 
     let delay = tokio::time::sleep(std::time::Duration::from_secs(STALE_TIMEOUT));
@@ -432,9 +439,9 @@ async fn build_multiple_choice_question(
         let cloned_player_ids = player_ids.to_vec();
         let collector = sent_msg
             .await_component_interaction(ctx)
-            .channel_id(command.channel_id.0)
-            .guild_id(command.guild_id.unwrap_or_default().0)
-            .filter(move |interaction| cloned_player_ids.contains(&interaction.user.id.0));
+            .channel_id(command.channel_id)
+            .guild_id(command.guild_id.unwrap_or_default())
+            .filter(move |interaction| cloned_player_ids.contains(&interaction.user.id.get()));
 
         tokio::select! {
             _ = &mut delay => {
@@ -484,7 +491,7 @@ async fn finalize(
             .get()
             .expect("Failed to get ongoing quizzes.");
         let mut ongoing_quizzes_write_lock = ongoing_quizzes.write().await;
-        ongoing_quizzes_write_lock.remove(&command.channel_id.0);
+        ongoing_quizzes_write_lock.remove(&command.channel_id.get());
     }
 
     if let Some(board) = score_board {
@@ -495,7 +502,7 @@ async fn finalize(
                 (
                     players
                         .iter()
-                        .find(|u| u.id.0 == user_id)
+                        .find(|u| u.id.get() == user_id)
                         .expect("Failed to map user ID to an user.")
                         .mention()
                         .to_string(),
@@ -533,7 +540,7 @@ async fn finalize(
 }
 
 fn get_random_response(is_kou: bool) -> &'static str {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
     if is_kou {
         KOU_RESPONSES.choose(&mut rng).cloned().unwrap_or_default()
     } else {

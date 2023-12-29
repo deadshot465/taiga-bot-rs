@@ -1,6 +1,8 @@
 use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::KOU;
-use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::builder::CreateEmbed;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -21,41 +23,45 @@ async fn avatar(ctx: Context, command: CommandInteraction) -> anyhow::Result<()>
         "<:TaigaFingerGunsLeft:702691580078850078>"
     };
 
-    if let Some(option) = command.data.options.get(0) {
-        if let CommandDataOptionValue::User(user, _) = option
-            .resolved
-            .as_ref()
-            .expect("Failed to resolve option value.")
-        {
-            let avatar_url = user
-                .avatar_url()
-                .unwrap_or_else(|| user.default_avatar_url());
-            let user_name = user.name.clone();
+    let users = command
+        .data
+        .resolved
+        .users
+        .into_values()
+        .collect::<Vec<_>>();
 
-            command
-                .create_interaction_response(&ctx.http, |response| {
-                    response.interaction_response_data(|data| {
-                        data.embed(|embed| {
-                            embed
-                                .title(&user_name)
-                                .description(format!(
-                                    "Here is {}'s avatar! {}\n**[Avatar URL]({})**",
-                                    user_name, emoji, &avatar_url
-                                ))
-                                .color(color)
-                                .image(avatar_url)
-                        })
-                    })
-                })
-                .await?;
-        }
+    if let Some(user) = users.get(0) {
+        let avatar_url = user
+            .avatar_url()
+            .unwrap_or_else(|| user.default_avatar_url());
+        let user_name = user.name.clone();
+
+        command
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().embed(
+                        CreateEmbed::new()
+                            .title(&user_name)
+                            .description(format!(
+                                "Here is {}'s avatar! {}\n**[Avatar URL]({})**",
+                                user_name, emoji, &avatar_url
+                            ))
+                            .color(color)
+                            .image(avatar_url),
+                    ),
+                ),
+            )
+            .await?;
     } else {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("Sorry, I can't seem to execute your command!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Sorry, I can't seem to execute your command!"),
+                ),
+            )
             .await?;
     }
 

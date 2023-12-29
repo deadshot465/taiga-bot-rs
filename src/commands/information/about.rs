@@ -1,5 +1,10 @@
 use crate::shared::constants::{CAMP_BUDDY_STAR, KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
+use serenity::all::{
+    CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseMessage,
+};
+use serenity::builder::CreateEmbed;
 use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
@@ -55,18 +60,19 @@ async fn about(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
     };
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.embed(|embed| {
-                    embed
-                        .author(|author| author.name(author_name).icon_url(&author_icon))
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().embed(
+                    CreateEmbed::new()
+                        .author(CreateEmbedAuthor::new(author_name).icon_url(author_icon))
                         .color(color)
-                        .footer(|f| f.text(footer))
+                        .footer(CreateEmbedFooter::new(footer))
                         .description(description)
-                        .thumbnail(RUST_LOGO)
-                })
-            })
-        })
+                        .thumbnail(RUST_LOGO),
+                ),
+            ),
+        )
         .await?;
     Ok(())
 }
