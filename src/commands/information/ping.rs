@@ -1,5 +1,5 @@
 use crate::shared::structs::config::configuration::KOU;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
@@ -7,12 +7,12 @@ use std::time::Instant;
 
 pub fn ping_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(ping(ctx, command))
 }
 
-async fn ping(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn ping(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
 
     let starting_msg = if is_kou {

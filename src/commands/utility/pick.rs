@@ -1,6 +1,6 @@
 use crate::shared::structs::config::configuration::KOU;
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::collections::HashMap;
 use std::future::Future;
@@ -13,12 +13,12 @@ const TAIGA_EMOJI: &str = "<:TaigaSmug:702210822310723614>";
 
 pub fn pick_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(pick(ctx, command))
 }
 
-async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn pick(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let times = command
         .data
         .options
@@ -85,7 +85,7 @@ async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
 async fn cancel_pick(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
 ) -> anyhow::Result<()> {
     let no_options_msg = if is_kou {

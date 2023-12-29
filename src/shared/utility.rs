@@ -1,8 +1,8 @@
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::guild::Member;
 use serenity::model::prelude::User;
 
-pub fn extract_string_option(command: &ApplicationCommandInteraction, index: usize) -> &str {
+pub fn extract_string_option(command: &CommandInteraction, index: usize) -> &str {
     command
         .data
         .options
@@ -13,7 +13,9 @@ pub fn extract_string_option(command: &ApplicationCommandInteraction, index: usi
 }
 
 pub fn find_user_in_members(user: User, members: &[Member]) -> Option<&Member> {
-    members.iter().find(|member| member.user.id.0 == user.id.0)
+    members
+        .iter()
+        .find(|member| member.user.id.get() == user.id.get())
 }
 
 pub fn get_animated_emote_url(emote_id: &str) -> String {

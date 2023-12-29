@@ -4,7 +4,7 @@ use crate::shared::structs::config::configuration::KOU;
 use once_cell::sync::Lazy;
 use serenity::builder::CreateEmbed;
 use serenity::model::application::component::{ButtonStyle, ComponentType};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::Color;
@@ -27,7 +27,7 @@ static TAIGA_INTRO_TEXT: Lazy<String> = Lazy::new(|| {
 
 pub fn guide_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(guide(ctx, command))
 }
@@ -147,7 +147,7 @@ fn build_embed(
     embed
 }
 
-async fn guide(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn guide(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Check your DM!"))

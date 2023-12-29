@@ -2,7 +2,7 @@ use crate::shared::structs::game::hangman_question::HANGMAN_QUESTIONS;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
 use serenity::futures::prelude::future::BoxFuture;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::User;
 use serenity::prelude::*;
 use serenity::utils::Color;
@@ -23,7 +23,7 @@ const LOSE_MESSAGE: &str = "you lose!";
 #[derive(Clone)]
 struct HangmanData {
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
     answer: String,
     author_name: String,
     author_avatar_url: String,
@@ -42,12 +42,12 @@ enum HangmanResult {
 
 pub fn hangman_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(hangman(ctx, command))
 }
 
-async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn hangman(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let author_name = get_author_name(&command.user, &command.member);
     let author_avatar_url = get_author_avatar(&command.user);
 

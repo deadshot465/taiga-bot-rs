@@ -5,19 +5,19 @@ use crate::shared::utility::{
     get_author_avatar, get_author_name, get_first_name, get_static_emote_url,
 };
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn valentine_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(valentine(ctx, command))
 }
 
-async fn valentine(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn valentine(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let valentine = {
         let mut rng = rand::thread_rng();
         VALENTINES

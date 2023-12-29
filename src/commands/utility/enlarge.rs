@@ -1,19 +1,19 @@
 use crate::shared::constants::{
     EMOTE_BASE_LINK, EMOTE_ID_REGEX, EMOTE_IS_ANIMATED_REGEX, EMOTE_REGEX,
 };
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn enlarge_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(enlarge(ctx, command))
 }
 
-async fn enlarge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn enlarge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let raw_string = command
         .data
         .options

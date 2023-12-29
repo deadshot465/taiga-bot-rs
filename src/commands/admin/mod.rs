@@ -1,14 +1,13 @@
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
-use serenity::model::application::interaction::application_command::{
-    ApplicationCommandInteraction, CommandDataOptionValue,
-};
+
+use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn dispatch_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     if let Some(opt) = command.data.options.get(0) {
         match opt.name.as_str() {
@@ -24,7 +23,7 @@ pub fn dispatch_async(
     }
 }
 
-async fn enable(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn enable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let channel_id = extract_channel_id(&command);
 
     if check_if_channel_id_exists_in_enabled(channel_id).await {
@@ -57,7 +56,7 @@ async fn enable(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
     Ok(())
 }
 
-async fn disable(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn disable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let channel_id = extract_channel_id(&command);
 
     if !check_if_channel_id_exists_in_enabled(channel_id).await {
@@ -96,7 +95,7 @@ async fn disable(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
     Ok(())
 }
 
-async fn allow(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn allow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let channel_id = extract_channel_id(&command);
 
     if !check_if_channel_id_exists_in_ignored(channel_id).await {
@@ -141,7 +140,7 @@ async fn allow(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     Ok(())
 }
 
-async fn disallow(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn disallow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let channel_id = extract_channel_id(&command);
 
     if check_if_channel_id_exists_in_ignored(channel_id).await {
@@ -180,7 +179,7 @@ async fn disallow(ctx: Context, command: ApplicationCommandInteraction) -> anyho
     Ok(())
 }
 
-async fn purge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn purge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Okay. Hold on..."))
@@ -227,7 +226,7 @@ async fn purge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     Ok(())
 }
 
-fn extract_channel_id(command: &ApplicationCommandInteraction) -> u64 {
+fn extract_channel_id(command: &CommandInteraction) -> u64 {
     command
         .data
         .options

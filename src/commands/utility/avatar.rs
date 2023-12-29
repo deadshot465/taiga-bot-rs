@@ -1,20 +1,18 @@
 use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::KOU;
-use serenity::model::application::interaction::application_command::{
-    ApplicationCommandInteraction, CommandDataOptionValue,
-};
+use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn avatar_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(avatar(ctx, command))
 }
 
-async fn avatar(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn avatar(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let emoji = if is_kou {

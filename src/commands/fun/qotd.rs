@@ -4,9 +4,9 @@ use crate::shared::structs::config::server_info::SERVER_INFOS;
 use crate::shared::structs::fun::qotd::{QotdInfo, QOTD_INFOS};
 use crate::shared::utility::extract_string_option;
 use chrono::{TimeZone, Utc};
-use serenity::model::application::interaction::application_command::{
-    ApplicationCommandInteraction, CommandDataOptionValue,
-};
+use serenity::all::{ChannelId, CreateEmbedFooter, CreateMessage};
+use serenity::builder::CreateEmbed;
+use serenity::model::application::CommandInteraction;
 use serenity::model::channel::ChannelType;
 use serenity::prelude::*;
 use std::future::Future;
@@ -14,12 +14,12 @@ use std::pin::Pin;
 
 pub fn qotd_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(qotd(ctx, command))
 }
 
-async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn qotd(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     if let Some(guild_id) = command.guild_id {
         command
             .create_interaction_response(&ctx.http, |response| {
@@ -34,18 +34,12 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         let elapsed_days = elapsed.num_days();
         let question = extract_string_option(&command, 0);
 
-        let attachment = command
+        let attachments = command
             .data
-            .options
-            .get(1)
-            .and_then(|opt| opt.resolved.as_ref())
-            .and_then(|value| {
-                if let CommandDataOptionValue::Attachment(attachment) = value {
-                    Some(attachment)
-                } else {
-                    None
-                }
-            });
+            .resolved
+            .attachments
+            .into_values()
+            .collect::<Vec<_>>();
 
         let is_kou = KOU.get().copied().unwrap_or(false);
         let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
@@ -54,26 +48,26 @@ async fn qotd(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
             .avatar_url()
             .unwrap_or_else(|| current_user.default_avatar_url());
 
+        let guild_channels = ctx.cache.guild_channels(guild_id);
+
         for server_info in SERVER_INFOS.server_infos.iter() {
             for qotd_channel_id in server_info.qotd_channel_ids.iter() {
-                if let Some(channel) = ctx.cache.guild_channel(*qotd_channel_id) {
+                if let Some(channel) = guild_channels
+                    .and_then(|channels| channels.get(&ChannelId::new(*qotd_channel_id)))
+                {
+                    let mut result_embed = CreateEmbed::new()
+                        .title(format!("Day {}", elapsed_days))
+                        .color(color)
+                        .thumbnail(&avatar_url)
+                        .footer(CreateEmbedFooter::new("Answer qotd to earn 25 credits!"))
+                        .description(question);
+
+                    if !attachments.is_empty() {
+                        result_embed = result_embed.image(attachments[0].url.clone())
+                    }
+
                     let msg = channel
-                        .send_message(&ctx.http, |msg| {
-                            msg.embed(|embed| {
-                                let result_embed = embed
-                                    .title(format!("Day {}", elapsed_days))
-                                    .color(color)
-                                    .thumbnail(&avatar_url)
-                                    .footer(|f| f.text("Answer qotd to earn 25 credits!"))
-                                    .description(question);
-
-                                if let Some(attachment) = attachment {
-                                    result_embed.image(attachment.url.as_str());
-                                }
-
-                                result_embed
-                            })
-                        })
+                        .send_message(&ctx.http, CreateMessage::new().embed(result_embed))
                         .await?;
                     let thread = channel
                         .create_public_thread(&ctx.http, msg.id, |thread| {

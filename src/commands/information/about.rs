@@ -1,6 +1,6 @@
 use crate::shared::constants::{CAMP_BUDDY_STAR, KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
@@ -10,12 +10,12 @@ const ABOUT_TAIGA_PATH: &str = "assets/txt/about_taiga.txt";
 
 pub fn about_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(about(ctx, command))
 }
 
-async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn about(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let configuration = CONFIGURATION.get().expect("Failed to get configuration.");

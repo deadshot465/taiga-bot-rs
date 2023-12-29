@@ -1,5 +1,6 @@
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
+use async_openai::config::OpenAIConfig;
 use async_openai::types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, Role};
 use async_openai::Client;
 use once_cell::sync::Lazy;
@@ -13,15 +14,15 @@ const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-boun
 
 const TAIGA_SYSTEM_PROMPT: &str = "You are Taiga Akatora from the visual novel game Camp Buddy. You have a tough exterior and you used to cause conflicts before you experience personal growth, opening up to others, and eventually come to terms with your own feelings and emotions. You like writing and handcrafting. Kieran Moreno is your ex. Your boyfriend is Keitaro Nagame. Your responses will be rebellious, snarky, somewhat impatient even though you don't mean ill, and should match the personality of Taiga Akatora. You will try your best to respond or continue the conversation even if you don't have the full context.";
 
-static CLIENT: Lazy<Client> = Lazy::new(|| {
-    Client::new()
-        .with_api_key(
-            CONFIGURATION
-                .get()
-                .map(|config| config.openai_api_key.clone())
-                .unwrap_or_default(),
-        )
-        .with_http_client(HTTP_CLIENT.clone())
+static CLIENT: Lazy<Client<OpenAIConfig>> = Lazy::new(|| {
+    let config = OpenAIConfig::new().with_api_key(
+        CONFIGURATION
+            .get()
+            .map(|c| c.openai_api_key.clone())
+            .unwrap_or_default(),
+    );
+
+    Client::with_config(config).with_http_client(HTTP_CLIENT.clone())
 });
 
 pub async fn build_openai_message(prompt: String) -> anyhow::Result<String> {
@@ -53,7 +54,11 @@ pub async fn build_openai_message(prompt: String) -> anyhow::Result<String> {
 
     match request {
         Ok(request) => match CLIENT.chat().create(request).await {
-            Ok(response) => Ok(response.choices[0].message.content.clone()),
+            Ok(response) => Ok(response.choices[0]
+                .message
+                .content
+                .clone()
+                .unwrap_or("Sorry, but I might not be able to respond to that!".into())),
             Err(e) => Err(anyhow::anyhow!("Failed to send OpenAI request: {}", e)),
         },
         Err(e) => Err(anyhow::anyhow!("Failed to create OpenAI request: {}", e)),

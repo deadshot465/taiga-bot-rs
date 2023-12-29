@@ -1,7 +1,7 @@
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::get_author_name;
 use owoify_rs::{Owoifiable, OwoifyLevel};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -10,12 +10,12 @@ const OWOIFY_LENGTH_LIMIT: usize = 1024;
 
 pub fn owoify_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(owoify(ctx, command))
 }
 
-async fn owoify(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn owoify(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let level = match command
         .data
         .options
@@ -81,7 +81,7 @@ async fn owoify(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
 
 async fn cancel_owoify(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     msg: &str,
 ) -> anyhow::Result<()> {
     command

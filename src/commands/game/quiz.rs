@@ -8,7 +8,7 @@ use rand::prelude::*;
 use serenity::builder::CreateEmbed;
 use serenity::collector::{MessageCollector, MessageCollectorBuilder};
 use serenity::futures::StreamExt;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::Color;
@@ -39,12 +39,12 @@ static ONGOING_QUIZZES: OnceCell<RwLock<HashSet<u64>>> = OnceCell::new();
 
 pub fn quiz_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(quiz(ctx, command))
 }
 
-async fn quiz(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn quiz(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
 
     {
@@ -82,7 +82,7 @@ async fn quiz(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
 async fn new_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
 ) -> anyhow::Result<()> {
@@ -116,7 +116,7 @@ async fn new_game(
     Ok(())
 }
 
-fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
+fn extract_rounds(command: &CommandInteraction) -> u64 {
     command
         .data
         .options
@@ -136,7 +136,7 @@ fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
 
 async fn join_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
 ) -> anyhow::Result<Vec<User>> {
@@ -231,7 +231,7 @@ fn build_embed(
 
 async fn start_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     sent_msg: &Message,
@@ -256,7 +256,7 @@ async fn start_game(
 
 async fn cancel_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     sent_msg: &Message,
@@ -281,7 +281,7 @@ async fn cancel_game(
 
 async fn progress_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     players: &[User],
     max_rounds: u64,
@@ -343,7 +343,7 @@ async fn progress_game(
 
 async fn build_fill_question(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     score_board: &mut HashMap<u64, u8>,
     question: &str,
@@ -387,7 +387,7 @@ async fn build_fill_question(
 
 async fn build_multiple_choice_question(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     score_board: &mut HashMap<u64, u8>,
     question: &str,
@@ -473,7 +473,7 @@ async fn build_multiple_choice_question(
 
 async fn finalize(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     score_board: Option<HashMap<u64, u8>>,

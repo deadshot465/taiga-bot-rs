@@ -6,9 +6,9 @@ use crate::shared::services::ship_service::{
 };
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{find_user_in_members, get_author_avatar, get_author_name};
-use serenity::model::application::interaction::application_command::{
-    ApplicationCommandInteraction, CommandDataOptionValue,
-};
+use serenity::all::{CreateAttachment, CreateMessage};
+use serenity::builder::CreateEmbed;
+use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::model::id::UserId;
 use serenity::model::prelude::User;
 use serenity::prelude::*;
@@ -18,25 +18,32 @@ use std::pin::Pin;
 
 pub fn ship_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(ship(ctx, command))
 }
 
-async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Alright! Hold on..."))
         })
         .await?;
 
+    let users = command
+        .data
+        .resolved
+        .users
+        .into_values()
+        .collect::<Vec<_>>();
+
     let user_1 = command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.resolved.as_ref())
+        .map(|opt| opt.value)
         .map(|resolved| {
-            if let CommandDataOptionValue::User(u, _) = resolved {
+            if let CommandDataOptionValue::User(u) = resolved {
                 u.clone()
             } else {
                 User::default()
@@ -47,27 +54,19 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         .data
         .options
         .get(1)
-        .and_then(|opt| opt.resolved.as_ref())
+        .map(|opt| opt.value)
         .map(|resolved| {
-            if let CommandDataOptionValue::User(u, _) = resolved {
+            if let CommandDataOptionValue::User(u) = resolved {
                 u.clone()
             } else {
                 User::default()
             }
         });
 
-    let user_1_id = user_1.clone().map(|u| u.id.0).unwrap_or_default();
-    let user_2_id = user_2.clone().map(|u| u.id.0).unwrap_or_default();
-    let ship_score = calculate_ship_score(user_1_id, user_2_id);
+    let ship_score = calculate_ship_score(users[0].id.get(), users[1].id.get());
 
-    let mut user_1_avatar_url = user_1
-        .clone()
-        .map(|user| get_author_avatar(&user))
-        .unwrap_or_default();
-    let mut user_2_avatar_url = user_2
-        .clone()
-        .map(|user| get_author_avatar(&user))
-        .unwrap_or_default();
+    let mut user_1_avatar_url = get_author_avatar(&users[0]);
+    let mut user_2_avatar_url = get_author_avatar(&users[1]);
 
     user_1_avatar_url = monochrome_if_lower_score(ship_score, user_1_avatar_url);
     user_2_avatar_url = monochrome_if_lower_score(ship_score, user_2_avatar_url);
@@ -82,19 +81,13 @@ async fn ship(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         .await?;
     let user_1_member = user_1
         .clone()
-        .and_then(|user| find_user_in_members(user, &members));
+        .and_then(|user| find_user_in_members(users[0].clone(), &members));
     let user_2_member = user_2
         .clone()
-        .and_then(|user| find_user_in_members(user, &members));
+        .and_then(|user| find_user_in_members(users[1].clone(), &members));
 
-    let user_1_display_name = get_author_name(
-        &user_1.expect("Failed to get user 1."),
-        &user_1_member.cloned(),
-    );
-    let user_2_display_name = get_author_name(
-        &user_2.expect("Failed to get user 1."),
-        &user_2_member.cloned(),
-    );
+    let user_1_display_name = get_author_name(&users[0], &user_1_member.cloned());
+    let user_2_display_name = get_author_name(&users[1], &user_2_member.cloned());
 
     let ship_msg = get_ship_message(ship_score)
         .replace("$1", &user_1_display_name)
@@ -164,7 +157,7 @@ async fn retry_with_png_if_error(
 
 async fn send_ship_embed(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     image: Vec<u8>,
     ship_score_text: String,
     user_1_display_name: String,
@@ -177,21 +170,23 @@ async fn send_ship_embed(
             response.content(&ship_score_text)
         })
         .await?;
-    let files = vec![(image.as_slice(), "result.png")];
+    let files = [CreateAttachment::bytes(image, "result.png")];
     command
         .channel_id
-        .send_files(&ctx.http, files, |m| {
-            m.embed(|embed| {
-                embed
+        .send_files(
+            &ctx.http,
+            files,
+            CreateMessage::new().embed(
+                CreateEmbed::new()
                     .title(format!(
                         "{} and {}",
                         user_1_display_name, user_2_display_name
                     ))
                     .description(format!("{}\n\n{}", ship_score_text, ship_msg))
                     .attachment("result.png")
-                    .color(color)
-            })
-        })
+                    .color(color),
+            ),
+        )
         .await?;
     Ok(())
 }

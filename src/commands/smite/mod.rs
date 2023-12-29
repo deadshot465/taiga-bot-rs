@@ -2,9 +2,7 @@ use crate::shared::constants::{KOU_SERVER_SMOTE_ROLE_ID, TAIGA_SERVER_SMOTE_ROLE
 use crate::shared::structs::smite::{SmoteUser, SMITE_GIF_LINKS, SMOTE_USERS};
 use chrono::Utc;
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::{
-    ApplicationCommandInteraction, CommandDataOptionValue,
-};
+use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 use std::future::Future;
@@ -12,12 +10,12 @@ use std::pin::Pin;
 
 pub fn smite_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(smite(ctx, command))
 }
 
-async fn smite(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn smite(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let smote_user = command
         .data
         .options

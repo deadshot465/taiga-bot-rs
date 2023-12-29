@@ -7,7 +7,7 @@ use crate::shared::structs::fun::emote::{Emote, EMOTE_LIST};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use serenity::utils::Color;
 use std::future::Future;
@@ -18,12 +18,12 @@ static NAME_REGEX: Lazy<Regex> =
 
 pub fn emote_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(emote(ctx, command))
 }
 
-async fn emote(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn emote(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
 
@@ -40,11 +40,7 @@ async fn emote(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     Ok(())
 }
 
-async fn add(
-    ctx: Context,
-    command: ApplicationCommandInteraction,
-    is_kou: bool,
-) -> anyhow::Result<()> {
+async fn add(ctx: Context, command: CommandInteraction, is_kou: bool) -> anyhow::Result<()> {
     let emote_name = extract_argument(&command, 0).to_lowercase();
 
     if !NAME_REGEX.is_match(&emote_name) {
@@ -129,11 +125,7 @@ async fn add(
     Ok(())
 }
 
-async fn list(
-    ctx: Context,
-    command: ApplicationCommandInteraction,
-    color: Color,
-) -> anyhow::Result<()> {
+async fn list(ctx: Context, command: CommandInteraction, color: Color) -> anyhow::Result<()> {
     let emote_names: String = {
         EMOTE_LIST
             .read()
@@ -173,7 +165,7 @@ async fn list(
     Ok(())
 }
 
-async fn remove(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn remove(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let emote_name = extract_argument(&command, 0).to_lowercase();
     let emote = {
         let emote_list_read_lock = EMOTE_LIST.read().await;
@@ -217,7 +209,7 @@ async fn remove(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
     Ok(())
 }
 
-fn extract_argument(command: &ApplicationCommandInteraction, index: usize) -> String {
+fn extract_argument(command: &CommandInteraction, index: usize) -> String {
     command
         .data
         .options

@@ -1,6 +1,6 @@
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::information::meal::MealData;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use serenity::utils::Color;
 use std::future::Future;
@@ -10,12 +10,12 @@ const ENDPOINT: &str = "http://www.themealdb.com/api/json/v1/1/random.php";
 
 pub fn meal_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(meal(ctx, command))
 }
 
-async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn meal(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Alright! One moment..."))

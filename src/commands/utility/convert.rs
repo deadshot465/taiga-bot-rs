@@ -4,7 +4,7 @@ use crate::shared::structs::utility::convert::conversion_table::CONVERSION_TABLE
 use crate::shared::structs::utility::convert::exchange_rate_api_response::ExchangeRateAPIResponse;
 use crate::shared::structs::utility::convert::temperature::Temperature;
 use crate::shared::structs::utility::convert::ConverterType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -13,12 +13,12 @@ const EXCHANGE_RATE_API_BASE_URL: &str = "http://api.exchangeratesapi.io/v1/late
 
 pub fn convert_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(convert(ctx, command))
 }
 
-async fn convert(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn convert(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Alright! One second..."))

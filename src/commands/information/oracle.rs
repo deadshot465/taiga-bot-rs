@@ -1,7 +1,7 @@
 use crate::shared::structs::information::oracle::ORACLES;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use serenity::utils::Color;
 use std::future::Future;
@@ -11,12 +11,12 @@ const THUMBNAIL_URL: &str = "https://cdn.discordapp.com/emojis/70191802616499404
 
 pub fn oracle_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(oracle(ctx, command))
 }
 
-async fn oracle(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn oracle(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let oracle = {
         let mut rng = rand::thread_rng();
         ORACLES
