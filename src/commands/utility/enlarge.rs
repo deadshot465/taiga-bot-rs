@@ -1,44 +1,51 @@
 use crate::shared::constants::{
     EMOTE_BASE_LINK, EMOTE_ID_REGEX, EMOTE_IS_ANIMATED_REGEX, EMOTE_REGEX,
 };
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{
+    CreateInteractionResponse, CreateInteractionResponseFollowup, CreateInteractionResponseMessage,
+};
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn enlarge_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(enlarge(ctx, command))
 }
 
-async fn enlarge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn enlarge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let raw_string = command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.value.as_ref())
+        .map(|opt| &opt.value)
         .and_then(|value| value.as_str())
         .unwrap_or_default();
 
     if !EMOTE_ID_REGEX.is_match(raw_string) {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("There are no emotes in the input!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("There are no emotes in the input!"),
+                ),
+            )
             .await?;
         return Ok(());
     }
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.content("Alright then, these are the emotes you requested.")
-            })
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content("Alright then, these are the emotes you requested."),
+            ),
+        )
         .await?;
 
     let split_emotes = raw_string.split(' ').collect::<Vec<_>>();
@@ -77,7 +84,10 @@ async fn enlarge(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
 
     for emote_link in emote_links.into_iter() {
         command
-            .create_followup_message(&ctx.http, |response| response.content(emote_link))
+            .create_followup(
+                &ctx.http,
+                CreateInteractionResponseFollowup::new().content(emote_link),
+            )
             .await?;
     }
 

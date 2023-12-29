@@ -8,7 +8,7 @@ use serenity::prelude::*;
 pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Result<()> {
     let guild_channels = &guild.channels;
     let greeting_message = {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         COMMON_SETTINGS
             .greetings
             .choose(&mut rng)
@@ -19,7 +19,7 @@ pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Resul
     let general_channels = CONFIGURATION
         .get()
         .map(|c| &c.general_channel_ids)
-        .map(|ids| ids.iter().map(|id| ChannelId(*id)).collect::<Vec<_>>())
+        .map(|ids| ids.iter().map(|id| ChannelId::new(*id)).collect::<Vec<_>>())
         .unwrap_or_default();
 
     for general_channel_id in general_channels.into_iter() {
@@ -33,6 +33,7 @@ pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Resul
     }
 
     let ctx_clone = ctx.clone();
+    let guild = guild.clone();
     tokio::spawn(async move {
         let ctx = ctx_clone;
         if let Err(e) = inner_guide(&ctx, guild, member).await {

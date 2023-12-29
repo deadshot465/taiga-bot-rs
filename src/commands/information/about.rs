@@ -1,6 +1,11 @@
 use crate::shared::constants::{CAMP_BUDDY_STAR, KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{
+    CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseMessage,
+};
+use serenity::builder::CreateEmbed;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
@@ -10,12 +15,12 @@ const ABOUT_TAIGA_PATH: &str = "assets/txt/about_taiga.txt";
 
 pub fn about_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(about(ctx, command))
 }
 
-async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn about(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let configuration = CONFIGURATION.get().expect("Failed to get configuration.");
@@ -55,18 +60,19 @@ async fn about(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     };
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.embed(|embed| {
-                    embed
-                        .author(|author| author.name(author_name).icon_url(&author_icon))
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().embed(
+                    CreateEmbed::new()
+                        .author(CreateEmbedAuthor::new(author_name).icon_url(author_icon))
                         .color(color)
-                        .footer(|f| f.text(footer))
+                        .footer(CreateEmbedFooter::new(footer))
                         .description(description)
-                        .thumbnail(RUST_LOGO)
-                })
-            })
-        })
+                        .thumbnail(RUST_LOGO),
+                ),
+            ),
+        )
         .await?;
     Ok(())
 }

@@ -3,7 +3,9 @@ use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::information::time::{GeocodeResponse, TimeData, TimezoneResponse};
 use crate::shared::utility::extract_string_option;
 use chrono::{DateTime, FixedOffset};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::builder::EditInteractionResponse;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -12,18 +14,20 @@ const WORLD_TIME_API_ENDPOINT: &str = "http://worldtimeapi.org/api/timezone/";
 
 pub fn time_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(time(ctx, command))
 }
 
-async fn time(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn time(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.content("Alright! One second (pun intended)...")
-            })
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content("Alright! One second (pun intended)..."),
+            ),
+        )
         .await?;
 
     let city = extract_string_option(&command, 0);
@@ -46,20 +50,23 @@ async fn time(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
     match time_data.datetime.parse::<DateTime<FixedOffset>>() {
         Ok(result) => {
             command
-                .edit_original_interaction_response(&ctx.http, |response| {
-                    response.content(format!(
+                .edit_response(
+                    &ctx.http,
+                    EditInteractionResponse::new().content(format!(
                         "The current local time of **{}** is: {}.",
                         timezone_name.replace('_', " "),
                         result.format("%Y-%m-%d %H:%M:%S")
-                    ))
-                })
+                    )),
+                )
                 .await?;
         }
         Err(e) => {
             command
-                .edit_original_interaction_response(&ctx.http, |response| {
-                    response.content(format!("Sorry, an error occurred! Error: {}", e))
-                })
+                .edit_response(
+                    &ctx.http,
+                    EditInteractionResponse::new()
+                        .content(format!("Sorry, an error occurred! Error: {}", e)),
+                )
                 .await?;
         }
     }

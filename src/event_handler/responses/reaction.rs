@@ -69,7 +69,7 @@ fn build_emote(reaction: &str) -> ReactionType {
 
     ReactionType::Custom {
         animated,
-        id: EmojiId(emote_id),
+        id: EmojiId::new(emote_id),
         name: Some(emote_name.into()),
     }
 }

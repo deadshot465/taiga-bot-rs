@@ -4,38 +4,43 @@ use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
+use serenity::all::{
+    CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
+};
 use serenity::builder::CreateEmbed;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn image_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(image(ctx, command))
 }
 
-async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let author_name = get_author_name(&command.user, &command.member);
+async fn image(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
+    let member = command.member.clone().map(|m| *m);
+    let author_name = get_author_name(&command.user, &member);
     let author_avatar_url = get_author_avatar(&command.user);
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Alright! Hold on..."))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Alright! Hold on..."),
+            ),
+        )
         .await?;
 
     // Dispatch to different image services (cat, image, dog).
     if let Some(opt) = command.data.options.get(0) {
         let mut keyword = opt
-            .options
-            .get(0)
-            .and_then(|opt| opt.value.as_ref())
-            .and_then(|value| value.as_str())
+            .value
+            .as_str()
             .map(|s| s.to_lowercase())
             .unwrap_or_default();
 
@@ -80,20 +85,18 @@ async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
         }
         .unwrap_or_else(|e| {
             tracing::error!("{}", e);
-            let mut embed = CreateEmbed::default();
-            embed.description(if is_kou {
+            CreateEmbed::new().description(if is_kou {
                 "Sorry...I don't understand the keyword and cannot find anything... <:KouCry:705054435826597928>"
             } else {
                 "Sorry. Not my problem. Your keyword is too weird that I can't find any image."
-            });
-            embed
+            })
         });
 
         command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                let embeds = vec![result];
-                response.content("").set_embeds(embeds)
-            })
+            .edit_response(
+                &ctx.http,
+                EditInteractionResponse::new().embed(result).content(""),
+            )
             .await?;
     }
 

@@ -10,7 +10,8 @@ use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
 use rand::prelude::*;
-use serenity::model::application::interaction::Interaction;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::model::application::Interaction;
 use serenity::model::prelude::{Member, Message, Ready};
 use serenity::{async_trait, prelude::*};
 
@@ -24,14 +25,17 @@ pub struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        if new_member.guild_id.0 == KOU_SERVER_ID {
+        if new_member.guild_id.get() == KOU_SERVER_ID {
             return;
         }
 
-        if let Some(guild) = ctx.cache.guild(new_member.guild_id) {
-            if let Err(e) = greet(&ctx, guild, new_member).await {
-                tracing::error!("Error when greeting a new member: {}", e);
-            }
+        let guild = ctx
+            .cache
+            .guild(new_member.guild_id)
+            .expect("Failed to retrieve guild from cache.")
+            .clone();
+        if let Err(e) = greet(&ctx, guild, new_member).await {
+            tracing::error!("Error when greeting a new member: {}", e);
         }
     }
 
@@ -72,7 +76,7 @@ impl EventHandler for Handler {
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(command) = interaction {
+        if let Interaction::Command(command) = interaction {
             let channel_enabled = {
                 CHANNEL_CONTROL
                     .get()
@@ -81,24 +85,19 @@ impl EventHandler for Handler {
                     .await
                     .enabled_channels
                     .iter()
-                    .any(|channel_id| *channel_id == command.channel_id.0)
+                    .any(|channel_id| *channel_id == command.channel_id.get())
             };
 
             if !channel_enabled
                 && !SKIP_CHANNEL_CHECK_COMMANDS.contains(&command.data.name.as_str())
             {
-                if let Err(e) = command.create_interaction_response(&ctx.http, |responses| responses
-                    .interaction_response_data(|data| data
-                        .content("This channel has to be enabled first before you can use command here!")))
-                    .await {
+                if let Err(e) = command.create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                    .content("This channel has to be enabled first before you can use command here!"))).await {
                     tracing::error!("Error when responding to slash command: {}", e);
                 }
 
                 tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
-                if let Err(e) = command
-                    .delete_original_interaction_response(&ctx.http)
-                    .await
-                {
+                if let Err(e) = command.delete_response(&ctx.http).await {
                     tracing::error!(
                         "Error when deleting original response to slash command: {}",
                         e
@@ -116,12 +115,15 @@ impl EventHandler for Handler {
                 }
             } else {
                 let result = command
-                    .create_interaction_response(&ctx.http, |response| {
-                        response.interaction_response_data(|data| {
-                            data.content("Sorry, this command is not yet implemented!")
-                        })
-                    })
+                    .create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new()
+                                .content("Sorry, this command is not yet implemented!"),
+                        ),
+                    )
                     .await;
+
                 if let Err(e) = result {
                     tracing::error!("Failed to execute slash command. Error: {}", e);
                 }
@@ -131,5 +133,5 @@ impl EventHandler for Handler {
 }
 
 pub fn hit_or_miss(probability: i32) -> bool {
-    rand::thread_rng().gen_range(0..100) < probability
+    thread_rng().gen_range(0..100) < probability
 }

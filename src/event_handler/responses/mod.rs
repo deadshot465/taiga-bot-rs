@@ -26,7 +26,7 @@ pub async fn handle_bot_responses(ctx: &Context, new_message: &Message) -> anyho
             .await
             .ignored_channels
             .iter()
-            .any(|channel_id| *channel_id == new_message.channel_id.0)
+            .any(|channel_id| *channel_id == new_message.channel_id.get())
     };
 
     if is_channel_ignored {

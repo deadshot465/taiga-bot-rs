@@ -14,7 +14,7 @@ pub async fn normal_message_hook(ctx: &Context, message: &Message) {
     }
 
     if let Some(ref guild_id) = message.guild_id {
-        if guild_id.0 != KOU_SERVER_ID {
+        if guild_id.get() != KOU_SERVER_ID {
             return;
         }
 
@@ -26,25 +26,26 @@ pub async fn normal_message_hook(ctx: &Context, message: &Message) {
 
 async fn certify_user(ctx: &Context, message: &Message) -> anyhow::Result<()> {
     if let Some(ref partial_member) = message.member {
-        if message.channel_id.0 != KOU_SERVER_RULE_CHANNEL_ID {
+        if message.channel_id.get() != KOU_SERVER_RULE_CHANNEL_ID {
             return Ok(());
         }
 
         if partial_member
             .roles
-            .contains(&RoleId(KOU_SERVER_CERTIFIED_ROLE_ID))
+            .contains(&RoleId::new(KOU_SERVER_CERTIFIED_ROLE_ID))
         {
             return Ok(());
         }
 
         let guild = message
             .guild(&ctx.cache)
-            .expect("Failed to retrieve guild from cache.");
-        let mut member = message.member(&ctx.http).await?;
+            .expect("Failed to retrieve guild from cache.")
+            .clone();
+        let member = message.member(&ctx.http).await?;
 
         if message.content.as_str() == KOU_SERVER_CERTIFICATION_MESSAGE {
             member
-                .add_role(&ctx.http, RoleId(KOU_SERVER_CERTIFIED_ROLE_ID))
+                .add_role(&ctx.http, RoleId::new(KOU_SERVER_CERTIFIED_ROLE_ID))
                 .await?;
 
             greet(ctx, guild, member).await?;

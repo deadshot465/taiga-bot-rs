@@ -4,6 +4,7 @@ use crate::shared::constants::{
 use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use serenity::all::{GuildId, UserId};
 use serenity::model::prelude::RoleId;
 use serenity::prelude::Context;
 use tokio::sync::RwLock;
@@ -91,18 +92,21 @@ fn initialize_smote_user_list() -> anyhow::Result<SmoteUserList> {
 }
 
 async fn remove_smote_user(ctx: Context, smote_user: SmoteUser) -> anyhow::Result<()> {
-    if let Ok(mut member) = ctx
+    if let Ok(member) = ctx
         .http
-        .get_member(smote_user.guild_id, smote_user.user_id)
+        .get_member(
+            GuildId::new(smote_user.guild_id),
+            UserId::new(smote_user.user_id),
+        )
         .await
     {
         let smote_role_ids = vec![TAIGA_SERVER_SMOTE_ROLE_ID, KOU_SERVER_SMOTE_ROLE_ID];
         for role_id in smote_role_ids.into_iter() {
-            if !member.roles.contains(&RoleId(role_id)) {
+            if !member.roles.contains(&RoleId::new(role_id)) {
                 continue;
             }
 
-            match member.remove_role(&ctx.http, RoleId(role_id)).await {
+            match member.remove_role(&ctx.http, RoleId::new(role_id)).await {
                 Ok(_) => {
                     let mut smote_users_write_lock = SMOTE_USERS.write().await;
                     let smote_users = smote_users_write_lock.smote_users.clone();

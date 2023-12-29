@@ -4,7 +4,9 @@ use crate::shared::utility::{
     get_animated_emote_url, get_author_avatar, get_author_name, get_first_name,
 };
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::builder::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
 use std::pin::Pin;
@@ -29,12 +31,12 @@ const KOU_GIFS: [&str; 5] = [
 
 pub fn route_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(route(ctx, command))
 }
 
-async fn route(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn route(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let route = get_route();
 
     let footer = format!(
@@ -46,35 +48,37 @@ async fn route(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     let ending = if route.name.contains("Mature") || route.name.contains("Kou") {
         "Perfect"
     } else {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         ENDINGS
             .choose(&mut rng)
             .expect("Failed to choose an ending.")
     };
 
-    let author_name = get_author_name(&command.user, &command.member);
+    let member = command.member.clone().map(|m| *m);
+    let author_name = get_author_name(&command.user, &member);
     let author_icon = get_author_avatar(&command.user);
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.embed(|embed| {
-                    embed
-                        .author(|author| author.name(&author_name).icon_url(&author_icon))
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().embed(
+                    CreateEmbed::new()
+                        .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_icon))
                         .color(color)
-                        .field("Age", route.age, true)
+                        .field("Age", route.age.to_string(), true)
                         .field("Birthday", &route.birthday, true)
                         .field("Animal Motif", &route.animal, true)
-                        .footer(|f| f.text(footer))
+                        .footer(CreateEmbedFooter::new(footer))
                         .description(&route.description)
                         .thumbnail(if route.name.contains("Mature") {
-                            let mut rng = rand::thread_rng();
+                            let mut rng = thread_rng();
                             let emote_id = MATURE_HIRO_EMOTE_IDS
                                 .choose(&mut rng)
                                 .cloned()
                                 .expect("Failed to get an emote ID for mature Hiro.");
                             get_animated_emote_url(emote_id)
                         } else if route.name.contains("Kou") {
-                            let mut rng = rand::thread_rng();
+                            let mut rng = thread_rng();
                             KOU_GIFS
                                 .choose(&mut rng)
                                 .expect("Failed to get an emote ID for Kou")
@@ -82,17 +86,17 @@ async fn route(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
                         } else {
                             get_animated_emote_url(&route.emote_id)
                         })
-                        .title(format!("Next: {}, {} Ending", &route.name, ending))
-                })
-            })
-        })
+                        .title(format!("Next: {}, {} Ending", &route.name, ending)),
+                ),
+            ),
+        )
         .await?;
 
     if let Some(user_records) = USER_RECORDS.get() {
         {
             let mut user_records_lock = user_records.write().await;
             let user_record_entry = user_records_lock
-                .entry(command.user.id.0.to_string())
+                .entry(command.user.id.get().to_string())
                 .or_default();
             let route_entry = user_record_entry
                 .route
@@ -108,7 +112,7 @@ async fn route(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
 }
 
 fn get_route() -> Character {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
     let random_numbers = rng.gen_range(0..100);
     match random_numbers {
         x if (0..=14).contains(&x) => ROUTES[0].clone(),

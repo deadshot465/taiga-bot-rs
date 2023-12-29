@@ -4,7 +4,9 @@ use crate::shared::structs::utility::convert::conversion_table::CONVERSION_TABLE
 use crate::shared::structs::utility::convert::exchange_rate_api_response::ExchangeRateAPIResponse;
 use crate::shared::structs::utility::convert::temperature::Temperature;
 use crate::shared::structs::utility::convert::ConverterType;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::builder::EditInteractionResponse;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
@@ -13,43 +15,43 @@ const EXCHANGE_RATE_API_BASE_URL: &str = "http://api.exchangeratesapi.io/v1/late
 
 pub fn convert_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(convert(ctx, command))
 }
 
-async fn convert(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn convert(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Alright! One second..."))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Alright! One second..."),
+            ),
+        )
         .await?;
 
     let source_unit = command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.options.get(0))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_str())
+        .map(|opt| &opt.value)
+        .and_then(|opt| opt.as_str())
         .unwrap_or_default();
 
     let target_unit = command
         .data
         .options
-        .get(0)
-        .and_then(|opt| opt.options.get(1))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_str())
+        .get(1)
+        .map(|opt| &opt.value)
+        .and_then(|opt| opt.as_str())
         .unwrap_or_default();
 
     let amount = command
         .data
         .options
-        .get(0)
-        .and_then(|opt| opt.options.get(2))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_f64())
+        .get(2)
+        .map(|opt| &opt.value)
+        .and_then(|opt| opt.as_f64())
         .map(|f| f as f32)
         .unwrap_or_default();
 
@@ -60,12 +62,13 @@ async fn convert(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
             Ok(res) => res,
             Err(e) => {
                 command
-                    .edit_original_interaction_response(&ctx.http, |response| {
-                        response.content(format!(
+                    .edit_response(
+                        &ctx.http,
+                        EditInteractionResponse::new().content(format!(
                             "Sorry, but I can't seem to find the currency you specified! {}",
                             e
-                        ))
-                    })
+                        )),
+                    )
                     .await?;
                 return Ok(());
             }
@@ -77,7 +80,7 @@ async fn convert(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
 
     let source_unit = replace_temperature_sign(source_unit);
     let target_unit = replace_temperature_sign(target_unit);
-    command.edit_original_interaction_response(&ctx.http, |response| response
+    command.edit_response(&ctx.http, EditInteractionResponse::new()
         .content(if is_kou {
             format!("<:KouBang:705054435667214367> Alright, that's the best calculation I got! {}{} is {}{}.",
                     amount, source_unit, (result * 100.0).round() / 100.0, target_unit)

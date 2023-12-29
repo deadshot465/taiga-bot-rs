@@ -1,6 +1,9 @@
 use crate::shared::structs::config::configuration::KOU;
+use num_traits::cast::FromPrimitive;
 use rand::prelude::*;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
+use serenity::builder::EditInteractionResponse;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::collections::HashMap;
 use std::future::Future;
@@ -13,18 +16,19 @@ const TAIGA_EMOJI: &str = "<:TaigaSmug:702210822310723614>";
 
 pub fn pick_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(pick(ctx, command))
 }
 
-async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn pick(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let times = command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_u64())
+        .map(|opt| &opt.value)
+        .and_then(|value| value.as_i64())
+        .and_then(|value| u64::from_i64(value))
         .map(|n| if n == 0 { 1 } else { n })
         .unwrap_or(1);
 
@@ -32,7 +36,7 @@ async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
         .data
         .options
         .get(1)
-        .and_then(|opt| opt.value.as_ref())
+        .map(|opt| &opt.value)
         .and_then(|value| value.as_str())
         .map(|s| s.trim());
 
@@ -46,21 +50,25 @@ async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
             if times == 1 {
                 command
-                    .create_interaction_response(&ctx.http, |response| {
-                        response.interaction_response_data(|data| {
-                            data.content(format!(
+                    .create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new().content(format!(
                                 "{} | I pick **{}**!",
                                 if is_kou { KOU_EMOJI } else { TAIGA_EMOJI },
                                 single_pick(&choices)
-                            ))
-                        })
-                    })
+                            )),
+                        ),
+                    )
                     .await?;
             } else {
                 command
-                    .create_interaction_response(&ctx.http, |response| {
-                        response.interaction_response_data(|data| data.content("Counting..."))
-                    })
+                    .create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new().content("Counting..."),
+                        ),
+                    )
                     .await?;
                 let choices = choices
                     .into_iter()
@@ -70,9 +78,11 @@ async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
                     tokio::spawn(async move { multiple_pick(choices, times) });
                 let (result, result_map) = multiple_pick_join_handle.await?;
                 command
-                    .edit_original_interaction_response(&ctx.http, |response| {
-                        response.content(build_message(result, result_map, is_kou))
-                    })
+                    .edit_response(
+                        &ctx.http,
+                        EditInteractionResponse::new()
+                            .content(build_message(result, result_map, is_kou)),
+                    )
                     .await?;
             }
         }
@@ -85,7 +95,7 @@ async fn pick(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
 async fn cancel_pick(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
 ) -> anyhow::Result<()> {
     let no_options_msg = if is_kou {
@@ -95,9 +105,12 @@ async fn cancel_pick(
     };
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content(no_options_msg))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content(no_options_msg),
+            ),
+        )
         .await?;
     Ok(())
 }

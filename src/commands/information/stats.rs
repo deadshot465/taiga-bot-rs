@@ -2,22 +2,24 @@ use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::structs::record::user_record::{UserRecord, USER_RECORDS};
 use crate::shared::utility::{get_author_avatar, get_author_name};
+use serenity::all::{
+    Color, CreateEmbedAuthor, CreateInteractionResponse, CreateInteractionResponseMessage,
+};
 use serenity::builder::CreateEmbed;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn stats_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(stats(ctx, command))
 }
 
-async fn stats(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn stats(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let user_records = USER_RECORDS.get().expect("Failed to get all user records.");
 
     let user_record = {
@@ -30,16 +32,12 @@ async fn stats(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
 
     let is_kou = KOU.get().copied().unwrap_or(false);
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
-    let author_name = get_author_name(&command.user, &command.member);
+    let member = command.member.clone().map(|m| *m);
+    let author_name = get_author_name(&command.user, &member);
     let author_avatar_url = get_author_avatar(&command.user);
 
     let embed = if let Some(option) = command.data.options.get(0) {
-        let value = option
-            .value
-            .as_ref()
-            .expect("Failed to get option value.")
-            .as_str()
-            .unwrap_or_default();
+        let value = option.value.as_str().unwrap_or_default();
 
         match value {
             "route" => build_route_records(author_name, author_avatar_url, color, user_record),
@@ -53,9 +51,12 @@ async fn stats(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::
     };
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.add_embed(embed))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().embed(embed),
+            ),
+        )
         .await?;
 
     Ok(())
@@ -74,13 +75,11 @@ fn build_route_records(
         .collect::<Vec<_>>();
     character_names.sort_unstable();
 
-    let mut embed = CreateEmbed::default();
-    embed
-        .author(|a| a.name(&author_name).icon_url(author_avatar_url))
+    let embed = CreateEmbed::new()
+        .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!("Here's {}'s records with `route`", author_name));
-    add_route_character_fields(&mut embed, character_names, route_record);
-    embed
+    add_route_character_fields(embed, character_names, route_record)
 }
 
 fn build_valentine_records(
@@ -96,13 +95,11 @@ fn build_valentine_records(
         .collect::<Vec<_>>();
     character_name_and_counts.sort_by(|(_, count_1), (_, count_2)| count_2.cmp(count_1));
 
-    let mut embed = CreateEmbed::default();
-    embed
-        .author(|a| a.name(&author_name).icon_url(author_avatar_url))
+    let embed = CreateEmbed::new()
+        .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!("Here's {}'s records with `valentine`", author_name));
-    add_valentine_character_fields(&mut embed, character_name_and_counts);
-    embed
+    add_valentine_character_fields(embed, character_name_and_counts)
 }
 
 fn build_all(
@@ -126,47 +123,53 @@ fn build_all(
         .collect::<Vec<_>>();
     valentine_name_and_counts.sort_by(|(_, count_1), (_, count_2)| count_2.cmp(count_1));
 
-    let mut embed = CreateEmbed::default();
-    embed
-        .author(|a| a.name(&author_name).icon_url(author_avatar_url))
+    let embed = CreateEmbed::new()
+        .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!(
             "Here's {}'s records with `route, valentine`",
             author_name
         ));
 
-    embed.field("**Route**", "Records for `route`", false);
-    add_route_character_fields(&mut embed, route_names, route_record);
-    embed.field("**Valentine**", "Records for `valentine`", false);
-    add_valentine_character_fields(&mut embed, valentine_name_and_counts);
-    embed
+    let embed = embed.field("**Route**", "Records for `route`", false);
+    let embed = add_route_character_fields(embed, route_names, route_record);
+    let embed = embed.field("**Valentine**", "Records for `valentine`", false);
+    add_valentine_character_fields(embed, valentine_name_and_counts)
 }
 
 fn add_route_character_fields(
-    embed: &mut CreateEmbed,
+    embed: CreateEmbed,
     route_names: Vec<&str>,
     route_record: &HashMap<String, HashMap<String, u16>>,
-) {
-    for name in route_names.into_iter() {
-        let character_record = &route_record[name];
-        let mut endings = character_record
-            .iter()
-            .map(|(ending, _)| ending.as_str())
-            .collect::<Vec<_>>();
-        endings.sort_unstable();
-        let result = endings
-            .into_iter()
-            .map(|s| format!("__{}__: {}\n", s, character_record[s]))
-            .collect::<String>();
-        embed.field(format!("**{}**", name), result, true);
-    }
+) -> CreateEmbed {
+    let fields = route_names
+        .into_iter()
+        .map(|name| {
+            let character_record = &route_record[name];
+            let mut endings = character_record
+                .iter()
+                .map(|(ending, _)| ending.as_str())
+                .collect::<Vec<_>>();
+            endings.sort_unstable();
+            let result = endings
+                .into_iter()
+                .map(|s| format!("__{}__: {}\n", s, character_record[s]))
+                .collect::<String>();
+            (format!("**{}**", name), result, true)
+        })
+        .collect::<Vec<_>>();
+
+    embed.fields(fields)
 }
 
 fn add_valentine_character_fields(
-    embed: &mut CreateEmbed,
+    embed: CreateEmbed,
     valentine_name_and_counts: Vec<(&str, u16)>,
-) {
-    for (name, count) in valentine_name_and_counts.into_iter() {
-        embed.field(format!("**{}**", name), count, true);
-    }
+) -> CreateEmbed {
+    let fields = valentine_name_and_counts
+        .into_iter()
+        .map(|(name, count)| (format!("**{}**", name), count.to_string(), true))
+        .collect::<Vec<_>>();
+
+    embed.fields(fields)
 }
