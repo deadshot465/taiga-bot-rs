@@ -2,11 +2,10 @@ use crate::commands::information::guide::inner_guide;
 use crate::shared::structs::config::common_settings::COMMON_SETTINGS;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use rand::prelude::*;
-use serenity::cache::GuildRef;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-pub async fn greet(ctx: &Context, guild: GuildRef<'_>, member: Member) -> anyhow::Result<()> {
+pub async fn greet(ctx: &Context, guild: Guild, member: Member) -> anyhow::Result<()> {
     let guild_channels = &guild.channels;
     let greeting_message = {
         let mut rng = thread_rng();

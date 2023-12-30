@@ -92,7 +92,7 @@ fn initialize_smote_user_list() -> anyhow::Result<SmoteUserList> {
 }
 
 async fn remove_smote_user(ctx: Context, smote_user: SmoteUser) -> anyhow::Result<()> {
-    if let Ok(mut member) = ctx
+    if let Ok(member) = ctx
         .http
         .get_member(
             GuildId::new(smote_user.guild_id),

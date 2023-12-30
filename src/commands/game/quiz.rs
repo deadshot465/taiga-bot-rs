@@ -199,9 +199,7 @@ async fn join_game(
 
         let mut reactions_collector = sent_msg
             .await_reactions(ctx)
-            .timeout(std::time::Duration::from_secs(2))
-            .removed(true)
-            .build();
+            .timeout(std::time::Duration::from_secs(2));
 
         while let Some(reaction) = reactions_collector.next().await {
             let emoji = &reaction.as_inner_ref().emoji;

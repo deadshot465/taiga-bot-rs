@@ -7,12 +7,12 @@ pub fn extract_string_option(command: &CommandInteraction, index: usize) -> &str
         .data
         .options
         .get(index)
-        .and_then(|opt| opt.value.as_ref())
+        .map(|opt| &opt.value)
         .and_then(|value| value.as_str())
         .unwrap_or_default()
 }
 
-pub fn find_user_in_members(user: User, members: &[Member]) -> Option<&Member> {
+pub fn find_user_in_members<'a>(user: &'a User, members: &'a [Member]) -> Option<&'a Member> {
     members
         .iter()
         .find(|member| member.user.id.get() == user.id.get())

@@ -3,6 +3,7 @@ use crate::shared::services::judge_zero_service::{
 };
 use crate::shared::structs::utility::judge_zero::JudgeZeroRequestResult;
 use crate::shared::utility::{get_author_avatar, get_author_name};
+use serenity::all::EditMessage;
 use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{Args, CommandResult};
 use serenity::model::channel::Message;
@@ -30,7 +31,7 @@ pub async fn eval(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
         .split('\n')
         .skip(1)
         .collect::<Vec<_>>();
-    let actual_code: String = (code_block[..code_block.len() - 1]).join("\n");
+    let actual_code: String = code_block[..code_block.len() - 1].join("\n");
 
     let token = create_eval_request(actual_code).await.unwrap_or_default();
     let eval_result_handle = tokio::spawn(async move { try_get_eval_result(token).await });
@@ -74,14 +75,17 @@ async fn handle_result(
                 .unwrap_or_else(|| error_msg);
 
             sent_msg
-                .edit(&ctx.http, |msg| msg.content(error_msg))
+                .edit(&ctx.http, EditMessage::new().content(error_msg))
                 .await?;
         }
         JudgeZeroRequestResult::InProgress => {
             sent_msg
-                .edit(&ctx.http, |msg| {
-                    msg.content("Sorry, I tried hard but can't seem to evaluate your code in time!")
-                })
+                .edit(
+                    &ctx.http,
+                    EditMessage::new().content(
+                        "Sorry, I tried hard but can't seem to evaluate your code in time!",
+                    ),
+                )
                 .await?;
         }
         JudgeZeroRequestResult::Success(res) => {
@@ -90,7 +94,7 @@ async fn handle_result(
             let author_avatar_url = get_author_avatar(&msg.author);
             let embed = build_embed(res, &author_name, &author_avatar_url);
             sent_msg
-                .edit(&ctx.http, |msg| msg.content("").set_embed(embed))
+                .edit(&ctx.http, EditMessage::new().content("").embed(embed))
                 .await?;
         }
     }

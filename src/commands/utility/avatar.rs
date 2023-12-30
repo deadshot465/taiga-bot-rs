@@ -27,6 +27,7 @@ async fn avatar(ctx: Context, command: CommandInteraction) -> anyhow::Result<()>
         .data
         .resolved
         .users
+        .clone()
         .into_values()
         .collect::<Vec<_>>();
 

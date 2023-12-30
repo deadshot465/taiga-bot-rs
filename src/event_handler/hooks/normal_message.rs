@@ -39,15 +39,16 @@ async fn certify_user(ctx: &Context, message: &Message) -> anyhow::Result<()> {
 
         let guild = message
             .guild(&ctx.cache)
-            .expect("Failed to retrieve guild from cache.");
-        let mut member = message.member(&ctx.http).await?;
+            .expect("Failed to retrieve guild from cache.")
+            .clone();
+        let member = message.member(&ctx.http).await?;
 
         if message.content.as_str() == KOU_SERVER_CERTIFICATION_MESSAGE {
             member
                 .add_role(&ctx.http, RoleId::new(KOU_SERVER_CERTIFIED_ROLE_ID))
                 .await?;
 
-            greet(ctx, *guild.clone(), member).await?;
+            greet(ctx, guild, member).await?;
             message.delete(&ctx.http).await?;
         } else {
             let reply_message = message

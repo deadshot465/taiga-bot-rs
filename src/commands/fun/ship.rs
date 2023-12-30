@@ -11,7 +11,7 @@ use serenity::all::{
     CreateMessage, EditInteractionResponse,
 };
 use serenity::builder::CreateEmbed;
-use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
+use serenity::model::application::CommandInteraction;
 use serenity::model::id::UserId;
 use serenity::prelude::*;
 use std::future::Future;
@@ -38,34 +38,9 @@ async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         .data
         .resolved
         .users
+        .clone()
         .into_values()
         .collect::<Vec<_>>();
-
-    let user_1 = command
-        .data
-        .options
-        .get(0)
-        .map(|opt| opt.value)
-        .map(|resolved| {
-            if let CommandDataOptionValue::User(u) = resolved {
-                u
-            } else {
-                UserId::default()
-            }
-        });
-
-    let user_2 = command
-        .data
-        .options
-        .get(1)
-        .map(|opt| opt.value)
-        .map(|resolved| {
-            if let CommandDataOptionValue::User(u) = resolved {
-                u
-            } else {
-                UserId::default()
-            }
-        });
 
     let ship_score = calculate_ship_score(users[0].id.get(), users[1].id.get());
 
@@ -83,12 +58,8 @@ async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         .unwrap_or_default()
         .members(&ctx.http, None::<u64>, None::<UserId>)
         .await?;
-    let user_1_member = user_1
-        .clone()
-        .and_then(|user| find_user_in_members(users[0].clone(), &members));
-    let user_2_member = user_2
-        .clone()
-        .and_then(|user| find_user_in_members(users[1].clone(), &members));
+    let user_1_member = find_user_in_members(&users[0], &members);
+    let user_2_member = find_user_in_members(&users[1], &members);
 
     let user_1_display_name = get_author_name(&users[0], &user_1_member.cloned());
     let user_2_display_name = get_author_name(&users[1], &user_2_member.cloned());

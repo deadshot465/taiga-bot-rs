@@ -28,10 +28,13 @@ impl EventHandler for Handler {
             return;
         }
 
-        if let Some(guild) = ctx.cache.guild(new_member.guild_id) {
-            if let Err(e) = greet(&ctx, guild, new_member).await {
-                tracing::error!("Error when greeting a new member: {}", e);
-            }
+        let guild = ctx
+            .cache
+            .guild(new_member.guild_id)
+            .expect("Failed to retrieve guild from cache.")
+            .clone();
+        if let Err(e) = greet(&ctx, guild, new_member).await {
+            tracing::error!("Error when greeting a new member: {}", e);
         }
     }
 

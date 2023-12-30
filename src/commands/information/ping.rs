@@ -1,4 +1,7 @@
 use crate::shared::structs::config::configuration::KOU;
+use serenity::all::{
+    CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
+};
 use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
 use std::future::Future;
@@ -29,15 +32,21 @@ async fn ping(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
 
     let original_time = Instant::now();
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content(starting_msg))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content(starting_msg),
+            ),
+        )
         .await?;
     let current_time = Instant::now();
     let elapsed = current_time.duration_since(original_time);
     let ending_msg = ending_msg.replace("{latency}", &elapsed.as_millis().to_string());
     command
-        .edit_original_interaction_response(&ctx.http, |data| data.content(ending_msg))
+        .edit_response(
+            &ctx.http,
+            EditInteractionResponse::new().content(ending_msg),
+        )
         .await?;
     Ok(())
 }

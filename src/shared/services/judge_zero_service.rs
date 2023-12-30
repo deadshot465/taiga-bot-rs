@@ -8,6 +8,7 @@ use base64::engine::{general_purpose, GeneralPurpose, GeneralPurposeConfig};
 use base64::Engine;
 use once_cell::sync::Lazy;
 use reqwest::header::HeaderMap;
+use serenity::all::CreateEmbedAuthor;
 use serenity::builder::CreateEmbed;
 
 const RUST_LANG_CODE: u8 = 73;
@@ -66,18 +67,18 @@ pub fn build_embed(
 
     let content = content + "\n```";
 
-    embed
-        .author(|a| a.name(author_name).icon_url(author_avatar_url))
+    embed = embed
+        .author(CreateEmbedAuthor::new(author_name).icon_url(author_avatar_url))
         .color(color)
         .description(content)
         .thumbnail(RUST_LOGO);
 
     if let Some(time_spent) = response.time {
-        embed.field("Time Spent", format!("{} sec", time_spent), true);
+        embed = embed.field("Time Spent", format!("{} sec", time_spent), true);
     }
 
     if let Some(memory) = response.memory {
-        embed.field("Memory Spent", format!("{} KB", memory), true);
+        embed = embed.field("Memory Spent", format!("{} KB", memory), true);
     }
 
     embed

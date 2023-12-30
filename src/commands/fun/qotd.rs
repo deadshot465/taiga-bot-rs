@@ -37,7 +37,7 @@ async fn qotd(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         let guild_creation_date = guild_id.created_at().naive_utc();
         let elapsed = Utc::now() - Utc.from_utc_datetime(&guild_creation_date);
         let elapsed_days = elapsed.num_days();
-        let question = extract_string_option(&command, 0);
+        let question = extract_string_option(&command, 0).to_string();
 
         let attachments = command
             .data
@@ -58,14 +58,15 @@ async fn qotd(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         for server_info in SERVER_INFOS.server_infos.iter() {
             for qotd_channel_id in server_info.qotd_channel_ids.iter() {
                 if let Some(channel) = guild_channels
-                    .and_then(|channels| channels.get(&ChannelId::new(*qotd_channel_id)))
+                    .as_ref()
+                    .and_then(|channels| channels.get(&ChannelId::new(*qotd_channel_id)).cloned())
                 {
                     let mut result_embed = CreateEmbed::new()
                         .title(format!("Day {}", elapsed_days))
                         .color(color)
                         .thumbnail(&avatar_url)
                         .footer(CreateEmbedFooter::new("Answer qotd to earn 25 credits!"))
-                        .description(question);
+                        .description(&question);
 
                     if !attachments.is_empty() {
                         result_embed = result_embed.image(attachments[0].url.clone())

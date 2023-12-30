@@ -2,6 +2,7 @@ use crate::shared::constants::{KOU_SERVER_SMOTE_ROLE_ID, TAIGA_SERVER_SMOTE_ROLE
 use crate::shared::structs::smite::{SmoteUser, SMITE_GIF_LINKS, SMOTE_USERS};
 use chrono::Utc;
 use rand::prelude::*;
+use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
 use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
@@ -36,7 +37,7 @@ async fn smite(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
     };
 
     let smote_role_ids = vec![TAIGA_SERVER_SMOTE_ROLE_ID, KOU_SERVER_SMOTE_ROLE_ID];
-    if let Some(mut member) = smote_member {
+    if let Some(member) = smote_member {
         for role_id in smote_role_ids.into_iter() {
             if member
                 .add_role(&ctx.http, RoleId::new(role_id))
@@ -51,9 +52,12 @@ async fn smite(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
                         .unwrap_or_default()
                 };
                 command
-                    .create_interaction_response(&ctx.http, |response| {
-                        response.interaction_response_data(|data| data.content(gif_link))
-                    })
+                    .create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new().content(gif_link),
+                        ),
+                    )
                     .await?;
 
                 {

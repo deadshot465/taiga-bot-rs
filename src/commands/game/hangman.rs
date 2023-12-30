@@ -52,7 +52,7 @@ pub fn hangman_async(
 }
 
 async fn hangman(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let member = command.member.map(|m| *m.clone());
+    let member = command.member.clone().map(|m| *m.clone());
     let author_name = get_author_name(&command.user, &member);
     let author_avatar_url = get_author_avatar(&command.user);
 
