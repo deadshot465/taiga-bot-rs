@@ -4,7 +4,10 @@ use crate::shared::structs::config::server_info::SERVER_INFOS;
 use crate::shared::structs::fun::qotd::{QotdInfo, QOTD_INFOS};
 use crate::shared::utility::extract_string_option;
 use chrono::{TimeZone, Utc};
-use serenity::all::{ChannelId, CreateEmbedFooter, CreateMessage};
+use serenity::all::{
+    AutoArchiveDuration, ChannelId, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage, CreateThread,
+};
 use serenity::builder::CreateEmbed;
 use serenity::model::application::CommandInteraction;
 use serenity::model::channel::ChannelType;
@@ -22,11 +25,13 @@ pub fn qotd_async(
 async fn qotd(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     if let Some(guild_id) = command.guild_id {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("Alright, I got your question! One moment...")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Alright, I got your question! One moment..."),
+                ),
+            )
             .await?;
 
         let guild_creation_date = guild_id.created_at().naive_utc();
@@ -70,19 +75,20 @@ async fn qotd(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
                         .send_message(&ctx.http, CreateMessage::new().embed(result_embed))
                         .await?;
                     let thread = channel
-                        .create_public_thread(&ctx.http, msg.id, |thread| {
-                            thread
-                                .name(format!("Day {} QotD", elapsed_days))
+                        .create_thread_from_message(
+                            &ctx.http,
+                            msg.id,
+                            CreateThread::new(format!("Day {} QotD", elapsed_days))
                                 .kind(ChannelType::PublicThread)
-                                .auto_archive_duration(1440)
-                        })
+                                .auto_archive_duration(AutoArchiveDuration::OneDay),
+                        )
                         .await?;
 
                     let mut qotd_infos = QOTD_INFOS.write().await;
                     qotd_infos.qotd_infos.insert(
                         0,
                         QotdInfo {
-                            thread_channel_id: thread.id.0,
+                            thread_channel_id: thread.id.get(),
                             question: question.to_string(),
                             expiry: Utc::now() + chrono::Duration::days(1),
                             participated_members: vec![],

@@ -3,9 +3,7 @@ use crate::shared::structs::config::server_info::SERVER_INFOS;
 use once_cell::sync::Lazy;
 use serenity::all::{CreateCommandPermission, RoleId};
 use serenity::builder::{CreateCommand, CreateCommandOption, EditCommandPermissions};
-use serenity::model::application::{
-    Command, CommandInteraction, CommandOptionType, CommandPermissionType,
-};
+use serenity::model::application::{Command, CommandInteraction, CommandOptionType};
 use serenity::model::prelude::{CommandId, GuildId};
 use serenity::model::Permissions;
 use serenity::prelude::Context;
@@ -315,14 +313,16 @@ async fn set_permission(
     let guild_id = GuildId::new(guild_id);
     for &cmd_id in cmds.iter() {
         for &role_id in role_ids.iter() {
-            guild_id.edit_command_permissions(
-                &ctx.http,
-                cmd_id,
-                EditCommandPermissions::new(vec![CreateCommandPermission::role(
-                    RoleId::new(role_id),
-                    true,
-                )]),
-            )
+            guild_id
+                .edit_command_permissions(
+                    &ctx.http,
+                    cmd_id,
+                    EditCommandPermissions::new(vec![CreateCommandPermission::role(
+                        RoleId::new(role_id),
+                        true,
+                    )]),
+                )
+                .await?;
         }
     }
 
@@ -332,7 +332,7 @@ async fn set_permission(
 fn global_commands() -> Vec<CreateCommand> {
     GLOBAL_COMMANDS
         .iter()
-        .map(|(_, element)| element.command())
+        .map(|(_, element)| (element.command)())
         .collect()
 }
 

@@ -4,10 +4,10 @@ use crate::{
     PersistenceService, SpecializedDialog, TextError,
 };
 use rand::{thread_rng, Rng};
+use serenity::all::Color;
 use serenity::framework::standard::{macros::command, Args, CommandError, CommandResult};
 use serenity::model::channel::Message;
 use serenity::prelude::Context;
-use serenity::utils::Color;
 use std::borrow::Borrow;
 use std::sync::Arc;
 use std::time::Duration;

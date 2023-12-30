@@ -199,8 +199,8 @@ async fn tour_loop(
                 _ = &mut delay => {
                     sent_msg.delete(&ctx.http).await?;
                     member.user
-                    .direct_message(&ctx.http, CreateMessage::new()
-                    .content(if is_kou {
+                        .direct_message(&ctx.http, CreateMessage::new()
+                        .content(if is_kou {
                             KOU_GOODBYE
                         } else {
                             TAIGA_GOODBYE
@@ -213,13 +213,13 @@ async fn tour_loop(
                             ComponentInteractionDataKind::Button => {
                                 sent_msg.delete(&ctx.http).await?;
                                 interaction
-                                .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
-                                .content(if is_kou {
+                                    .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                    .content(if is_kou {
                                         KOU_GOODBYE
                                     } else {
                                         TAIGA_GOODBYE
                                     })))
-                                .await?;
+                                    .await?;
                                 break 'outer;
                             },
                             ComponentInteractionDataKind::StringSelect {
@@ -228,9 +228,9 @@ async fn tour_loop(
                                 if let Some(value) = values.first() {
                                     if let Some((description, _)) = available_commands.get(&&value.as_str().to_string()) {
                                         interaction
-                                        .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
-                                        .content(format!("**{}**: {}", value.as_str(), *description))))
-                                        .await?;
+                                            .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                            .content(format!("**{}**: {}", value.as_str(), *description))))
+                                            .await?;
                                     }
                                 }
                                 break 'inner;

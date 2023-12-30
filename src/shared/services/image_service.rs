@@ -1,8 +1,8 @@
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
+use serenity::all::Color;
 use serenity::builder::CreateEmbed;
-use serenity::utils::Color;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Url {

@@ -10,7 +10,7 @@ use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
 use rand::prelude::*;
-use serenity::model::application::interaction::Interaction;
+use serenity::model::application::Interaction;
 use serenity::model::prelude::{Member, Message, Ready};
 use serenity::{async_trait, prelude::*};
 
@@ -24,7 +24,7 @@ pub struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn guild_member_addition(&self, ctx: Context, new_member: Member) {
-        if new_member.guild_id.0 == KOU_SERVER_ID {
+        if new_member.guild_id.get() == KOU_SERVER_ID {
             return;
         }
 
@@ -72,7 +72,7 @@ impl EventHandler for Handler {
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(command) = interaction {
+        if let Interaction::Command(command) = interaction {
             let channel_enabled = {
                 CHANNEL_CONTROL
                     .get()
@@ -81,7 +81,7 @@ impl EventHandler for Handler {
                     .await
                     .enabled_channels
                     .iter()
-                    .any(|channel_id| *channel_id == command.channel_id.0)
+                    .any(|channel_id| *channel_id == command.channel_id.get())
             };
 
             if !channel_enabled
@@ -131,5 +131,5 @@ impl EventHandler for Handler {
 }
 
 pub fn hit_or_miss(probability: i32) -> bool {
-    rand::thread_rng().gen_range(0..100) < probability
+    thread_rng().gen_range(0..100) < probability
 }

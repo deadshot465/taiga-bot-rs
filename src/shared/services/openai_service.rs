@@ -1,7 +1,11 @@
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use async_openai::config::OpenAIConfig;
-use async_openai::types::{ChatCompletionRequestMessage, CreateChatCompletionRequestArgs, Role};
+use async_openai::types::{
+    ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
+    ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
+    CreateChatCompletionRequestArgs, Role,
+};
 use async_openai::Client;
 use once_cell::sync::Lazy;
 use std::clone::Clone;
@@ -29,20 +33,22 @@ pub async fn build_openai_message(prompt: String) -> anyhow::Result<String> {
     let is_kou = KOU.get().copied().unwrap_or(false);
 
     let messages = vec![
-        ChatCompletionRequestMessage {
-            role: Role::System,
+        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
             content: if is_kou {
-                KOU_SYSTEM_PROMPT.into()
+                Some(KOU_SYSTEM_PROMPT.to_string())
             } else {
-                TAIGA_SYSTEM_PROMPT.into()
+                Some(TAIGA_SYSTEM_PROMPT.to_string())
             },
+            role: Role::System,
             name: None,
-        },
-        ChatCompletionRequestMessage {
+        }),
+        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+            content: Some(ChatCompletionRequestUserMessageContent::Text(
+                prompt.to_string(),
+            )),
             role: Role::User,
-            content: prompt,
             name: None,
-        },
+        }),
     ];
 
     let request = CreateChatCompletionRequestArgs::default()

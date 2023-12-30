@@ -6,13 +6,14 @@ use crate::shared::services::ship_service::{
 };
 use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{find_user_in_members, get_author_avatar, get_author_name};
-use serenity::all::{CreateAttachment, CreateMessage};
+use serenity::all::{
+    Color, CreateAttachment, CreateInteractionResponse, CreateInteractionResponseMessage,
+    CreateMessage, EditInteractionResponse,
+};
 use serenity::builder::CreateEmbed;
 use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::model::id::UserId;
-use serenity::model::prelude::User;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -25,9 +26,12 @@ pub fn ship_async(
 
 async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Alright! Hold on..."))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Alright! Hold on..."),
+            ),
+        )
         .await?;
 
     let users = command
@@ -44,9 +48,9 @@ async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         .map(|opt| opt.value)
         .map(|resolved| {
             if let CommandDataOptionValue::User(u) = resolved {
-                u.clone()
+                u
             } else {
-                User::default()
+                UserId::default()
             }
         });
 
@@ -57,9 +61,9 @@ async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         .map(|opt| opt.value)
         .map(|resolved| {
             if let CommandDataOptionValue::User(u) = resolved {
-                u.clone()
+                u
             } else {
-                User::default()
+                UserId::default()
             }
         });
 
@@ -133,9 +137,11 @@ async fn ship(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
                 Err(e) => {
                     tracing::error!("{}", e.to_string());
                     command
-                        .edit_original_interaction_response(&ctx.http, |response| {
-                            response.content(format!("Sorry, an occurred! Error: {}", e))
-                        })
+                        .edit_response(
+                            &ctx.http,
+                            EditInteractionResponse::new()
+                                .content(format!("Sorry, an occurred! Error: {}", e)),
+                        )
                         .await?;
                 }
             }
@@ -166,9 +172,10 @@ async fn send_ship_embed(
     color: Color,
 ) -> anyhow::Result<()> {
     command
-        .edit_original_interaction_response(&ctx.http, |response| {
-            response.content(&ship_score_text)
-        })
+        .edit_response(
+            &ctx.http,
+            EditInteractionResponse::new().content(&ship_score_text),
+        )
         .await?;
     let files = [CreateAttachment::bytes(image, "result.png")];
     command

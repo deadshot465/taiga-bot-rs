@@ -1,5 +1,9 @@
 use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
 
+use serenity::all::{
+    CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
+    GetMessages,
+};
 use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
 use serenity::prelude::*;
 use std::future::Future;
@@ -28,11 +32,13 @@ async fn enable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()>
 
     if check_if_channel_id_exists_in_enabled(channel_id).await {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!("The channel <#{}> is already enabled!", channel_id))
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content(format!("The channel <#{}> is already enabled!", channel_id)),
+                ),
+            )
             .await?;
     } else {
         {
@@ -45,11 +51,13 @@ async fn enable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()>
             channel_control_write_lock.write_channel_control()?;
         }
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!("Successfully enabled channel <#{}>!", channel_id))
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content(format!("Successfully enabled channel <#{}>!", channel_id)),
+                ),
+            )
             .await?;
     }
 
@@ -61,11 +69,13 @@ async fn disable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()
 
     if !check_if_channel_id_exists_in_enabled(channel_id).await {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!("The channel <#{}> is not yet enabled!", channel_id))
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content(format!("The channel <#{}> is not yet enabled!", channel_id)),
+                ),
+            )
             .await?;
     } else {
         {
@@ -84,11 +94,13 @@ async fn disable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()
             channel_control_write_lock.write_channel_control()?;
         }
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!("Successfully disabled channel <#{}>!", channel_id))
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content(format!("Successfully disabled channel <#{}>!", channel_id)),
+                ),
+            )
             .await?;
     }
 
@@ -100,14 +112,15 @@ async fn allow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
 
     if !check_if_channel_id_exists_in_ignored(channel_id).await {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!(
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(format!(
                         "The channel <#{}> is not yet disallowed!",
                         channel_id
-                    ))
-                })
-            })
+                    )),
+                ),
+            )
             .await?;
     } else {
         {
@@ -126,14 +139,15 @@ async fn allow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
             channel_control_write_lock.write_channel_control()?;
         }
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!(
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(format!(
                         "Successfully allowed channel <#{}> for bot responses!",
                         channel_id
-                    ))
-                })
-            })
+                    )),
+                ),
+            )
             .await?;
     }
 
@@ -145,14 +159,15 @@ async fn disallow(ctx: Context, command: CommandInteraction) -> anyhow::Result<(
 
     if check_if_channel_id_exists_in_ignored(channel_id).await {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!(
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(format!(
                         "The channel <#{}> is already disallowed!",
                         channel_id
-                    ))
-                })
-            })
+                    )),
+                ),
+            )
             .await?;
     } else {
         {
@@ -165,14 +180,15 @@ async fn disallow(ctx: Context, command: CommandInteraction) -> anyhow::Result<(
             channel_control_write_lock.write_channel_control()?;
         }
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(format!(
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(format!(
                         "Successfully disallowed channel <#{}> for bot responses!",
                         channel_id
-                    ))
-                })
-            })
+                    )),
+                ),
+            )
             .await?;
     }
 
@@ -181,46 +197,55 @@ async fn disallow(ctx: Context, command: CommandInteraction) -> anyhow::Result<(
 
 async fn purge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Okay. Hold on..."))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Okay. Hold on..."),
+            ),
+        )
         .await?;
 
     let amount = command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.options.get(0))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_u64())
+        .map(|opt| &opt.value)
+        .and_then(|value| value.as_i64())
         .map(|v| if v > 100 { 100 } else { v })
         .unwrap_or(10);
 
-    if let Some(channel) = ctx.cache.guild_channel(command.channel_id) {
+    let guild_channel = ctx
+        .cache
+        .guild_channels(command.guild_id.unwrap_or_default())
+        .and_then(|channels| channels.get(&command.channel_id).cloned());
+    if let Some(channel) = guild_channel {
         let sent_msg = command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response.content("Retrieving messages...")
-            })
+            .edit_response(
+                &ctx.http,
+                EditInteractionResponse::new().content("Retrieving messages..."),
+            )
             .await?;
 
         let messages = channel
-            .messages(&ctx.http, |msg| msg.limit(amount).before(sent_msg.id))
+            .messages(
+                &ctx.http,
+                GetMessages::new().limit(amount as u8).before(sent_msg.id),
+            )
             .await?;
 
         command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response.content(format!(
+            .edit_response(
+                &ctx.http,
+                EditInteractionResponse::new().content(format!(
                     "The last {} messages in this channel will be deleted in 5 seconds.",
                     amount
-                ))
-            })
+                )),
+            )
             .await?;
 
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
         channel.delete_messages(&ctx.http, messages).await?;
-        command
-            .delete_original_interaction_response(&ctx.http)
-            .await?;
+        command.delete_response(&ctx.http).await?;
     }
 
     Ok(())
@@ -231,11 +256,10 @@ fn extract_channel_id(command: &CommandInteraction) -> u64 {
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.options.get(0))
-        .and_then(|opt| opt.resolved.as_ref())
+        .map(|opt| opt.value)
         .map(|resolved| {
-            if let CommandDataOptionValue::Channel(channel) = resolved {
-                channel.id.0
+            if let CommandDataOptionValue::Channel(channel_id) = resolved {
+                channel_id.get()
             } else {
                 0
             }

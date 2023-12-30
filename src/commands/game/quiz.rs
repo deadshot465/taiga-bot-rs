@@ -6,8 +6,8 @@ use chrono::{Duration, Utc};
 use once_cell::sync::OnceCell;
 use rand::prelude::*;
 use serenity::all::{
-    CreateActionRow, CreateInteractionResponseFollowup, CreateSelectMenuKind,
-    CreateSelectMenuOption,
+    CreateActionRow, CreateInteractionResponse, CreateInteractionResponseFollowup,
+    CreateInteractionResponseMessage, CreateSelectMenuKind, CreateSelectMenuOption,
 };
 use serenity::builder::{CreateEmbed, CreateSelectMenu};
 use serenity::collector::MessageCollector;
@@ -15,7 +15,6 @@ use serenity::futures::StreamExt;
 use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::pin::Pin;
@@ -57,11 +56,13 @@ async fn quiz(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
         let ongoing_quizzes_read_lock = ongoing_quizzes.read().await;
         if ongoing_quizzes_read_lock.contains(&command.channel_id.get()) {
             command
-                .create_interaction_response(&ctx.http, |response| {
-                    response.interaction_response_data(|data| {
-                        data.content("A game is already running in this channel!")
-                    })
-                })
+                .create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content("A game is already running in this channel!"),
+                    ),
+                )
                 .await?;
             return Ok(());
         }
@@ -69,11 +70,13 @@ async fn quiz(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
 
     if command.guild_id.is_none() {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("The quiz game can only be started in a guild!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("The quiz game can only be started in a guild!"),
+                ),
+            )
             .await?;
         return Ok(());
     }
@@ -92,11 +95,13 @@ async fn new_game(
 ) -> anyhow::Result<()> {
     let max_rounds = extract_rounds(command);
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.content(format!("Starting a game with {} rounds...", max_rounds))
-            })
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content(format!("Starting a game with {} rounds...", max_rounds)),
+            ),
+        )
         .await?;
 
     if let Ok(players) = join_game(ctx, command, color, is_kou).await {
@@ -160,7 +165,10 @@ async fn join_game(
 
     let embed = build_embed("Minigame Starting!", &description, color, None);
     let sent_msg = command
-        .create_followup_message(&ctx.http, |response| response.add_embed(embed))
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new().add_embed(embed),
+        )
         .await?;
     sent_msg
         .react(&ctx.http, ReactionType::Unicode("🇴".to_string()))
@@ -179,11 +187,14 @@ async fn join_game(
             " or NSFW themes"
         }, user_mentions.join(", "), (joining_end_time - Utc::now()).num_seconds());
 
+        let embed = build_embed("Minigame Starting!", &description, color, None);
+
         let sent_msg = command
-            .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-                let embed = build_embed("Minigame Starting!", &description, color, None);
-                response.set_embeds(vec![embed])
-            })
+            .edit_followup(
+                &ctx.http,
+                sent_msg.id,
+                CreateInteractionResponseFollowup::new().embed(embed),
+            )
             .await?;
 
         let mut reactions_collector = sent_msg
@@ -242,20 +253,23 @@ async fn start_game(
     is_kou: bool,
     sent_msg: &Message,
 ) -> anyhow::Result<()> {
+    let embed = build_embed(
+        "Minigame Started!",
+        "The game has begun!",
+        color,
+        if is_kou {
+            Some("https://cdn.discordapp.com/emojis/705182851754360912.png")
+        } else {
+            Some("https://cdn.discordapp.com/emojis/702210822310723614.png")
+        },
+    );
+
     command
-        .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-            let embed = build_embed(
-                "Minigame Started!",
-                "The game has begun!",
-                color,
-                if is_kou {
-                    Some("https://cdn.discordapp.com/emojis/705182851754360912.png")
-                } else {
-                    Some("https://cdn.discordapp.com/emojis/702210822310723614.png")
-                },
-            );
-            response.set_embeds(vec![embed])
-        })
+        .edit_followup(
+            &ctx.http,
+            sent_msg.id,
+            CreateInteractionResponseFollowup::new().embed(embed),
+        )
         .await?;
     Ok(())
 }
@@ -267,20 +281,23 @@ async fn cancel_game(
     is_kou: bool,
     sent_msg: &Message,
 ) -> anyhow::Result<()> {
+    let embed = build_embed(
+        "Minigame Cancelled!",
+        "Nobody joined...",
+        color,
+        if is_kou {
+            Some("https://cdn.discordapp.com/emojis/736061517534855201.png")
+        } else {
+            Some("https://cdn.discordapp.com/emojis/701226059726585866.png")
+        },
+    );
+
     command
-        .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-            let embed = build_embed(
-                "Minigame Cancelled!",
-                "Nobody joined...",
-                color,
-                if is_kou {
-                    Some("https://cdn.discordapp.com/emojis/736061517534855201.png")
-                } else {
-                    Some("https://cdn.discordapp.com/emojis/701226059726585866.png")
-                },
-            );
-            response.set_embeds(vec![embed])
-        })
+        .edit_followup(
+            &ctx.http,
+            sent_msg.id,
+            CreateInteractionResponseFollowup::new().embed(embed),
+        )
         .await?;
     Ok(())
 }
@@ -356,7 +373,10 @@ async fn build_fill_question(
     collector: &mut MessageCollector,
 ) -> anyhow::Result<()> {
     command
-        .create_followup_message(&ctx.http, |response| response.content(question))
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new().content(question),
+        )
         .await?;
 
     let delay = tokio::time::sleep(std::time::Duration::from_secs(STALE_TIMEOUT));
@@ -365,9 +385,10 @@ async fn build_fill_question(
     loop {
         tokio::select! {
             _ = &mut delay => {
-                command.create_followup_message(&ctx.http, |response| {
-                    response.content("Cancelling stale game...")
-                }).await?;
+                command
+                    .create_followup(&ctx.http, CreateInteractionResponseFollowup::new()
+                    .content("Cancelling stale game..."))
+                    .await?;
                 return Err(anyhow::anyhow!("Game is cancelled."));
             }
             maybe_v = collector.next() => {
@@ -377,9 +398,10 @@ async fn build_fill_question(
                     .any(|s| s == msg.content.to_lowercase()) {
                         let random_response = get_random_response(is_kou);
 
-                        command.create_followup_message(&ctx.http, |response| {
-                            response.content(format!("{} {}", msg.author.mention(), random_response))
-                        }).await?;
+                        command
+                            .create_followup(&ctx.http, CreateInteractionResponseFollowup::new()
+                            .content(format!("{} {}", msg.author.mention(), random_response)))
+                            .await?;
                         let score_entry = score_board.entry(msg.author.id.get()).or_default();
                         *score_entry += 1;
                         return Ok(());
@@ -450,25 +472,29 @@ async fn build_multiple_choice_question(
                 }).await?;
                 return Err(anyhow::anyhow!("Game is cancelled."));
             }
-            maybe_v = collector => {
-                if let Some(interaction) = maybe_v {
-                    if let Some(value) = interaction.data.values.get(0) {
-                        if value.as_str() == answer {
+            maybe_v = collector.next() => {
+                if let Some(ref interaction) = maybe_v {
+                    if let ComponentInteractionDataKind::StringSelect {
+                        values
+                    } = interaction.data.kind.clone() {
+                        let value = values[0].as_str();
+                        if value == answer {
                             let random_response = get_random_response(is_kou);
 
-                            interaction.create_interaction_response(&ctx.http, |response| response
-                                .interaction_response_data(|data| data
-                                    .content(format!("{} {}", interaction.user.mention(), random_response))))
+                            interaction
+                                .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                .content(format!("{} {}", interaction.user.mention(), random_response))))
                                 .await?;
 
-                            let score_entry = score_board.entry(interaction.user.id.0).or_default();
+                            let score_entry = score_board.entry(interaction.user.id.get()).or_default();
                             *score_entry += 1;
-                            command.delete_followup_message(&ctx.http, &sent_msg.id).await?;
+                            command
+                                .delete_followup(&ctx.http, sent_msg.id).await?;
                             return Ok(());
                         } else {
-                            interaction.create_interaction_response(&ctx.http, |response| response
-                                .interaction_response_data(|data| data
-                                    .content(format!("{}, that's not the correct answer!", interaction.user.mention()))))
+                            interaction
+                                .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                .content(format!("{}, that's not the correct answer!", interaction.user.mention()))))
                                 .await?;
                         }
                     }

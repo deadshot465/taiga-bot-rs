@@ -7,9 +7,12 @@ use crate::shared::structs::fun::emote::{Emote, EMOTE_LIST};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use serenity::all::{
+    Color, CreateEmbed, CreateEmbedAuthor, CreateInteractionResponse,
+    CreateInteractionResponseMessage,
+};
 use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -44,12 +47,14 @@ async fn add(ctx: Context, command: CommandInteraction, is_kou: bool) -> anyhow:
     let emote_name = extract_argument(&command, 0).to_lowercase();
 
     if !NAME_REGEX.is_match(&emote_name) {
-        command.create_interaction_response(&ctx.http, |response| response
-            .interaction_response_data(|data| data.content(if is_kou {
-                "I'm not really good at languages...Could you pick another name, please?... <:KouConcern:736062067299188817>"
-            } else {
-                "Well I *can* do it if you really want such a weird name, but no, I don't *want* to do."
-            }))).await?;
+        command
+            .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                .content(if is_kou {
+                    "I'm not really good at languages...Could you pick another name, please?... <:KouConcern:736062067299188817>"
+                } else {
+                    "Well I *can* do it if you really want such a weird name, but no, I don't *want* to do."
+                })))
+            .await?;
         return Ok(());
     }
 
@@ -64,11 +69,13 @@ async fn add(ctx: Context, command: CommandInteraction, is_kou: bool) -> anyhow:
 
     if emote_exists {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("The emote you specified already existed!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("The emote you specified already existed!"),
+                ),
+            )
             .await?;
         return Ok(());
     }
@@ -77,15 +84,16 @@ async fn add(ctx: Context, command: CommandInteraction, is_kou: bool) -> anyhow:
 
     if !EMOTE_REGEX.is_match(&emote_string) {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content(if is_kou {
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(if is_kou {
                         "It's not a valid emote, I think...?"
                     } else {
                         "Obviously this is not a correct or valid emote, you dummy..."
-                    })
-                })
-            })
+                    }),
+                ),
+            )
             .await?;
         return Ok(());
     }
@@ -117,9 +125,12 @@ async fn add(ctx: Context, command: CommandInteraction, is_kou: bool) -> anyhow:
     }
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Successfully added the emote!"))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Successfully added the emote!"),
+            ),
+        )
         .await?;
 
     Ok(())
@@ -137,14 +148,16 @@ async fn list(ctx: Context, command: CommandInteraction, color: Color) -> anyhow
             .join(", ")
     };
 
-    let author_name = get_author_name(&command.user, &command.member);
+    let member = command.member.clone().map(|m| *m);
+    let author_name = get_author_name(&command.user, &member);
     let author_avatar_url = get_author_avatar(&command.user);
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.embed(|embed| {
-                    embed
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().embed(
+                    CreateEmbed::new()
                         .description(format!(
                             "The following is a list of currently registered emotes:\n\n{}",
                             if emote_names.chars().count() > 1990 {
@@ -153,13 +166,13 @@ async fn list(ctx: Context, command: CommandInteraction, color: Color) -> anyhow
                                 &emote_names
                             }
                         ))
-                        .author(|a| a.name(&author_name).icon_url(&author_avatar_url))
+                        .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_avatar_url))
                         .title("Registered Emotes")
                         .color(color)
-                        .thumbnail(SHIBA_KEK_ICON)
-                })
-            })
-        })
+                        .thumbnail(SHIBA_KEK_ICON),
+                ),
+            ),
+        )
         .await?;
 
     Ok(())
@@ -190,19 +203,23 @@ async fn remove(ctx: Context, command: CommandInteraction) -> anyhow::Result<()>
         }
 
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("Successfully removed the emote!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Successfully removed the emote!"),
+                ),
+            )
             .await?;
     } else {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("The emote you specified is not registered!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("The emote you specified is not registered!"),
+                ),
+            )
             .await?;
     }
 
@@ -213,10 +230,9 @@ fn extract_argument(command: &CommandInteraction, index: usize) -> String {
     command
         .data
         .options
-        .get(0)
-        .and_then(|opt| opt.options.get(index))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_str())
+        .get(index)
+        .map(|opt| opt.value)
+        .and_then(|opt| opt.as_str())
         .map(ToString::to_string)
         .unwrap_or_default()
 }
