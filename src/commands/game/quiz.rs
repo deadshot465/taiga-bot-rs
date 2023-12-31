@@ -197,16 +197,14 @@ async fn join_game(
             )
             .await?;
 
-        let mut reactions_collector = sent_msg
+        let reactions_collector = sent_msg
             .await_reactions(ctx)
             .timeout(std::time::Duration::from_secs(2));
 
-        while let Some(reaction) = reactions_collector.next().await {
-            let emoji = &reaction.as_inner_ref().emoji;
-            if emoji.as_data().as_str() == "🇴" {
+        if let Some(reaction) = reactions_collector.next().await {
+            if reaction.emoji.as_data() == "🇴" {
                 users = reaction
-                    .as_inner_ref()
-                    .users(&ctx.http, emoji.clone(), None::<u8>, None::<UserId>)
+                    .users(&ctx.http, reaction.emoji.clone(), None::<u8>, None::<UserId>)
                     .await
                     .unwrap_or_default();
                 users = users.into_iter().filter(|u| !u.bot).collect::<Vec<_>>();
@@ -313,7 +311,7 @@ async fn progress_game(
         .map(|id| (*id, 0_u8))
         .collect::<HashMap<_, _>>();
     let cloned_player_ids = player_ids.clone();
-    let mut collector = MessageCollector::new(ctx)
+    let collector = MessageCollector::new(ctx)
         .channel_id(command.channel_id)
         .guild_id(command.guild_id.unwrap_or_default())
         .filter(move |m| cloned_player_ids.contains(&m.author.id.get()));
@@ -336,7 +334,7 @@ async fn progress_game(
                 &mut score_board,
                 &question.question,
                 &question.answers,
-                &mut collector,
+                collector,
             )
             .await;
         } else if question.question_type.as_str() == "MULTIPLE" {
@@ -368,7 +366,7 @@ async fn build_fill_question(
     score_board: &mut HashMap<u64, u8>,
     question: &str,
     answers: &[String],
-    collector: &mut MessageCollector,
+    collector: MessageCollector,
 ) -> anyhow::Result<()> {
     command
         .create_followup(
