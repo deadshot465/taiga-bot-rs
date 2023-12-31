@@ -1,8 +1,12 @@
 use crate::shared::services::HTTP_CLIENT;
 use crate::shared::structs::information::meal::MealData;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::all::{
+    Color, CreateEmbedFooter, CreateInteractionResponse, CreateInteractionResponseMessage,
+    EditInteractionResponse,
+};
+use serenity::builder::CreateEmbed;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::Context;
-use serenity::utils::Color;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -10,25 +14,29 @@ const ENDPOINT: &str = "http://www.themealdb.com/api/json/v1/1/random.php";
 
 pub fn meal_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(meal(ctx, command))
 }
 
-async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn meal(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Alright! One moment..."))
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new().content("Alright! One moment..."),
+            ),
+        )
         .await?;
 
     let meal_data: MealData = HTTP_CLIENT.get(ENDPOINT).send().await?.json().await?;
 
     if let Some(meal_data) = meal_data.meals.get(0) {
         command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response.content("").embed(|embed| {
-                    embed
+            .edit_response(
+                &ctx.http,
+                EditInteractionResponse::new().content("").embed(
+                    CreateEmbed::new()
                         .color(Color::new(0xfd9b3b))
                         .description(if meal_data.str_instructions.len() >= 1900 {
                             &meal_data.str_instructions[0..1900]
@@ -41,16 +49,19 @@ async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
                         .field("Category", &meal_data.str_category, true)
                         .field("Area", &meal_data.str_area, true)
                         .field("YouTube Video", &meal_data.str_youtube, true)
-                        .footer(|f| f.text("Bon Appétit! Powered by TheMealDB.com."))
-                })
-            })
+                        .footer(CreateEmbedFooter::new(
+                            "Bon Appétit! Powered by TheMealDB.com.",
+                        )),
+                ),
+            )
             .await?;
     } else {
         command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response
-                    .content("Sorry, I can't seem to find any recipe for you for the time being!")
-            })
+            .edit_response(
+                &ctx.http,
+                EditInteractionResponse::new()
+                    .content("Sorry, I can't seem to find any recipe for you for the time being!"),
+            )
             .await?;
     }
 

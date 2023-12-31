@@ -1,11 +1,11 @@
 use crate::PersistenceService;
 use chrono::{Duration, Utc};
+use serenity::all::Color;
 use serenity::collector::MessageCollectorBuilder;
 use serenity::framework::standard::{macros::command, CommandError, CommandResult};
 use serenity::futures::StreamExt;
 use serenity::model::{channel::Message, prelude::*};
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::sync::Arc;
 
 enum TicTacToeResult {

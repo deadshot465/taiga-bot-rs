@@ -1,8 +1,8 @@
 use crate::shared::structs::config::configuration::CONFIGURATION;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
+use serenity::all::{Color, CreateEmbedAuthor};
 use serenity::builder::CreateEmbed;
-use serenity::utils::Color;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Url {
@@ -128,14 +128,13 @@ pub async fn get_normal_image(
             "https://unsplash.com/?utm_source=Taiga&utm_medium=referral"
         );
 
-        let mut embed = CreateEmbed::default();
-        embed
+        let embed = CreateEmbed::new()
             .title("Download Link")
             .description(description)
             .url(&query.links.download)
             .color(color)
             .image(&query.urls.regular)
-            .author(|author| author.name(author_name).icon_url(author_avatar_url));
+            .author(CreateEmbedAuthor::new(author_name).icon_url(author_avatar_url));
         Ok(embed)
     } else {
         Err(anyhow::anyhow!("Failed to query an image."))
@@ -170,7 +169,7 @@ pub async fn get_cat_image(
             color,
         )
         .await?;
-        result.description(description);
+        result = result.description(description);
         Ok(result)
     } else {
         // Substitute spaces with plus signs for URL
@@ -209,7 +208,7 @@ pub async fn get_cat_image(
                 color,
             )
             .await?;
-            result.description(description);
+            result = result.description(description);
             Ok(result)
         } else {
             // If there are no results, just return a random cat.
@@ -228,7 +227,7 @@ pub async fn get_cat_image(
                 color,
             )
             .await?;
-            result.description(description);
+            result = result.description(description);
             Ok(result)
         }
     }
@@ -258,7 +257,7 @@ pub async fn get_dog_image(
 
         let mut result =
             fetch_dog_image(DOG_API_URL, client, author_name, author_avatar_url, color).await?;
-        result.description(description);
+        result = result.description(description);
         Ok(result)
     } else {
         // Try searching for the breed.
@@ -272,7 +271,7 @@ pub async fn get_dog_image(
                 "Here is your result for **{}**!\nPhoto by [Dog API]({})",
                 keyword, "https://dog.ceo/dog-api/"
             );
-            result.description(description);
+            result = result.description(description);
             Ok(result)
         } else {
             // If there are no results, just return a random dog.
@@ -283,7 +282,7 @@ pub async fn get_dog_image(
             );
             let mut result =
                 fetch_dog_image(DOG_API_URL, client, author_name, author_avatar_url, color).await?;
-            result.description(description);
+            result = result.description(description);
             Ok(result)
         }
     }
@@ -301,13 +300,12 @@ async fn fetch_cat_image(
 
     let search_result: Vec<CatSearchResult> = response.json().await?;
     if let Some(result) = search_result.get(0) {
-        let mut embed = CreateEmbed::default();
-        embed
+        let embed = CreateEmbed::new()
             .title("Download Link")
             .url(&result.url)
             .color(color)
             .image(&result.url)
-            .author(|author| author.name(author_name).icon_url(author_avatar_url));
+            .author(CreateEmbedAuthor::new(author_name).icon_url(author_avatar_url));
         Ok(embed)
     } else {
         Err(anyhow::anyhow!("Failed to get a cat image."))
@@ -325,13 +323,12 @@ async fn fetch_dog_image(
     let search_result: DogSearchResult = response.json().await?;
 
     if search_result.status.as_str() != "error" {
-        let mut embed = CreateEmbed::default();
-        embed
+        let embed = CreateEmbed::new()
             .title("Download Link")
             .url(&search_result.message)
             .color(color)
             .image(&search_result.message)
-            .author(|author| author.name(author_name).icon_url(author_avatar_url));
+            .author(CreateEmbedAuthor::new(author_name).icon_url(author_avatar_url));
         Ok(embed)
     } else {
         Err(anyhow::anyhow!("Failed to get a dog image."))

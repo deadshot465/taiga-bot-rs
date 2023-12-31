@@ -6,8 +6,8 @@ use crate::{
 use chrono::{Duration, Local, Utc};
 use rand::{prelude::*, thread_rng, Rng};
 use regex::Regex;
+use serenity::all::Color;
 use serenity::framework::standard::DispatchError;
-use serenity::utils::Color;
 use serenity::{async_trait, framework::standard::macros::hook, model::prelude::*, prelude::*};
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};

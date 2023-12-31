@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serenity::utils::Color;
+use serenity::all::Color;
 
 pub const ASSET_DIRECTORY: &str = "assets";
 pub const CONFIG_DIRECTORY: &str = "config";

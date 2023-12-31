@@ -51,7 +51,7 @@ pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::R
     if !replied {
         let author_id_skippable = CONFIGURATION
             .get()
-            .map(|c| c.skip_user_ids.contains(&new_message.author.id.0))
+            .map(|c| c.skip_user_ids.contains(&new_message.author.id.get()))
             .unwrap_or(false);
 
         let random_common_response = if reply_with_openai && !author_id_skippable {

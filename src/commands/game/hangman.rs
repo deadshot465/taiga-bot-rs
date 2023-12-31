@@ -1,11 +1,15 @@
 use crate::shared::structs::game::hangman_question::HANGMAN_QUESTIONS;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
+use serenity::all::{
+    Color, CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseFollowup, CreateInteractionResponseMessage, EditInteractionResponse,
+};
+use serenity::builder::CreateEmbed;
 use serenity::futures::prelude::future::BoxFuture;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::User;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use serenity::FutureExt;
 use std::future::Future;
 use std::pin::Pin;
@@ -23,7 +27,7 @@ const LOSE_MESSAGE: &str = "you lose!";
 #[derive(Clone)]
 struct HangmanData {
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
     answer: String,
     author_name: String,
     author_avatar_url: String,
@@ -42,24 +46,23 @@ enum HangmanResult {
 
 pub fn hangman_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(hangman(ctx, command))
 }
 
-async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let author_name = get_author_name(&command.user, &command.member);
+async fn hangman(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
+    let member = command.member.clone().map(|m| *m.clone());
+    let author_name = get_author_name(&command.user, &member);
     let author_avatar_url = get_author_avatar(&command.user);
 
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.content(format!(
-                    "Hello {}! We are going to play hangman!",
-                    &author_name
-                ))
-            })
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(CreateInteractionResponseMessage::new().content(
+                format!("Hello {}! We are going to play hangman!", &author_name),
+            )),
+        )
         .await?;
 
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -73,12 +76,13 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
     };
 
     command
-        .edit_original_interaction_response(&ctx.http, |response| {
-            response.content(format!(
+        .edit_response(
+            &ctx.http,
+            EditInteractionResponse::new().content(format!(
                 "There are {} letters in this word.",
                 answer.chars().count()
-            ))
-        })
+            )),
+        )
         .await?;
 
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -86,17 +90,18 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
     let word: String = answer.chars().map(|_| "\\_").collect::<Vec<_>>().join(" ");
 
     command
-        .edit_original_interaction_response(&ctx.http, |response| {
-            response.content("").embed(|embed| {
-                embed
-                    .author(|author| author.name(&author_name).icon_url(&author_avatar_url))
+        .edit_response(
+            &ctx.http,
+            EditInteractionResponse::new().embed(
+                CreateEmbed::new()
+                    .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_avatar_url))
                     .description(format!("You have {} attempts left.", DEFAULT_MAX_ATTEMPTS))
                     .color(HANGMAN_COLOR)
                     .title(&word)
                     .thumbnail(HANGMAN_THUMBNAIL)
-                    .footer(|f| f.text(HANGMAN_FOOTER))
-            })
-        })
+                    .footer(CreateEmbedFooter::new(HANGMAN_FOOTER)),
+            ),
+        )
         .await?;
 
     let user = command.user.clone();
@@ -118,14 +123,15 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                 HangmanResult::Win => {
                     if let Err(e) = hangman_data_clone
                         .command
-                        .create_followup_message(&hangman_data_clone.ctx.http, |response| {
-                            response.content(format!(
+                        .create_followup(
+                            &hangman_data_clone.ctx.http,
+                            CreateInteractionResponseFollowup::new().content(format!(
                                 "{}, {}\nThe answer is **{}**!",
                                 &hangman_data_clone.author_name,
                                 WIN_MESSAGE,
                                 &hangman_data_clone.answer
-                            ))
-                        })
+                            )),
+                        )
                         .await
                     {
                         tracing::error!("{}", e);
@@ -134,14 +140,15 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                 HangmanResult::Lose => {
                     if let Err(e) = hangman_data_clone
                         .command
-                        .create_followup_message(&hangman_data_clone.ctx.http, |response| {
-                            response.content(format!(
+                        .create_followup(
+                            &hangman_data_clone.ctx.http,
+                            CreateInteractionResponseFollowup::new().content(format!(
                                 "{}, {}\nThe answer is **{}**!",
                                 &hangman_data_clone.author_name,
                                 LOSE_MESSAGE,
                                 &hangman_data_clone.answer
-                            ))
-                        })
+                            )),
+                        )
                         .await
                     {
                         tracing::error!("{}", e);
@@ -150,12 +157,13 @@ async fn hangman(ctx: Context, command: ApplicationCommandInteraction) -> anyhow
                 HangmanResult::Aborted => {
                     if let Err(e) = hangman_data_clone
                         .command
-                        .create_followup_message(&hangman_data_clone.ctx.http, |response| {
-                            response.content(format!(
+                        .create_followup(
+                            &hangman_data_clone.ctx.http,
+                            CreateInteractionResponseFollowup::new().content(format!(
                                 "No input from {} is provided. Game aborted.",
                                 &hangman_data_clone.author_name
-                            ))
-                        })
+                            )),
+                        )
                         .await
                     {
                         tracing::error!("{}", e);
@@ -179,9 +187,11 @@ fn hangman_loop(
 
         let sent_msg = hangman_data
             .command
-            .create_followup_message(&hangman_data.ctx.http, |response| {
-                response.content(format!("{}, {}", &hangman_data.author_name, PROMPT_MESSAGE))
-            })
+            .create_followup(
+                &hangman_data.ctx.http,
+                CreateInteractionResponseFollowup::new()
+                    .content(format!("{}, {}", &hangman_data.author_name, PROMPT_MESSAGE)),
+            )
             .await?;
 
         let user_guess: char;
@@ -202,28 +212,32 @@ fn hangman_loop(
                     user_reply.delete(&hangman_data.ctx.http).await?;
                     hangman_data
                         .command
-                        .edit_followup_message(&hangman_data.ctx.http, sent_msg.id, |response| {
-                            response.content(format!(
+                        .edit_followup(
+                            &hangman_data.ctx.http,
+                            sent_msg.id,
+                            CreateInteractionResponseFollowup::new().content(format!(
                                 "{}, {}",
                                 &hangman_data.author_name, INPUT_ERROR_MESSAGE
-                            ))
-                        })
+                            )),
+                        )
                         .await?;
                     tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
                     hangman_data
                         .command
-                        .edit_followup_message(&hangman_data.ctx.http, sent_msg.id, |response| {
-                            response.content(format!(
+                        .edit_followup(
+                            &hangman_data.ctx.http,
+                            sent_msg.id,
+                            CreateInteractionResponseFollowup::new().content(format!(
                                 "{}, {}",
                                 &hangman_data.author_name, PROMPT_MESSAGE
-                            ))
-                        })
+                            )),
+                        )
                         .await?;
                 }
             } else {
                 hangman_data
                     .command
-                    .delete_followup_message(&hangman_data.ctx.http, sent_msg.id)
+                    .delete_followup(&hangman_data.ctx.http, sent_msg.id)
                     .await?;
                 return Ok(HangmanResult::Aborted);
             }
@@ -262,14 +276,15 @@ fn hangman_loop(
 
         hangman_data
             .command
-            .edit_followup_message(&hangman_data.ctx.http, sent_msg.id, |response| {
-                response.content("").embed(|embed| {
-                    embed
-                        .author(|author| {
-                            author
-                                .name(&hangman_data.author_name)
-                                .icon_url(&hangman_data.author_avatar_url)
-                        })
+            .edit_followup(
+                &hangman_data.ctx.http,
+                sent_msg.id,
+                CreateInteractionResponseFollowup::new().content("").embed(
+                    CreateEmbed::new()
+                        .author(
+                            CreateEmbedAuthor::new(&hangman_data.author_name)
+                                .icon_url(&hangman_data.author_avatar_url),
+                        )
                         .description(format!(
                             "You have {} attempts left.\nYour previous guesses: {}.",
                             hangman_data.attempts_remained, previous_guesses
@@ -277,9 +292,9 @@ fn hangman_loop(
                         .color(HANGMAN_COLOR)
                         .title(word)
                         .thumbnail(HANGMAN_THUMBNAIL)
-                        .footer(|f| f.text(HANGMAN_FOOTER))
-                })
-            })
+                        .footer(CreateEmbedFooter::new(HANGMAN_FOOTER)),
+                ),
+            )
             .await?;
 
         if hangman_data.failures == 0 {

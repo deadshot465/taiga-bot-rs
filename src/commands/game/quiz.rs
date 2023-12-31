@@ -5,13 +5,16 @@ use crate::shared::structs::game::quiz_question::QUIZ_QUESTIONS;
 use chrono::{Duration, Utc};
 use once_cell::sync::OnceCell;
 use rand::prelude::*;
-use serenity::builder::CreateEmbed;
-use serenity::collector::{MessageCollector, MessageCollectorBuilder};
+use serenity::all::{
+    CreateActionRow, CreateInteractionResponse, CreateInteractionResponseFollowup,
+    CreateInteractionResponseMessage, CreateSelectMenuKind, CreateSelectMenuOption,
+};
+use serenity::builder::{CreateEmbed, CreateSelectMenu};
+use serenity::collector::MessageCollector;
 use serenity::futures::StreamExt;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use serenity::utils::Color;
 use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::pin::Pin;
@@ -39,25 +42,27 @@ static ONGOING_QUIZZES: OnceCell<RwLock<HashSet<u64>>> = OnceCell::new();
 
 pub fn quiz_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(quiz(ctx, command))
 }
 
-async fn quiz(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn quiz(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let is_kou = KOU.get().copied().unwrap_or(false);
 
     {
         let ongoing_quizzes = ONGOING_QUIZZES.get_or_init(|| RwLock::new(HashSet::new()));
 
         let ongoing_quizzes_read_lock = ongoing_quizzes.read().await;
-        if ongoing_quizzes_read_lock.contains(&command.channel_id.0) {
+        if ongoing_quizzes_read_lock.contains(&command.channel_id.get()) {
             command
-                .create_interaction_response(&ctx.http, |response| {
-                    response.interaction_response_data(|data| {
-                        data.content("A game is already running in this channel!")
-                    })
-                })
+                .create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content("A game is already running in this channel!"),
+                    ),
+                )
                 .await?;
             return Ok(());
         }
@@ -65,11 +70,13 @@ async fn quiz(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
     if command.guild_id.is_none() {
         command
-            .create_interaction_response(&ctx.http, |response| {
-                response.interaction_response_data(|data| {
-                    data.content("The quiz game can only be started in a guild!")
-                })
-            })
+            .create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("The quiz game can only be started in a guild!"),
+                ),
+            )
             .await?;
         return Ok(());
     }
@@ -82,17 +89,19 @@ async fn quiz(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
 
 async fn new_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
 ) -> anyhow::Result<()> {
     let max_rounds = extract_rounds(command);
     command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| {
-                data.content(format!("Starting a game with {} rounds...", max_rounds))
-            })
-        })
+        .create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content(format!("Starting a game with {} rounds...", max_rounds)),
+            ),
+        )
         .await?;
 
     if let Ok(players) = join_game(ctx, command, color, is_kou).await {
@@ -116,14 +125,13 @@ async fn new_game(
     Ok(())
 }
 
-fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
+fn extract_rounds(command: &CommandInteraction) -> u64 {
     command
         .data
         .options
         .get(0)
-        .and_then(|opt| opt.options.get(0))
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_u64())
+        .and_then(|opt| opt.value.as_i64())
+        .and_then(|value| u64::from_i64(value))
         .map(|rounds| {
             if !(2..=10).contains(&rounds) {
                 DEFAULT_ROUNDS
@@ -136,7 +144,7 @@ fn extract_rounds(command: &ApplicationCommandInteraction) -> u64 {
 
 async fn join_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
 ) -> anyhow::Result<Vec<User>> {
@@ -145,7 +153,7 @@ async fn join_game(
             .get()
             .expect("Failed to get ongoing quizzes.");
         let mut ongoing_quizzes_write_lock = ongoing_quizzes.write().await;
-        ongoing_quizzes_write_lock.insert(command.channel_id.0);
+        ongoing_quizzes_write_lock.insert(command.channel_id.get());
     }
 
     let joining_end_time = Utc::now() + Duration::seconds(10);
@@ -157,7 +165,10 @@ async fn join_game(
 
     let embed = build_embed("Minigame Starting!", &description, color, None);
     let sent_msg = command
-        .create_followup_message(&ctx.http, |response| response.add_embed(embed))
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new().add_embed(embed),
+        )
         .await?;
     sent_msg
         .react(&ctx.http, ReactionType::Unicode("🇴".to_string()))
@@ -176,25 +187,24 @@ async fn join_game(
             " or NSFW themes"
         }, user_mentions.join(", "), (joining_end_time - Utc::now()).num_seconds());
 
+        let embed = build_embed("Minigame Starting!", &description, color, None);
+
         let sent_msg = command
-            .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-                let embed = build_embed("Minigame Starting!", &description, color, None);
-                response.set_embeds(vec![embed])
-            })
+            .edit_followup(
+                &ctx.http,
+                sent_msg.id,
+                CreateInteractionResponseFollowup::new().embed(embed),
+            )
             .await?;
 
-        let mut reactions_collector = sent_msg
+        let reactions_collector = sent_msg
             .await_reactions(ctx)
-            .timeout(std::time::Duration::from_secs(2))
-            .removed(true)
-            .build();
+            .timeout(std::time::Duration::from_secs(2));
 
-        while let Some(reaction) = reactions_collector.next().await {
-            let emoji = &reaction.as_inner_ref().emoji;
-            if emoji.as_data().as_str() == "🇴" {
+        if let Some(reaction) = reactions_collector.next().await {
+            if reaction.emoji.as_data() == "🇴" {
                 users = reaction
-                    .as_inner_ref()
-                    .users(&ctx.http, emoji.clone(), None::<u8>, None::<UserId>)
+                    .users(&ctx.http, reaction.emoji.clone(), None::<u8>, None::<UserId>)
                     .await
                     .unwrap_or_default();
                 users = users.into_iter().filter(|u| !u.bot).collect::<Vec<_>>();
@@ -221,85 +231,93 @@ fn build_embed(
     color: Color,
     thumbnail: Option<&str>,
 ) -> CreateEmbed {
-    let mut embed = CreateEmbed::default();
-    embed.title(title).color(color).description(description);
+    let embed = CreateEmbed::new()
+        .title(title)
+        .color(color)
+        .description(description);
     if let Some(t) = thumbnail {
-        embed.thumbnail(t);
+        embed.thumbnail(t)
+    } else {
+        embed
     }
-    embed
 }
 
 async fn start_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     sent_msg: &Message,
 ) -> anyhow::Result<()> {
+    let embed = build_embed(
+        "Minigame Started!",
+        "The game has begun!",
+        color,
+        if is_kou {
+            Some("https://cdn.discordapp.com/emojis/705182851754360912.png")
+        } else {
+            Some("https://cdn.discordapp.com/emojis/702210822310723614.png")
+        },
+    );
+
     command
-        .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-            let embed = build_embed(
-                "Minigame Started!",
-                "The game has begun!",
-                color,
-                if is_kou {
-                    Some("https://cdn.discordapp.com/emojis/705182851754360912.png")
-                } else {
-                    Some("https://cdn.discordapp.com/emojis/702210822310723614.png")
-                },
-            );
-            response.set_embeds(vec![embed])
-        })
+        .edit_followup(
+            &ctx.http,
+            sent_msg.id,
+            CreateInteractionResponseFollowup::new().embed(embed),
+        )
         .await?;
     Ok(())
 }
 
 async fn cancel_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     sent_msg: &Message,
 ) -> anyhow::Result<()> {
+    let embed = build_embed(
+        "Minigame Cancelled!",
+        "Nobody joined...",
+        color,
+        if is_kou {
+            Some("https://cdn.discordapp.com/emojis/736061517534855201.png")
+        } else {
+            Some("https://cdn.discordapp.com/emojis/701226059726585866.png")
+        },
+    );
+
     command
-        .edit_followup_message(&ctx.http, &sent_msg.id, |response| {
-            let embed = build_embed(
-                "Minigame Cancelled!",
-                "Nobody joined...",
-                color,
-                if is_kou {
-                    Some("https://cdn.discordapp.com/emojis/736061517534855201.png")
-                } else {
-                    Some("https://cdn.discordapp.com/emojis/701226059726585866.png")
-                },
-            );
-            response.set_embeds(vec![embed])
-        })
+        .edit_followup(
+            &ctx.http,
+            sent_msg.id,
+            CreateInteractionResponseFollowup::new().embed(embed),
+        )
         .await?;
     Ok(())
 }
 
 async fn progress_game(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     players: &[User],
     max_rounds: u64,
 ) -> anyhow::Result<HashMap<u64, u8>> {
-    let player_ids = players.iter().map(|u| u.id.0).collect::<Vec<_>>();
+    let player_ids = players.iter().map(|u| u.id.get()).collect::<Vec<_>>();
     let mut score_board = player_ids
         .iter()
         .map(|id| (*id, 0_u8))
         .collect::<HashMap<_, _>>();
     let cloned_player_ids = player_ids.clone();
-    let mut collector = MessageCollectorBuilder::new(ctx)
-        .channel_id(command.channel_id.0)
-        .guild_id(command.guild_id.unwrap_or_default().0)
-        .filter(move |m| cloned_player_ids.contains(&m.author.id.0))
-        .build();
+    let collector = MessageCollector::new(ctx)
+        .channel_id(command.channel_id)
+        .guild_id(command.guild_id.unwrap_or_default())
+        .filter(move |m| cloned_player_ids.contains(&m.author.id.get()));
 
     let quiz_questions = {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         QUIZ_QUESTIONS
             .choose_multiple(&mut rng, max_rounds as usize)
             .zip(1..=max_rounds)
@@ -316,7 +334,7 @@ async fn progress_game(
                 &mut score_board,
                 &question.question,
                 &question.answers,
-                &mut collector,
+                collector,
             )
             .await;
         } else if question.question_type.as_str() == "MULTIPLE" {
@@ -343,15 +361,18 @@ async fn progress_game(
 
 async fn build_fill_question(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     score_board: &mut HashMap<u64, u8>,
     question: &str,
     answers: &[String],
-    collector: &mut MessageCollector,
+    collector: MessageCollector,
 ) -> anyhow::Result<()> {
     command
-        .create_followup_message(&ctx.http, |response| response.content(question))
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new().content(question),
+        )
         .await?;
 
     let delay = tokio::time::sleep(std::time::Duration::from_secs(STALE_TIMEOUT));
@@ -360,22 +381,24 @@ async fn build_fill_question(
     loop {
         tokio::select! {
             _ = &mut delay => {
-                command.create_followup_message(&ctx.http, |response| {
-                    response.content("Cancelling stale game...")
-                }).await?;
+                command
+                    .create_followup(&ctx.http, CreateInteractionResponseFollowup::new()
+                    .content("Cancelling stale game..."))
+                    .await?;
                 return Err(anyhow::anyhow!("Game is cancelled."));
             }
             maybe_v = collector.next() => {
-                if let Some(msg) = maybe_v {
+                if let Some(ref msg) = maybe_v {
                     if answers.iter()
                     .map(|s| s.to_lowercase())
                     .any(|s| s == msg.content.to_lowercase()) {
                         let random_response = get_random_response(is_kou);
 
-                        command.create_followup_message(&ctx.http, |response| {
-                            response.content(format!("{} {}", msg.author.mention(), random_response))
-                        }).await?;
-                        let score_entry = score_board.entry(msg.author.id.0).or_default();
+                        command
+                            .create_followup(&ctx.http, CreateInteractionResponseFollowup::new()
+                            .content(format!("{} {}", msg.author.mention(), random_response)))
+                            .await?;
+                        let score_entry = score_board.entry(msg.author.id.get()).or_default();
                         *score_entry += 1;
                         return Ok(());
                     }
@@ -387,7 +410,7 @@ async fn build_fill_question(
 
 async fn build_multiple_choice_question(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     is_kou: bool,
     score_board: &mut HashMap<u64, u8>,
     question: &str,
@@ -398,31 +421,33 @@ async fn build_multiple_choice_question(
     let mut shuffled_answers = wrong_answers.to_vec();
     shuffled_answers.push(answer.into());
     {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         shuffled_answers.shuffle(&mut rng);
     }
 
+    let answer_options = shuffled_answers
+        .into_iter()
+        .enumerate()
+        .map(|(no, choice)| CreateSelectMenuOption::new(format!("{}. {}", no + 1, choice), choice))
+        .collect::<Vec<_>>();
+
     let sent_msg = command
-        .create_followup_message(&ctx.http, |response| {
-            response.content(question).components(|component| {
-                component.create_action_row(|row| {
-                    row.create_select_menu(|menu| {
-                        menu.min_values(1)
-                            .max_values(1)
-                            .placeholder("Pick an answer!")
-                            .custom_id("multiple_choice")
-                            .options(|opts| {
-                                for (no, choice) in shuffled_answers.iter().enumerate() {
-                                    opts.create_option(|opt| {
-                                        opt.label(format!("{}. {}", no + 1, choice)).value(choice)
-                                    });
-                                }
-                                opts
-                            })
-                    })
-                })
-            })
-        })
+        .create_followup(
+            &ctx.http,
+            CreateInteractionResponseFollowup::new()
+                .content(question)
+                .components(vec![CreateActionRow::SelectMenu(
+                    CreateSelectMenu::new(
+                        "multiple_choice",
+                        CreateSelectMenuKind::String {
+                            options: answer_options,
+                        },
+                    )
+                    .min_values(1)
+                    .max_values(1)
+                    .placeholder("Pick an answer!"),
+                )]),
+        )
         .await?;
 
     let delay = tokio::time::sleep(std::time::Duration::from_secs(STALE_TIMEOUT));
@@ -432,9 +457,9 @@ async fn build_multiple_choice_question(
         let cloned_player_ids = player_ids.to_vec();
         let collector = sent_msg
             .await_component_interaction(ctx)
-            .channel_id(command.channel_id.0)
-            .guild_id(command.guild_id.unwrap_or_default().0)
-            .filter(move |interaction| cloned_player_ids.contains(&interaction.user.id.0));
+            .channel_id(command.channel_id)
+            .guild_id(command.guild_id.unwrap_or_default())
+            .filter(move |interaction| cloned_player_ids.contains(&interaction.user.id.get()));
 
         tokio::select! {
             _ = &mut delay => {
@@ -443,25 +468,29 @@ async fn build_multiple_choice_question(
                 }).await?;
                 return Err(anyhow::anyhow!("Game is cancelled."));
             }
-            maybe_v = collector => {
-                if let Some(interaction) = maybe_v {
-                    if let Some(value) = interaction.data.values.get(0) {
-                        if value.as_str() == answer {
+            maybe_v = collector.next() => {
+                if let Some(ref interaction) = maybe_v {
+                    if let ComponentInteractionDataKind::StringSelect {
+                        values
+                    } = interaction.data.kind.clone() {
+                        let value = values[0].as_str();
+                        if value == answer {
                             let random_response = get_random_response(is_kou);
 
-                            interaction.create_interaction_response(&ctx.http, |response| response
-                                .interaction_response_data(|data| data
-                                    .content(format!("{} {}", interaction.user.mention(), random_response))))
+                            interaction
+                                .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                .content(format!("{} {}", interaction.user.mention(), random_response))))
                                 .await?;
 
-                            let score_entry = score_board.entry(interaction.user.id.0).or_default();
+                            let score_entry = score_board.entry(interaction.user.id.get()).or_default();
                             *score_entry += 1;
-                            command.delete_followup_message(&ctx.http, &sent_msg.id).await?;
+                            command
+                                .delete_followup(&ctx.http, sent_msg.id).await?;
                             return Ok(());
                         } else {
-                            interaction.create_interaction_response(&ctx.http, |response| response
-                                .interaction_response_data(|data| data
-                                    .content(format!("{}, that's not the correct answer!", interaction.user.mention()))))
+                            interaction
+                                .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                .content(format!("{}, that's not the correct answer!", interaction.user.mention()))))
                                 .await?;
                         }
                     }
@@ -473,7 +502,7 @@ async fn build_multiple_choice_question(
 
 async fn finalize(
     ctx: &Context,
-    command: &ApplicationCommandInteraction,
+    command: &CommandInteraction,
     color: Color,
     is_kou: bool,
     score_board: Option<HashMap<u64, u8>>,
@@ -484,7 +513,7 @@ async fn finalize(
             .get()
             .expect("Failed to get ongoing quizzes.");
         let mut ongoing_quizzes_write_lock = ongoing_quizzes.write().await;
-        ongoing_quizzes_write_lock.remove(&command.channel_id.0);
+        ongoing_quizzes_write_lock.remove(&command.channel_id.get());
     }
 
     if let Some(board) = score_board {
@@ -495,7 +524,7 @@ async fn finalize(
                 (
                     players
                         .iter()
-                        .find(|u| u.id.0 == user_id)
+                        .find(|u| u.id.get() == user_id)
                         .expect("Failed to map user ID to an user.")
                         .mention()
                         .to_string(),
@@ -533,7 +562,7 @@ async fn finalize(
 }
 
 fn get_random_response(is_kou: bool) -> &'static str {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
     if is_kou {
         KOU_RESPONSES.choose(&mut rng).cloned().unwrap_or_default()
     } else {

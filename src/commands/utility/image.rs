@@ -5,19 +5,19 @@ use crate::shared::structs::config::configuration::KOU;
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use rand::prelude::*;
 use serenity::builder::CreateEmbed;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
+use serenity::model::application::CommandInteraction;
 use serenity::prelude::*;
 use std::future::Future;
 use std::pin::Pin;
 
 pub fn image_async(
     ctx: Context,
-    command: ApplicationCommandInteraction,
+    command: CommandInteraction,
 ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
     Box::pin(image(ctx, command))
 }
 
-async fn image(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
+async fn image(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     let author_name = get_author_name(&command.user, &command.member);
     let author_avatar_url = get_author_avatar(&command.user);
     let is_kou = KOU.get().copied().unwrap_or(false);
