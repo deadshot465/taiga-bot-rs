@@ -1,8 +1,6 @@
 #![allow(clippy::ptr_arg)]
-use crate::shared::services::HTTP_CLIENT;
-use crate::shared::structs::authentication::AUTHENTICATION;
-use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::fun::dialog::Dialog;
+use crate::shared::structs::Context;
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use regex::Regex;
@@ -20,6 +18,7 @@ static NON_ASCII_AND_JAPANESE_REGEX: Lazy<Regex> = Lazy::new(|| {
 });
 
 pub async fn get_dialog(
+    ctx: Context<'_>,
     background: String,
     character: String,
     text: String,
@@ -30,14 +29,14 @@ pub async fn get_dialog(
         text,
     };
 
-    let server_endpoint = CONFIGURATION
-        .get()
-        .map(|c| c.server_endpoint.as_str())
-        .unwrap_or_default();
+    let server_endpoint = ctx.data().config.server_endpoint.clone();
 
     let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
-    let token = AUTHENTICATION.read().await.token.clone();
-    let response = HTTP_CLIENT
+    let auth = ctx.data().authentication.clone();
+    let token = auth.read().await.token.clone();
+    let response = ctx
+        .data()
+        .http_client
         .post(&dialog_path)
         .json(&dialog)
         .header("Content-Type", "application/json")
@@ -115,24 +114,28 @@ pub async fn get_comic(
 }*/
 
 pub async fn validate_dialog(
+    ctx: Context<'_>,
     background: &mut String,
     character: &String,
     text: &String,
     is_kou: bool,
 ) -> anyhow::Result<()> {
-    let server_endpoint = CONFIGURATION
-        .get()
-        .map(|c| &c.server_endpoint)
-        .expect("Failed to get server endpoint from configuration.");
+    let server_endpoint = ctx.data().config.server_endpoint.clone();
 
     let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
-    let dialog_options: HashMap<String, Vec<String>> =
-        HTTP_CLIENT.get(&dialog_path).send().await?.json().await?;
+    let dialog_options: HashMap<String, Vec<String>> = ctx
+        .data()
+        .http_client
+        .get(&dialog_path)
+        .send()
+        .await?
+        .json()
+        .await?;
 
     if let Some(backgrounds) = dialog_options.get("backgrounds") {
         if !backgrounds.contains(background) {
             *background = {
-                let mut rng = rand::thread_rng();
+                let mut rng = thread_rng();
                 backgrounds.choose(&mut rng).cloned().unwrap_or_default()
             }
         }

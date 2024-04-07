@@ -1,22 +1,13 @@
-use crate::shared::structs::config::configuration::KOU;
-use serenity::all::{
-    CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
-};
-use serenity::model::application::CommandInteraction;
-use serenity::prelude::Context;
-use std::future::Future;
-use std::pin::Pin;
 use std::time::Instant;
 
-pub fn ping_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(ping(ctx, command))
-}
+use poise::CreateReply;
 
-async fn ping(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let is_kou = KOU.get().copied().unwrap_or(false);
+use crate::shared::structs::{Context, ContextError};
+
+/// Returns latency and API ping.
+#[poise::command(slash_command, category = "Information")]
+pub async fn ping(ctx: Context<'_>) -> Result<(), ContextError> {
+    let is_kou = ctx.data().kou;
 
     let starting_msg = if is_kou {
         "<:KouBrave:705182851397845193> Pinging..."
@@ -31,22 +22,14 @@ async fn ping(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
     };
 
     let original_time = Instant::now();
-    command
-        .create_response(
-            &ctx.http,
-            CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new().content(starting_msg),
-            ),
-        )
+    let reply_handle = ctx
+        .send(CreateReply::default().content(starting_msg))
         .await?;
     let current_time = Instant::now();
     let elapsed = current_time.duration_since(original_time);
     let ending_msg = ending_msg.replace("{latency}", &elapsed.as_millis().to_string());
-    command
-        .edit_response(
-            &ctx.http,
-            EditInteractionResponse::new().content(ending_msg),
-        )
+    reply_handle
+        .edit(ctx, CreateReply::default().content(ending_msg))
         .await?;
     Ok(())
 }

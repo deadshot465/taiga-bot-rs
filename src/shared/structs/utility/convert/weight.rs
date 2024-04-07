@@ -1,13 +1,18 @@
 #![allow(clippy::from_over_into)]
+
 use crate::shared::structs::utility::convert::{
     ConverterType, FromStrToConverter, ParseConverterError,
 };
+use std::fmt::Display;
 use std::str::FromStr;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
 pub enum Weight {
+    #[name = "kg"]
     Kilogram,
+    #[name = "g"]
     Gram,
+    #[name = "lb"]
     Pound,
 }
 
@@ -39,9 +44,9 @@ impl FromStrToConverter for Weight {
     }
 }
 
-impl ToString for Weight {
-    fn to_string(&self) -> String {
-        (*self).into()
+impl Display for Weight {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", <Weight as Into<String>>::into(*self))
     }
 }
 

@@ -6,8 +6,6 @@ use crate::event_handler::responses::greet::greet;
 use crate::event_handler::responses::handle_bot_responses;
 use crate::event_handler::responses::qotd::handle_qotd;
 use crate::shared::constants::KOU_SERVER_ID;
-use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
-use crate::shared::structs::config::configuration::CONFIGURATION;
 use crate::shared::structs::smite::schedule_unsmite;
 use rand::prelude::*;
 use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};

@@ -1,19 +1,18 @@
-use crate::event_handler::commands::{SlashCommandElements, AVAILABLE_COMMANDS};
-use crate::shared::constants::{ASSET_DIRECTORY, KOU_COLOR, TAIGA_COLOR};
-use crate::shared::structs::config::configuration::KOU;
+use std::borrow::Cow;
+use std::collections::HashMap;
+
 use once_cell::sync::Lazy;
+use poise::CreateReply;
 use serenity::all::{
-    CreateActionRow, CreateButton, CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
+    ButtonStyle, Color, ComponentInteractionDataKind, CreateActionRow, CreateButton,
+    CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage, CreateSelectMenu, CreateSelectMenuKind,
-    CreateSelectMenuOption,
+    CreateSelectMenuOption, Guild, Member, Message,
 };
 use serenity::builder::CreateEmbed;
-use serenity::model::application::CommandInteraction;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
+
+use crate::shared::constants::{ASSET_DIRECTORY, KOU_COLOR, TAIGA_COLOR};
+use crate::shared::structs::{Context, ContextError};
 
 const KOU_GOODBYE: &str = "Thanks for taking a guide with me! I hope you can enjoy your stay! <a:KouFascinated:705279783340212265>";
 const TAIGA_GOODBYE: &str = "Hope you like my guide! Make sure to say hello to other campers! <:chibitaiga:697893400891883531>";
@@ -28,15 +27,34 @@ static TAIGA_INTRO_TEXT: Lazy<String> = Lazy::new(|| {
         .expect("Failed to read Taiga's intro text from local disk.")
 });
 
-pub fn guide_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(guide(ctx, command))
+/// Start a step-by-step guide.
+#[poise::command(slash_command, category = "Information")]
+pub async fn guide(ctx: Context<'_>) -> Result<(), ContextError> {
+    ctx.send(CreateReply::default().content("Check your DM!"))
+        .await?;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        if let Some(member) = ctx.author_member().await {
+            let guild = ctx
+                .cache()
+                .guild(guild_id)
+                .map(|guild_ref| guild_ref.clone());
+
+            let member = match member {
+                Cow::Borrowed(m) => m.clone(),
+                Cow::Owned(m) => m,
+            };
+
+            if let Some(guild) = guild {
+                inner_guide(ctx, guild, member).await?;
+            }
+        }
+    }
+    Ok(())
 }
 
-pub async fn inner_guide(ctx: &Context, guild: Guild, member: Member) -> anyhow::Result<()> {
-    let is_kou = KOU.get().copied().unwrap_or(false);
+pub async fn inner_guide(ctx: Context<'_>, guild: Guild, member: Member) -> anyhow::Result<()> {
+    let is_kou = ctx.data().kou;
 
     let text = if is_kou {
         KOU_INTRO_TEXT
@@ -48,7 +66,7 @@ pub async fn inner_guide(ctx: &Context, guild: Guild, member: Member) -> anyhow:
             .replace("{guildName}", &guild.name)
     };
 
-    let bot_user = ctx.http.get_current_user().await?;
+    let bot_user = ctx.http().get_current_user().await?;
     let bot_avatar_url = if let Some(avatar_url) = bot_user.avatar_url() {
         avatar_url
     } else {
@@ -67,43 +85,35 @@ pub async fn inner_guide(ctx: &Context, guild: Guild, member: Member) -> anyhow:
         &thumbnail,
     );
 
-    let mut available_commands = AVAILABLE_COMMANDS
+    let global_commands = ctx.http().get_global_commands().await?;
+
+    let mut available_commands = global_commands
         .iter()
-        .map(
-            |(
-                name,
-                SlashCommandElements {
-                    description, emoji, ..
-                },
-            )| (name.clone(), (description.clone(), emoji.clone())),
-        )
+        .map(|command| (command.name.clone(), command.description.clone()))
         .collect::<Vec<_>>();
     available_commands.sort_unstable_by(|(name_1, _), (name_2, _)| name_1.cmp(name_2));
 
-    let sent_msg = build_component(ctx, &member, embed, &available_commands).await?;
-    tour_loop(ctx, &member, &sent_msg, &available_commands, is_kou).await?;
+    let sent_msg = build_component(ctx, member.clone(), embed, &available_commands).await?;
+    tour_loop(ctx, member, sent_msg, &available_commands, is_kou).await?;
 
     Ok(())
 }
 
 async fn build_component(
-    ctx: &Context,
-    member: &Member,
+    ctx: Context<'_>,
+    member: Member,
     embed: CreateEmbed,
-    available_commands: &[(String, (String, String))],
+    available_commands: &[(String, String)],
 ) -> anyhow::Result<Message> {
     let command_options = available_commands
         .iter()
-        .map(|(name, (_, emoji))| {
-            CreateSelectMenuOption::new(name.as_str(), name.as_str())
-                .emoji(ReactionType::Unicode(emoji.clone()))
-        })
+        .map(|(name, _)| CreateSelectMenuOption::new(name.as_str(), name.as_str()))
         .collect::<Vec<_>>();
 
     let sent_msg = member
         .user
         .direct_message(
-            &ctx.http,
+            ctx.http(),
             CreateMessage::new().embed(embed).components(vec![
                 CreateActionRow::SelectMenu(
                     CreateSelectMenu::new(
@@ -145,42 +155,16 @@ fn build_embed(
         ))
 }
 
-async fn guide(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    command
-        .create_response(
-            &ctx.http,
-            CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new().content("Check your DM!"),
-            ),
-        )
-        .await?;
-
-    if let Some(guild_id) = command.guild_id {
-        if let Some(member) = command.member {
-            let guild = if let Some(guild) = ctx.cache.guild(guild_id) {
-                Some(guild.clone())
-            } else {
-                None
-            };
-
-            if let Some(guild) = guild {
-                inner_guide(&ctx, guild, *member).await?;
-            }
-        }
-    }
-    Ok(())
-}
-
 async fn tour_loop(
-    ctx: &Context,
-    member: &Member,
-    sent_msg: &Message,
-    available_commands: &[(String, (String, String))],
+    ctx: Context<'_>,
+    member: Member,
+    sent_msg: Message,
+    available_commands: &[(String, String)],
     is_kou: bool,
 ) -> anyhow::Result<()> {
     let available_commands = available_commands
         .iter()
-        .map(|(name, (description, emoji))| (name, (description, emoji)))
+        .map(|(name, description)| (name.clone(), description.clone()))
         .collect::<HashMap<_, _>>();
 
     'outer: loop {
@@ -197,9 +181,9 @@ async fn tour_loop(
 
             tokio::select! {
                 _ = &mut delay => {
-                    sent_msg.delete(&ctx.http).await?;
+                    sent_msg.delete(ctx.http()).await?;
                     member.user
-                        .direct_message(&ctx.http, CreateMessage::new()
+                        .direct_message(ctx.http(), CreateMessage::new()
                         .content(if is_kou {
                             KOU_GOODBYE
                         } else {
@@ -211,9 +195,9 @@ async fn tour_loop(
                     if let Some(ref interaction) = maybe_v {
                         match interaction.data.kind.clone() {
                             ComponentInteractionDataKind::Button => {
-                                sent_msg.delete(&ctx.http).await?;
+                                sent_msg.delete(ctx.http()).await?;
                                 interaction
-                                    .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                    .create_response(ctx.http(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
                                     .content(if is_kou {
                                         KOU_GOODBYE
                                     } else {
@@ -226,9 +210,9 @@ async fn tour_loop(
                                 values
                             } => {
                                 if let Some(value) = values.first() {
-                                    if let Some((description, _)) = available_commands.get(&&value.as_str().to_string()) {
+                                    if let Some(description) = available_commands.get(value.as_str()) {
                                         interaction
-                                            .create_response(&ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                            .create_response(ctx.http(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
                                             .content(format!("**{}**: {}", value.as_str(), *description))))
                                             .await?;
                                     }

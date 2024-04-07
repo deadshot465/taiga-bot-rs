@@ -1,20 +1,16 @@
-use crate::shared::constants::RECORD_DIRECTORY;
 use chrono::{DateTime, Utc};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 
-pub static QOTD_INFOS: Lazy<RwLock<QotdInfos>> =
-    Lazy::new(|| RwLock::new(initialize().expect("Failed to initialize qotd infos.")));
+use crate::shared::constants::RECORD_DIRECTORY;
 
 const QOTD_INFOS_FILE_NAME: &str = "/qotd_infos.toml";
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct QotdInfos {
     pub qotd_infos: Vec<QotdInfo>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct QotdInfo {
     pub thread_channel_id: u64,
     pub question: String,
@@ -45,7 +41,7 @@ impl QotdInfos {
     }
 }
 
-fn initialize() -> anyhow::Result<QotdInfos> {
+pub fn initialize_qotd_infos() -> anyhow::Result<QotdInfos> {
     if !std::path::Path::new(RECORD_DIRECTORY).exists() {
         std::fs::create_dir(RECORD_DIRECTORY)?;
     }

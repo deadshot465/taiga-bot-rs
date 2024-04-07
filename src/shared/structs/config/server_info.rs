@@ -1,21 +1,18 @@
+use serde::{Deserialize, Serialize};
+
 use crate::shared::constants::{
     CONFIG_DIRECTORY, KOU_SERVER_ADMIN_ROLE_ID, KOU_SERVER_ID, KOU_SERVER_QOTD_CHANNEL_ID,
     TAIGA_SERVER_ADMIN_ROLE_ID, TAIGA_SERVER_ID, TAIGA_SERVER_WINTER_SPLENDOR_ROLE_ID,
 };
-use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
-
-pub static SERVER_INFOS: Lazy<ServerInfos> =
-    Lazy::new(|| initialize().expect("Failed to initialize server infos."));
 
 const SERVER_INFOS_FILE_NAME: &str = "/server_infos.toml";
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerInfos {
     pub server_infos: Vec<ServerInfo>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerInfo {
     pub server_id: u64,
     pub admin_role_ids: Vec<u64>,
@@ -31,7 +28,7 @@ impl ServerInfos {
     }
 }
 
-fn initialize() -> anyhow::Result<ServerInfos> {
+pub fn initialize_server_infos() -> anyhow::Result<ServerInfos> {
     if !std::path::Path::new(CONFIG_DIRECTORY).exists() {
         std::fs::create_dir(CONFIG_DIRECTORY)?;
     }

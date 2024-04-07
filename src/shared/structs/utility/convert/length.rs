@@ -1,17 +1,26 @@
 #![allow(clippy::from_over_into)]
+
 use crate::shared::structs::utility::convert::{
     ConverterType, FromStrToConverter, ParseConverterError,
 };
+use std::fmt::Display;
 use std::str::FromStr;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
 pub enum Length {
+    #[name = "km"]
     Kilometer,
+    #[name = "m"]
     Meter,
+    #[name = "cm"]
     Centimeter,
+    #[name = "inches"]
     Inch,
+    #[name = "feet"]
     Foot,
+    #[name = "miles"]
     Mile,
+    #[name = "au"]
     Astronomical,
 }
 
@@ -43,9 +52,9 @@ impl FromStrToConverter for Length {
     }
 }
 
-impl ToString for Length {
-    fn to_string(&self) -> String {
-        (*self).into()
+impl Display for Length {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", <Length as Into<String>>::into(*self))
     }
 }
 

@@ -1,63 +1,65 @@
-use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
-use crate::shared::structs::config::configuration::KOU;
-use crate::shared::structs::record::user_record::{UserRecord, USER_RECORDS};
-use crate::shared::utility::{get_author_avatar, get_author_name};
-use serenity::all::{
-    Color, CreateEmbedAuthor, CreateInteractionResponse, CreateInteractionResponseMessage,
-};
-use serenity::builder::CreateEmbed;
-use serenity::model::application::CommandInteraction;
-use serenity::prelude::*;
+use std::borrow::Cow;
 use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
 
-pub fn stats_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(stats(ctx, command))
+use poise::CreateReply;
+use serenity::all::{Color, CreateEmbedAuthor};
+use serenity::builder::CreateEmbed;
+
+use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
+use crate::shared::structs::record::user_record::UserRecord;
+use crate::shared::structs::{Context, ContextError};
+use crate::shared::utility::{get_author_avatar, get_author_name};
+
+#[derive(Debug, Copy, Clone, poise::ChoiceParameter)]
+pub enum StatChoice {
+    #[name = "route"]
+    Route,
+    #[name = "valentine"]
+    Valentine,
 }
 
-async fn stats(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let user_records = USER_RECORDS.get().expect("Failed to get all user records.");
+/// This command will show your records with several commands.
+#[poise::command(slash_command, category = "Information")]
+pub async fn stats(
+    ctx: Context<'_>,
+    #[description = "(Optional) The command of which you want to query the record."]
+    #[autocomplete = "poise::builtins::autocomplete_command"]
+    command: Option<StatChoice>,
+) -> Result<(), ContextError> {
+    let user_records = ctx.data().user_records.clone();
+    let author = ctx.author();
 
     let user_record = {
         let mut user_records_write_lock = user_records.write().await;
         let record_entry = user_records_write_lock
-            .entry(command.user.id.to_string())
+            .entry(author.id.to_string())
             .or_default();
         (*record_entry).clone()
     };
 
-    let is_kou = KOU.get().copied().unwrap_or(false);
+    let is_kou = ctx.data().kou;
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
-    let member = command.member.clone().map(|m| *m);
-    let author_name = get_author_name(&command.user, &member);
-    let author_avatar_url = get_author_avatar(&command.user);
+    let member = ctx.author_member().await.map(|member| match member {
+        Cow::Borrowed(m) => m.clone(),
+        Cow::Owned(m) => m,
+    });
+    let author_name = get_author_name(author, &member);
+    let author_avatar_url = get_author_avatar(author);
 
-    let embed = if let Some(option) = command.data.options.get(0) {
-        let value = option.value.as_str().unwrap_or_default();
-
-        match value {
-            "route" => build_route_records(author_name, author_avatar_url, color, user_record),
-            "valentine" => {
+    let embed = if let Some(cmd) = command {
+        match cmd {
+            StatChoice::Route => {
+                build_route_records(author_name, author_avatar_url, color, user_record)
+            }
+            StatChoice::Valentine => {
                 build_valentine_records(author_name, author_avatar_url, color, user_record)
             }
-            _ => build_all(author_name, author_avatar_url, color, user_record),
         }
     } else {
         build_all(author_name, author_avatar_url, color, user_record)
     };
 
-    command
-        .create_response(
-            &ctx.http,
-            CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new().embed(embed),
-            ),
-        )
-        .await?;
+    ctx.send(CreateReply::default().embed(embed)).await?;
 
     Ok(())
 }

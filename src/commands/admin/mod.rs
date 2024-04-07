@@ -1,89 +1,76 @@
-use crate::shared::structs::config::channel_control::CHANNEL_CONTROL;
+use std::borrow::Cow;
+use std::sync::Arc;
 
-use serenity::all::{
-    CreateInteractionResponse, CreateInteractionResponseMessage, EditInteractionResponse,
-    GetMessages,
-};
-use serenity::model::application::{CommandDataOptionValue, CommandInteraction};
-use serenity::prelude::*;
-use std::future::Future;
-use std::pin::Pin;
+use poise::CreateReply;
+use serenity::all::{Channel, GetMessages};
+use tokio::sync::RwLock;
 
-pub fn dispatch_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    if let Some(opt) = command.data.options.get(0) {
-        match opt.name.as_str() {
-            "enable" => Box::pin(enable(ctx, command)),
-            "disable" => Box::pin(disable(ctx, command)),
-            "allow" => Box::pin(allow(ctx, command)),
-            "disallow" => Box::pin(disallow(ctx, command)),
-            "purge" => Box::pin(purge(ctx, command)),
-            _ => Box::pin(enable(ctx, command)),
-        }
-    } else {
-        Box::pin(async move { Ok(()) })
-    }
+use crate::shared::structs::config::channel_control::ChannelControl;
+use crate::shared::structs::{Context, ContextError};
+
+/// Administrative commands.
+#[poise::command(
+    slash_command,
+    subcommands("enable", "disable", "allow", "disallow", "purge"),
+    subcommand_required
+)]
+pub async fn admin(_: Context<'_>) -> Result<(), ContextError> {
+    Ok(())
 }
 
-async fn enable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let channel_id = extract_channel_id(&command);
+/// Enable a specific channel for bot usage.
+#[poise::command(
+    slash_command,
+    required_permissions = "ADMINISTRATOR",
+    category = "Admin"
+)]
+pub async fn enable(
+    ctx: Context<'_>,
+    #[description = "The channel to enable for bot usage."] channel: Channel,
+) -> Result<(), ContextError> {
+    let channel_id = channel.id().get();
+    let channel_control = ctx.data().channel_control.clone();
 
-    if check_if_channel_id_exists_in_enabled(channel_id).await {
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new()
-                        .content(format!("The channel <#{}> is already enabled!", channel_id)),
-                ),
-            )
-            .await?;
+    if check_if_channel_id_exists_in_enabled(&channel_control, channel_id).await {
+        ctx.send(
+            CreateReply::default()
+                .content(format!("The channel <#{}> is already enabled!", channel_id)),
+        )
+        .await?;
     } else {
         {
-            let mut channel_control_write_lock = CHANNEL_CONTROL
-                .get()
-                .expect("Failed to get channel control")
-                .write()
-                .await;
+            let mut channel_control_write_lock = channel_control.write().await;
             channel_control_write_lock.enabled_channels.push(channel_id);
             channel_control_write_lock.write_channel_control()?;
         }
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new()
-                        .content(format!("Successfully enabled channel <#{}>!", channel_id)),
-                ),
-            )
-            .await?;
+        ctx.send(
+            CreateReply::default()
+                .content(format!("Successfully enabled channel <#{}>!", channel_id)),
+        )
+        .await?;
     }
 
     Ok(())
 }
 
-async fn disable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let channel_id = extract_channel_id(&command);
+/// Disable a specific channel for bot usage.
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+pub async fn disable(
+    ctx: Context<'_>,
+    #[description = "The channel to disable for bot usage."] channel: Channel,
+) -> Result<(), ContextError> {
+    let channel_id = channel.id().get();
+    let channel_control = ctx.data().channel_control.clone();
 
-    if !check_if_channel_id_exists_in_enabled(channel_id).await {
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new()
-                        .content(format!("The channel <#{}> is not yet enabled!", channel_id)),
-                ),
-            )
-            .await?;
+    if !check_if_channel_id_exists_in_enabled(&channel_control, channel_id).await {
+        ctx.send(
+            CreateReply::default()
+                .content(format!("The channel <#{}> is not yet enabled!", channel_id)),
+        )
+        .await?;
     } else {
         {
-            let mut channel_control_write_lock = CHANNEL_CONTROL
-                .get()
-                .expect("Failed to get channel control")
-                .write()
-                .await;
+            let mut channel_control_write_lock = channel_control.write().await;
             let filtered_channels = channel_control_write_lock
                 .enabled_channels
                 .iter()
@@ -93,42 +80,34 @@ async fn disable(ctx: Context, command: CommandInteraction) -> anyhow::Result<()
             channel_control_write_lock.enabled_channels = filtered_channels;
             channel_control_write_lock.write_channel_control()?;
         }
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new()
-                        .content(format!("Successfully disabled channel <#{}>!", channel_id)),
-                ),
-            )
-            .await?;
+        ctx.send(
+            CreateReply::default()
+                .content(format!("Successfully disabled channel <#{}>!", channel_id)),
+        )
+        .await?;
     }
 
     Ok(())
 }
 
-async fn allow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let channel_id = extract_channel_id(&command);
+/// Allow a specific channel for random responses of bot.
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+pub async fn allow(
+    ctx: Context<'_>,
+    #[description = "The channel to allow for random responses."] channel: Channel,
+) -> Result<(), ContextError> {
+    let channel_id = channel.id().get();
+    let channel_control = ctx.data().channel_control.clone();
 
-    if !check_if_channel_id_exists_in_ignored(channel_id).await {
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new().content(format!(
-                        "The channel <#{}> is not yet disallowed!",
-                        channel_id
-                    )),
-                ),
-            )
-            .await?;
+    if !check_if_channel_id_exists_in_ignored(&channel_control, channel_id).await {
+        ctx.send(CreateReply::default().content(format!(
+            "The channel <#{}> is not yet disallowed!",
+            channel_id
+        )))
+        .await?;
     } else {
         {
-            let mut channel_control_write_lock = CHANNEL_CONTROL
-                .get()
-                .expect("Failed to get channel control")
-                .write()
-                .await;
+            let mut channel_control_write_lock = channel_control.write().await;
             let filtered_channels = channel_control_write_lock
                 .ignored_channels
                 .iter()
@@ -138,105 +117,93 @@ async fn allow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
             channel_control_write_lock.ignored_channels = filtered_channels;
             channel_control_write_lock.write_channel_control()?;
         }
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new().content(format!(
-                        "Successfully allowed channel <#{}> for bot responses!",
-                        channel_id
-                    )),
-                ),
-            )
-            .await?;
+        ctx.send(CreateReply::default().content(format!(
+            "Successfully allowed channel <#{}> for bot responses!",
+            channel_id
+        )))
+        .await?;
     }
 
     Ok(())
 }
 
-async fn disallow(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let channel_id = extract_channel_id(&command);
+/// Disallow a specific channel for random responses of bot.
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+pub async fn disallow(
+    ctx: Context<'_>,
+    #[description = "The channel to disallow for random responses."] channel: Channel,
+) -> Result<(), ContextError> {
+    let channel_id = channel.id().get();
+    let channel_control = ctx.data().channel_control.clone();
 
-    if check_if_channel_id_exists_in_ignored(channel_id).await {
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new().content(format!(
-                        "The channel <#{}> is already disallowed!",
-                        channel_id
-                    )),
-                ),
-            )
-            .await?;
+    if check_if_channel_id_exists_in_ignored(&channel_control, channel_id).await {
+        ctx.send(CreateReply::default().content(format!(
+            "The channel <#{}> is already disallowed!",
+            channel_id
+        )))
+        .await?;
     } else {
         {
-            let mut channel_control_write_lock = CHANNEL_CONTROL
-                .get()
-                .expect("Failed to get channel control")
-                .write()
-                .await;
+            let mut channel_control_write_lock = channel_control.write().await;
             channel_control_write_lock.ignored_channels.push(channel_id);
             channel_control_write_lock.write_channel_control()?;
         }
-        command
-            .create_response(
-                &ctx.http,
-                CreateInteractionResponse::Message(
-                    CreateInteractionResponseMessage::new().content(format!(
-                        "Successfully disallowed channel <#{}> for bot responses!",
-                        channel_id
-                    )),
-                ),
-            )
-            .await?;
+        ctx.send(CreateReply::default().content(format!(
+            "Successfully disallowed channel <#{}> for bot responses!",
+            channel_id
+        )))
+        .await?;
     }
 
     Ok(())
 }
 
-async fn purge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    command
-        .create_response(
-            &ctx.http,
-            CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new().content("Okay. Hold on..."),
-            ),
-        )
+/// Purge messages from this channel. Default to 10 most recent messages. Maximum 100 messages.
+#[poise::command(slash_command, required_permissions = "ADMINISTRATOR")]
+pub async fn purge(
+    ctx: Context<'_>,
+    #[description = "The amount of messages to purge."] amount: Option<i32>,
+) -> Result<(), ContextError> {
+    let reply_handle = ctx
+        .send(CreateReply::default().content("Okay. Hold on..."))
         .await?;
 
-    let amount = command
-        .data
-        .options
-        .get(0)
-        .map(|opt| &opt.value)
-        .and_then(|value| value.as_i64())
-        .map(|v| if v > 100 { 100 } else { v })
-        .unwrap_or(10);
-
+    let guild_id = ctx.guild_id().unwrap_or_default();
+    let channel_id = ctx.channel_id();
     let guild_channel = ctx
-        .cache
-        .guild_channels(command.guild_id.unwrap_or_default())
-        .and_then(|channels| channels.get(&command.channel_id).cloned());
+        .cache()
+        .guild_channels(guild_id)
+        .and_then(|channels| channels.get(&channel_id).cloned());
+
     if let Some(channel) = guild_channel {
-        let sent_msg = command
-            .edit_response(
-                &ctx.http,
-                EditInteractionResponse::new().content("Retrieving messages..."),
+        reply_handle
+            .edit(
+                ctx,
+                CreateReply::default().content("Retrieving messages..."),
             )
             .await?;
+
+        let amount = amount.unwrap_or(10);
+
+        let sent_message = reply_handle.message().await?;
+        let sent_message = match sent_message {
+            Cow::Borrowed(m) => m.clone(),
+            Cow::Owned(m) => m,
+        };
 
         let messages = channel
             .messages(
-                &ctx.http,
-                GetMessages::new().limit(amount as u8).before(sent_msg.id),
+                ctx.http(),
+                GetMessages::new()
+                    .limit(amount as u8)
+                    .before(sent_message.id),
             )
             .await?;
 
-        command
-            .edit_response(
-                &ctx.http,
-                EditInteractionResponse::new().content(format!(
+        reply_handle
+            .edit(
+                ctx,
+                CreateReply::default().content(format!(
                     "The last {} messages in this channel will be deleted in 5 seconds.",
                     amount
                 )),
@@ -244,43 +211,29 @@ async fn purge(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
             .await?;
 
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-        channel.delete_messages(&ctx.http, messages).await?;
-        command.delete_response(&ctx.http).await?;
+        channel.delete_messages(ctx.http(), messages).await?;
+        reply_handle.delete(ctx).await?;
     }
 
     Ok(())
 }
 
-fn extract_channel_id(command: &CommandInteraction) -> u64 {
-    command
-        .data
-        .options
-        .get(0)
-        .map(|opt| opt.value)
-        .map(|resolved| {
-            if let CommandDataOptionValue::Channel(channel_id) = resolved {
-                channel_id.get()
-            } else {
-                0
-            }
-        })
-        .unwrap_or_default()
-}
-
-async fn check_if_channel_id_exists_in_enabled(channel_id: u64) -> bool {
-    CHANNEL_CONTROL
-        .get()
-        .expect("Failed to get channel control")
+async fn check_if_channel_id_exists_in_enabled(
+    channel_control: &Arc<RwLock<ChannelControl>>,
+    channel_id: u64,
+) -> bool {
+    channel_control
         .read()
         .await
         .enabled_channels
         .contains(&channel_id)
 }
 
-async fn check_if_channel_id_exists_in_ignored(channel_id: u64) -> bool {
-    CHANNEL_CONTROL
-        .get()
-        .expect("Failed to get channel control")
+async fn check_if_channel_id_exists_in_ignored(
+    channel_control: &Arc<RwLock<ChannelControl>>,
+    channel_id: u64,
+) -> bool {
+    channel_control
         .read()
         .await
         .ignored_channels

@@ -1,22 +1,17 @@
-use serenity::model::application::CommandInteraction;
-use serenity::prelude::*;
-use std::future::Future;
-use std::pin::Pin;
+use crate::commands::game::hangman::hangman;
+use crate::commands::game::quiz::quiz;
+use crate::shared::structs::{Context, ContextError};
 
 pub mod hangman;
 pub mod quiz;
 
-pub fn dispatch_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    if let Some(opt) = command.data.options.get(0) {
-        match opt.name.as_str() {
-            "quiz" => quiz::quiz_async(ctx, command),
-            "hangman" => hangman::hangman_async(ctx, command),
-            _ => quiz::quiz_async(ctx, command),
-        }
-    } else {
-        Box::pin(async move { Ok(()) })
-    }
+/// Play mini games with Kou/Taiga.
+#[poise::command(
+    slash_command,
+    subcommands("quiz", "hangman"),
+    subcommand_required,
+    category = "Game"
+)]
+pub async fn game(_: Context<'_>) -> Result<(), ContextError> {
+    Ok(())
 }

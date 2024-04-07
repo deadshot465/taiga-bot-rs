@@ -18,7 +18,7 @@ pub async fn handle_qotd(ctx: &Context, new_message: &Message) -> anyhow::Result
             .await
             .qotd_infos
             .iter()
-            .find(|info| info.thread_channel_id == new_message.channel_id.0)
+            .find(|info| info.thread_channel_id == new_message.channel_id.get())
             .cloned()
     };
 
@@ -30,7 +30,7 @@ pub async fn handle_qotd(ctx: &Context, new_message: &Message) -> anyhow::Result
         if Utc::now() > qotd_info.expiry
             || qotd_info
                 .participated_members
-                .contains(&new_message.author.id.0)
+                .contains(&new_message.author.id.get())
         {
             Ok(())
         } else {
@@ -39,13 +39,13 @@ pub async fn handle_qotd(ctx: &Context, new_message: &Message) -> anyhow::Result
                 let qotd_info = qotd_infos
                     .qotd_infos
                     .iter_mut()
-                    .find(|info| info.thread_channel_id == new_message.channel_id.0);
+                    .find(|info| info.thread_channel_id == new_message.channel_id.get());
                 if let Some(info) = qotd_info {
-                    info.participated_members.push(new_message.author.id.0);
+                    info.participated_members.push(new_message.author.id.get());
                 }
                 qotd_infos.write_qotd_infos()?;
             }
-            add_user_credit(new_message.author.id.0, &author_name, REWARD).await?;
+            add_user_credit(new_message.author.id.get(), &author_name, REWARD).await?;
             new_message
                 .reply(
                     &ctx.http,

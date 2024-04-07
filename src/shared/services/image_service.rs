@@ -1,4 +1,4 @@
-use crate::shared::structs::config::configuration::CONFIGURATION;
+use crate::shared::structs::Context;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use serenity::all::{Color, CreateEmbedAuthor};
@@ -64,16 +64,14 @@ const CAT_API_URL: &str = "https://api.thecatapi.com/v1/images/search";
 const DOG_API_URL: &str = "https://dog.ceo/api/breeds/image/random";
 
 pub async fn get_normal_image(
+    ctx: Context<'_>,
     keyword: &str,
     client: &reqwest::Client,
     author_name: &str,
     author_avatar_url: &str,
     color: Color,
 ) -> anyhow::Result<CreateEmbed> {
-    let token = CONFIGURATION
-        .get()
-        .map(|c| c.unsplash_token.as_str())
-        .expect("Failed to get image token.");
+    let token = ctx.data().config.unsplash_token.as_str();
 
     // Substitute spaces with plus signs for URL
     let keyword = keyword.replace(' ', "+");
@@ -142,16 +140,14 @@ pub async fn get_normal_image(
 }
 
 pub async fn get_cat_image(
+    ctx: Context<'_>,
     keyword: &str,
     client: &reqwest::Client,
     author_name: &str,
     author_avatar_url: &str,
     color: Color,
 ) -> anyhow::Result<CreateEmbed> {
-    let cat_token = CONFIGURATION
-        .get()
-        .map(|c| c.cat_token.as_str())
-        .expect("Failed to get cat image token from configuration.");
+    let cat_token = ctx.data().config.cat_token.as_str();
 
     if keyword.is_empty() {
         // Get a random cat picture from the Cat API.

@@ -1,6 +1,5 @@
 use crate::shared::constants::ASSET_DIRECTORY;
-use crate::shared::services::HTTP_CLIENT;
-use crate::shared::structs::fun::ship_message::SHIP_MESSAGES;
+use crate::shared::structs::Context;
 use image::imageops::{overlay, FilterType};
 use image::DynamicImage;
 use std::io::{BufWriter, Cursor};
@@ -17,8 +16,10 @@ pub fn calculate_ship_score(user_id_1: u64, user_id_2: u64) -> u64 {
     }
 }
 
-pub async fn download_avatar(avatar_url: &str) -> anyhow::Result<Vec<u8>> {
-    Ok(HTTP_CLIENT
+pub async fn download_avatar(ctx: Context<'_>, avatar_url: &str) -> anyhow::Result<Vec<u8>> {
+    Ok(ctx
+        .data()
+        .http_client
         .get(avatar_url)
         .send()
         .await?
@@ -52,12 +53,13 @@ pub fn generate_ship_image(avatar_1: &[u8], avatar_2: &[u8]) -> anyhow::Result<V
     let length = buffer.as_bytes().len();
     let image = Vec::with_capacity(length);
     let mut writer = BufWriter::new(Cursor::new(image));
-    buffer.write_to(&mut writer, image::ImageOutputFormat::Png)?;
+    buffer.write_to(&mut writer, image::ImageFormat::Png)?;
     Ok(writer.into_inner().unwrap_or_default().into_inner())
 }
 
-pub fn get_ship_message(score: u64) -> &'static str {
-    SHIP_MESSAGES
+pub fn get_ship_message(ctx: Context<'_>, score: u64) -> &'static str {
+    ctx.data()
+        .ship_messages
         .iter()
         .find(|msg| msg.max_score as u64 >= score)
         .map(|msg| msg.message.as_str())

@@ -1,15 +1,15 @@
-use crate::shared::structs::information::character::{Character, ROUTES};
-use crate::shared::structs::record::user_record::{write_user_records, USER_RECORDS};
+use std::borrow::Cow;
+
+use poise::CreateReply;
+use rand::prelude::*;
+use serenity::builder::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
+
+use crate::shared::structs::information::character::Character;
+use crate::shared::structs::record::user_record::write_user_records;
+use crate::shared::structs::{Context, ContextError};
 use crate::shared::utility::{
     get_animated_emote_url, get_author_avatar, get_author_name, get_first_name,
 };
-use rand::prelude::*;
-use serenity::all::{CreateInteractionResponse, CreateInteractionResponseMessage};
-use serenity::builder::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
-use serenity::model::application::CommandInteraction;
-use serenity::prelude::Context;
-use std::future::Future;
-use std::pin::Pin;
 
 const MATURE_HIRO_EMOTE_IDS: [&str; 5] = [
     "703591584305774662",
@@ -29,15 +29,10 @@ const KOU_GIFS: [&str; 5] = [
     "https://cdn.discordapp.com/emojis/705279783340212265.gif",
 ];
 
-pub fn route_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(route(ctx, command))
-}
-
-async fn route(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
-    let route = get_route();
+/// Tells you what route to play next.
+#[poise::command(slash_command, category = "Information")]
+pub async fn route(ctx: Context<'_>) -> Result<(), ContextError> {
+    let route = get_route(ctx.data().routes.as_slice());
 
     let footer = format!(
         "Play {}'s route next. All bois are best bois.",
@@ -54,76 +49,76 @@ async fn route(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> 
             .expect("Failed to choose an ending.")
     };
 
-    let member = command.member.clone().map(|m| *m);
-    let author_name = get_author_name(&command.user, &member);
-    let author_icon = get_author_avatar(&command.user);
-    command
-        .create_response(
-            &ctx.http,
-            CreateInteractionResponse::Message(
-                CreateInteractionResponseMessage::new().embed(
-                    CreateEmbed::new()
-                        .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_icon))
-                        .color(color)
-                        .field("Age", route.age.to_string(), true)
-                        .field("Birthday", &route.birthday, true)
-                        .field("Animal Motif", &route.animal, true)
-                        .footer(CreateEmbedFooter::new(footer))
-                        .description(&route.description)
-                        .thumbnail(if route.name.contains("Mature") {
-                            let mut rng = thread_rng();
-                            let emote_id = MATURE_HIRO_EMOTE_IDS
-                                .choose(&mut rng)
-                                .cloned()
-                                .expect("Failed to get an emote ID for mature Hiro.");
-                            get_animated_emote_url(emote_id)
-                        } else if route.name.contains("Kou") {
-                            let mut rng = thread_rng();
-                            KOU_GIFS
-                                .choose(&mut rng)
-                                .expect("Failed to get an emote ID for Kou")
-                                .to_string()
-                        } else {
-                            get_animated_emote_url(&route.emote_id)
-                        })
-                        .title(format!("Next: {}, {} Ending", &route.name, ending)),
-                ),
-            ),
-        )
-        .await?;
+    let member = ctx.author_member().await.map(|member| match member {
+        Cow::Borrowed(m) => m.clone(),
+        Cow::Owned(m) => m,
+    });
+    let author = ctx.author();
+    let author_name = get_author_name(author, &member);
+    let author_icon = get_author_avatar(author);
+    ctx.send(
+        CreateReply::default().embed(
+            CreateEmbed::new()
+                .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_icon))
+                .color(color)
+                .field("Age", route.age.to_string(), true)
+                .field("Birthday", &route.birthday, true)
+                .field("Animal Motif", &route.animal, true)
+                .footer(CreateEmbedFooter::new(footer))
+                .description(&route.description)
+                .thumbnail(if route.name.contains("Mature") {
+                    let mut rng = thread_rng();
+                    let emote_id = MATURE_HIRO_EMOTE_IDS
+                        .choose(&mut rng)
+                        .cloned()
+                        .expect("Failed to get an emote ID for mature Hiro.");
+                    get_animated_emote_url(emote_id)
+                } else if route.name.contains("Kou") {
+                    let mut rng = thread_rng();
+                    KOU_GIFS
+                        .choose(&mut rng)
+                        .expect("Failed to get an emote ID for Kou")
+                        .to_string()
+                } else {
+                    get_animated_emote_url(&route.emote_id)
+                })
+                .title(format!("Next: {}, {} Ending", &route.name, ending)),
+        ),
+    )
+    .await?;
 
-    if let Some(user_records) = USER_RECORDS.get() {
-        {
-            let mut user_records_lock = user_records.write().await;
-            let user_record_entry = user_records_lock
-                .entry(command.user.id.get().to_string())
-                .or_default();
-            let route_entry = user_record_entry
-                .route
-                .entry(route.name.clone())
-                .or_default();
-            *route_entry.entry(format!("{} Ending", ending)).or_default() += 1;
-        }
-        let user_records_lock = user_records.read().await;
-        write_user_records(&user_records_lock)?;
+    let user_records = ctx.data().user_records.clone();
+    {
+        let mut user_records_lock = user_records.write().await;
+        let user_record_entry = user_records_lock
+            .entry(author.id.get().to_string())
+            .or_default();
+        let route_entry = user_record_entry
+            .route
+            .entry(route.name.clone())
+            .or_default();
+        *route_entry.entry(format!("{} Ending", ending)).or_default() += 1;
     }
+
+    let user_records_lock = user_records.read().await;
+    write_user_records(&user_records_lock)?;
 
     Ok(())
 }
 
-fn get_route() -> Character {
+fn get_route(routes: &[Character]) -> Character {
     let mut rng = thread_rng();
     let random_numbers = rng.gen_range(0..100);
     match random_numbers {
-        x if (0..=14).contains(&x) => ROUTES[0].clone(),
-        x if (15..=19).contains(&x) => ROUTES[1].clone(),
-        x if (20..=22).contains(&x) => ROUTES[7].clone(),
-        x if (23..=38).contains(&x) => ROUTES[2].clone(),
-        x if (39..=53).contains(&x) => ROUTES[3].clone(),
-        x if (54..=68).contains(&x) => ROUTES[4].clone(),
-        x if (69..=83).contains(&x) => ROUTES[5].clone(),
-        x if (84..=99).contains(&x) => ROUTES[6].clone(),
-        _ => ROUTES
+        x if (0..=14).contains(&x) => routes[0].clone(),
+        x if (15..=19).contains(&x) => routes[1].clone(),
+        x if (20..=22).contains(&x) => routes[7].clone(),
+        x if (23..=38).contains(&x) => routes[2].clone(),
+        x if (39..=53).contains(&x) => routes[3].clone(),
+        x if (54..=68).contains(&x) => routes[4].clone(),
+        x if (69..=83).contains(&x) => routes[5].clone(),
+        x if (84..=99).contains(&x) => routes[6].clone(),
+        _ => routes
             .choose(&mut rng)
             .cloned()
             .expect("Failed to choose a route."),

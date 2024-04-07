@@ -1,37 +1,29 @@
-use crate::shared::structs::config::configuration::KOU;
-use crate::shared::structs::information::character::VALENTINES;
-use crate::shared::structs::record::user_record::{write_user_records, USER_RECORDS};
+use std::borrow::Cow;
+
+use poise::CreateReply;
+use rand::prelude::*;
+use serenity::all::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
+
+use crate::shared::structs::record::user_record::write_user_records;
+use crate::shared::structs::{Context, ContextError};
 use crate::shared::utility::{
     get_author_avatar, get_author_name, get_first_name, get_static_emote_url,
 };
-use rand::prelude::*;
-use serenity::all::{
-    CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
-    CreateInteractionResponseMessage,
-};
-use serenity::model::application::CommandInteraction;
-use serenity::prelude::Context;
-use std::future::Future;
-use std::pin::Pin;
 
-pub fn valentine_async(
-    ctx: Context,
-    command: CommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(valentine(ctx, command))
-}
-
-async fn valentine(ctx: Context, command: CommandInteraction) -> anyhow::Result<()> {
+/// Tells you your next valentine.
+#[poise::command(slash_command, category = "Information")]
+pub async fn valentine(ctx: Context<'_>) -> Result<(), ContextError> {
     let valentine = {
-        let mut rng = rand::thread_rng();
-        VALENTINES
+        let mut rng = thread_rng();
+        ctx.data()
+            .valentines
             .choose(&mut rng)
             .cloned()
             .expect("Failed to get a valentine.")
     };
 
     let is_keitaro = get_first_name(&valentine.name) == "Keitaro";
-    let is_kou = KOU.get().copied().unwrap_or(false);
+    let is_kou = ctx.data().kou;
     let rig_keitaro = !is_kou && is_keitaro;
     let prefix_suffix = if rig_keitaro { "~~" } else { "" };
 
@@ -52,10 +44,14 @@ async fn valentine(ctx: Context, command: CommandInteraction) -> anyhow::Result<
     let color =
         u32::from_str_radix(&valentine.color, 16).expect("Failed to create a color from string.");
 
-    let member = command.member.clone().map(|m| *m);
-    let author_name = get_author_name(&command.user, &member);
-    let author_icon = get_author_avatar(&command.user);
-    let message = CreateInteractionResponseMessage::new().embed(
+    let member = ctx.author_member().await.map(|member| match member {
+        Cow::Borrowed(m) => m.clone(),
+        Cow::Owned(m) => m,
+    });
+    let author = ctx.author();
+    let author_name = get_author_name(author, &member);
+    let author_icon = get_author_avatar(author);
+    let message = CreateReply::default().embed(
         CreateEmbed::new()
             .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_icon))
             .color(color)
@@ -81,21 +77,19 @@ async fn valentine(ctx: Context, command: CommandInteraction) -> anyhow::Result<
         message
     };
 
-    command
-        .create_response(&ctx.http, CreateInteractionResponse::Message(message))
-        .await?;
+    ctx.send(message).await?;
 
-    if let Some(user_records) = USER_RECORDS.get() {
-        {
-            let mut user_records_lock = user_records.write().await;
-            let entry = user_records_lock
-                .entry(command.user.id.get().to_string())
-                .or_default();
-            *entry.valentine.entry(valentine.name.clone()).or_default() += 1;
-        }
-        let user_records_lock = user_records.read().await;
-        write_user_records(&user_records_lock)?;
+    let user_records = ctx.data().user_records.clone();
+    {
+        let mut user_records_lock = user_records.write().await;
+        let entry = user_records_lock
+            .entry(author.id.get().to_string())
+            .or_default();
+        *entry.valentine.entry(valentine.name.clone()).or_default() += 1;
     }
+
+    let user_records_lock = user_records.read().await;
+    write_user_records(&user_records_lock)?;
 
     Ok(())
 }

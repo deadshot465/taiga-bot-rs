@@ -1,7 +1,8 @@
 use crate::shared::structs::config::common_settings::COMMON_SETTINGS;
 use rand::prelude::*;
+use serenity::all::ActivityData;
 use serenity::futures::prelude::future::BoxFuture;
-use serenity::model::prelude::{Activity, OnlineStatus};
+use serenity::model::prelude::OnlineStatus;
 use serenity::prelude::*;
 use serenity::FutureExt;
 
@@ -18,8 +19,8 @@ async fn set_activity(ctx: &Context) {
     };
 
     if let Some(activity) = activity {
-        let activity = Activity::playing(activity);
-        ctx.set_presence(Some(activity), OnlineStatus::Online).await;
+        let activity = ActivityData::playing(activity);
+        ctx.set_presence(Some(activity), OnlineStatus::Online);
     }
 }
 
