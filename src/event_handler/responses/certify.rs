@@ -3,12 +3,10 @@ use crate::shared::constants::{
     KOU_SERVER_CERTIFICATION_MESSAGE, KOU_SERVER_CERTIFIED_ROLE_ID, KOU_SERVER_ID,
     KOU_SERVER_RULE_CHANNEL_ID,
 };
-use serenity::framework::standard::macros::hook;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
+use crate::shared::structs::ContextData;
+use serenity::all::{Context, Message, RoleId};
 
-#[hook]
-pub async fn normal_message_hook(ctx: &Context, message: &Message) {
+pub async fn handle_certify(ctx: &Context, message: &Message, data: &ContextData) {
     if message.author.bot {
         return;
     }
@@ -18,13 +16,13 @@ pub async fn normal_message_hook(ctx: &Context, message: &Message) {
             return;
         }
 
-        if let Err(e) = certify_user(ctx, message).await {
+        if let Err(e) = certify_user(ctx, message, data).await {
             tracing::error!("An error occurred when certifying the user: {}", e);
         }
     }
 }
 
-async fn certify_user(ctx: &Context, message: &Message) -> anyhow::Result<()> {
+async fn certify_user(ctx: &Context, message: &Message, data: &ContextData) -> anyhow::Result<()> {
     if let Some(ref partial_member) = message.member {
         if message.channel_id.get() != KOU_SERVER_RULE_CHANNEL_ID {
             return Ok(());
@@ -48,7 +46,7 @@ async fn certify_user(ctx: &Context, message: &Message) -> anyhow::Result<()> {
                 .add_role(&ctx.http, RoleId::new(KOU_SERVER_CERTIFIED_ROLE_ID))
                 .await?;
 
-            greet(ctx, guild, member).await?;
+            greet(ctx, guild, &member, data).await?;
             message.delete(&ctx.http).await?;
         } else {
             let reply_message = message

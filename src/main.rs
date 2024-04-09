@@ -3,7 +3,7 @@ mod event_handler;
 mod shared;
 
 use crate::commands::information::about::about;
-use crate::shared::structs::{ContextData, ContextError};
+use crate::shared::structs::{Context, ContextData, ContextError};
 
 use crate::commands::admin::admin;
 use crate::commands::fun::dialog::dialog;
@@ -26,9 +26,11 @@ use crate::commands::utility::convert::convert;
 use crate::commands::utility::enlarge::enlarge;
 use crate::commands::utility::image::image;
 use crate::commands::utility::pick::pick;
+use crate::event_handler::handle_event;
 use crate::shared::services::openai_service::initialize_openai_client;
 use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::common_settings::initialize_common_settings;
+use crate::shared::structs::config::random_response::initialize_random_response;
 use crate::shared::structs::config::server_info::initialize_server_infos;
 use crate::shared::structs::fun::emote::initialize_emote_list;
 use crate::shared::structs::fun::qotd::initialize_qotd_infos;
@@ -38,8 +40,8 @@ use crate::shared::structs::information::character::{initialize_routes, initiali
 use crate::shared::structs::information::oracle::initialize_oracles;
 use crate::shared::structs::smite::initialize_smite;
 use crate::shared::structs::utility::convert::conversion_table::initialize_conversion_table;
-use poise::FrameworkError;
-use poise::{serenity_prelude as serenity, PrefixFrameworkOptions};
+use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
+use poise::{CreateReply, FrameworkError};
 use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
 use shared::structs::config::*;
 use shared::structs::record::*;
@@ -66,12 +68,13 @@ async fn main() -> anyhow::Result<()> {
     let kou = args.contains(&"kou".to_string());
     let config = configuration::initialize()?;
     let http_client = reqwest::Client::new();
-    let openai_client = initialize_openai_client(&config, http_client.clone());
+    let openai_client = initialize_openai_client(&config);
 
     let context_data = ContextData {
         config,
         kou,
         channel_control: Arc::new(RwLock::new(channel_control)),
+        enabled_channels,
         user_records: Arc::new(RwLock::new(user_records)),
         routes: initialize_routes(),
         valentines: initialize_valentines(),
@@ -87,6 +90,7 @@ async fn main() -> anyhow::Result<()> {
         quiz_questions: initialize_quiz_questions(kou),
         smite: initialize_smite()?,
         openai_client,
+        random_response: initialize_random_response()?,
     };
 
     if context_data.config.token.is_empty() {
@@ -140,8 +144,8 @@ async fn main() -> anyhow::Result<()> {
                 guide(),
                 smite(),
             ],
-            on_error: |error| Box::pin(on_error(error)),
-            command_check: None,
+            on_error: |error| Box::pin(handle_error(error)),
+            command_check: Some(check_command),
             allowed_mentions: Some(
                 CreateAllowedMentions::new()
                     .all_roles(true)
@@ -149,7 +153,9 @@ async fn main() -> anyhow::Result<()> {
                     .everyone(true),
             ),
             reply_callback: None,
-            event_handler: (),
+            event_handler: |ctx, event, framework, data| {
+                Box::pin(handle_event(ctx, event, framework, data))
+            },
             initialize_owners: true,
             prefix_options: PrefixFrameworkOptions {
                 prefix: Some(prefix),
@@ -162,7 +168,7 @@ async fn main() -> anyhow::Result<()> {
             },
             ..std::default::Default::default()
         })
-        .setup(|ctx, ready, framework| {
+        .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
                 Ok(context_data)
@@ -183,7 +189,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn on_error(framework_error: FrameworkError<'_, ContextData, ContextError>) {
+async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextError>) {
     match framework_error {
         FrameworkError::Setup { error, .. } => {
             tracing::error!("Failed to start bot: {}", error.to_string());
@@ -220,6 +226,18 @@ async fn on_error(framework_error: FrameworkError<'_, ContextData, ContextError>
             )
         }
         FrameworkError::CommandCheckFailed { error, ctx, .. } => {
+            let result = ctx.send(CreateReply::default().content("Either this channel is not enabled for commands, or you're not calling in a guild!")).await;
+
+            if let Ok(reply_handle) = result {
+                tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+                if let Err(e) = reply_handle.delete(ctx).await {
+                    tracing::error!(
+                        "Error when deleting original response to slash command: {}",
+                        e
+                    );
+                }
+            }
+
             let command_name = ctx.command().name.as_str();
             tracing::error!(
                 "Command check failed, command: {}, error: {:?}",
@@ -233,4 +251,13 @@ async fn on_error(framework_error: FrameworkError<'_, ContextData, ContextError>
             }
         }
     }
+}
+
+fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> {
+    Box::pin(check_command_async(ctx))
+}
+
+async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
+    let channel_id = ctx.channel_id();
+    Ok(ctx.data().enabled_channels.contains(&channel_id))
 }

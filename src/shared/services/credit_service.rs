@@ -1,23 +1,23 @@
-use crate::shared::structs::authentication::login;
-use crate::shared::structs::record::user_credit::{UserCredit, UserCreditUpdateInfo};
-use crate::shared::structs::Context;
 use reqwest::StatusCode;
 
+use crate::shared::structs::authentication::login;
+use crate::shared::structs::record::user_credit::{UserCredit, UserCreditUpdateInfo};
+use crate::shared::structs::ContextData;
+
 pub async fn add_user_credit(
-    ctx: Context<'_>,
     user_id: u64,
     user_name: &str,
     amount: i32,
+    data: &ContextData,
 ) -> anyhow::Result<()> {
-    get_user_credit(ctx, user_id, user_name).await?;
+    get_user_credit(user_id, user_name, data).await?;
 
-    let server_endpoint = ctx.data().config.server_endpoint.clone();
+    let server_endpoint = data.config.server_endpoint.clone();
 
     let request_data = UserCreditUpdateInfo { credit: amount };
-    let auth = ctx.data().authentication.clone();
+    let auth = data.authentication.clone();
 
-    let response = ctx
-        .data()
+    let response = data
         .http_client
         .patch(format!("{}/{}/{}/plus", server_endpoint, "credit", user_id))
         .bearer_auth(auth.read().await.token.clone())
@@ -32,17 +32,16 @@ pub async fn add_user_credit(
 }
 
 pub async fn get_user_credit(
-    ctx: Context<'_>,
     user_id: u64,
     user_name: &str,
+    data: &ContextData,
 ) -> anyhow::Result<UserCredit> {
-    login(ctx).await?;
+    login(data).await?;
 
-    let server_endpoint = ctx.data().config.server_endpoint.clone();
-    let auth = ctx.data().authentication.clone();
+    let server_endpoint = data.config.server_endpoint.clone();
+    let auth = data.authentication.clone();
 
-    let response = ctx
-        .data()
+    let response = data
         .http_client
         .get(format!("{}/{}/{}", server_endpoint, "credit", user_id))
         .bearer_auth(auth.read().await.token.clone())
@@ -51,7 +50,7 @@ pub async fn get_user_credit(
 
     let response_status = response.status();
     match response_status {
-        StatusCode::NOT_FOUND => create_user(ctx, &server_endpoint, user_id, user_name).await,
+        StatusCode::NOT_FOUND => create_user(&server_endpoint, user_id, user_name, data).await,
         StatusCode::INTERNAL_SERVER_ERROR => Err(anyhow::anyhow!(
             "Internal server error: {}",
             response.text().await?
@@ -66,15 +65,14 @@ pub async fn get_user_credit(
 }
 
 async fn create_user(
-    ctx: Context<'_>,
     server_endpoint: &str,
     user_id: u64,
     user_name: &str,
+    data: &ContextData,
 ) -> anyhow::Result<UserCredit> {
-    login(ctx).await?;
-    let auth = ctx.data().authentication.clone();
-    let response = ctx
-        .data()
+    login(data).await?;
+    let auth = data.authentication.clone();
+    let response = data
         .http_client
         .get(format!("{}{}", server_endpoint, "/credit"))
         .bearer_auth(auth.read().await.token.clone())
@@ -98,8 +96,7 @@ async fn create_user(
                 credits: 100,
             };
 
-            let response = ctx
-                .data()
+            let response = data
                 .http_client
                 .post(format!("{}{}", server_endpoint, "/credit"))
                 .json(&request_data)

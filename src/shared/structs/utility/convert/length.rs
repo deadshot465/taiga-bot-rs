@@ -32,7 +32,7 @@ impl FromStr for Length {
         if Self::all_available_units().contains(&lowercase.as_str()) {
             Ok(Self::new(s))
         } else {
-            Err(ParseConverterError("Failed to parse length unit."))
+            Err(ParseConverterError)
         }
     }
 }
@@ -47,7 +47,7 @@ impl FromStrToConverter for Length {
             (Ok(source_result), Ok(target_result)) => {
                 Ok(ConverterType::Length(source_result, target_result, amount))
             }
-            _ => Err(ParseConverterError("Invalid length unit.")),
+            _ => Err(ParseConverterError),
         }
     }
 }

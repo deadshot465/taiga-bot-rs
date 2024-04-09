@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::shared::constants::{KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
 use crate::shared::structs::utility::judge_zero::{
     JudgeZeroGetResponse, JudgeZeroPostRequest, JudgeZeroPostResponse, JudgeZeroRequestResult,

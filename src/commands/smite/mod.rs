@@ -51,7 +51,6 @@ pub async fn smite(
                 let context = ctx.serenity_context().clone();
                 tokio::spawn(async move {
                     let context = context;
-                    let smote_user_list = smote_user_list;
                     tokio::time::sleep(std::time::Duration::from_secs(86400)).await;
 
                     match member.remove_role(context.http, RoleId::new(role_id)).await {

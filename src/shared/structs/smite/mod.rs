@@ -1,7 +1,7 @@
 use crate::shared::constants::{
     ASSET_DIRECTORY, CONFIG_DIRECTORY, KOU_SERVER_SMOTE_ROLE_ID, TAIGA_SERVER_SMOTE_ROLE_ID,
 };
-use crate::shared::structs::Context;
+use crate::shared::structs::ContextData;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serenity::all::{GuildId, UserId};
@@ -52,13 +52,13 @@ pub fn initialize_smite() -> anyhow::Result<Smite> {
     })
 }
 
-pub async fn schedule_unsmite(ctx: Context<'_>) {
-    let smote_user_list = ctx.data().smite.smote_user_list.clone();
+pub async fn schedule_unsmite(ctx: &serenity::prelude::Context, data: &ContextData) {
+    let smote_user_list = data.smite.smote_user_list.clone();
     let smote_users = smote_user_list.read().await.smote_users.clone();
 
     for smote_user in smote_users.into_iter() {
-        let context = ctx.serenity_context().clone();
-        let smote_user_list = ctx.data().smite.smote_user_list.clone();
+        let context = ctx.clone();
+        let smote_user_list = data.smite.smote_user_list.clone();
         tokio::spawn(async move {
             let time_remained = smote_user.due_time - Utc::now();
 

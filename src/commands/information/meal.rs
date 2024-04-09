@@ -23,7 +23,7 @@ pub async fn meal(ctx: Context<'_>) -> Result<(), ContextError> {
         .json()
         .await?;
 
-    if let Some(meal_data) = meal_data.meals.get(0) {
+    if let Some(meal_data) = meal_data.meals.first() {
         reply_handle
             .edit(
                 ctx,

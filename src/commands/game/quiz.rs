@@ -307,7 +307,7 @@ async fn progress_game(
                     is_kou,
                     &mut score_board,
                     &question.question,
-                    &question.answers.get(0).cloned().unwrap_or_default(),
+                    &question.answers.first().cloned().unwrap_or_default(),
                     &question.wrong,
                     &player_ids,
                 )

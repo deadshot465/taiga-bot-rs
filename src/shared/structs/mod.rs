@@ -2,6 +2,7 @@ use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::channel_control::ChannelControl;
 use crate::shared::structs::config::common_settings::CommonSettings;
 use crate::shared::structs::config::configuration::Configuration;
+use crate::shared::structs::config::random_response::RandomResponse;
 use crate::shared::structs::config::server_info::ServerInfos;
 use crate::shared::structs::fun::emote::EmoteList;
 use crate::shared::structs::fun::qotd::QotdInfos;
@@ -14,7 +15,8 @@ use crate::shared::structs::smite::Smite;
 use crate::shared::structs::utility::convert::conversion_table::ConversionTable;
 use async_openai::config::OpenAIConfig;
 use reqwest::Client;
-use std::collections::HashMap;
+use serenity::all::ChannelId;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -32,6 +34,7 @@ pub struct ContextData {
     pub config: Configuration,
     pub kou: bool,
     pub channel_control: Arc<RwLock<ChannelControl>>,
+    pub enabled_channels: HashSet<ChannelId>,
     pub user_records: Arc<RwLock<HashMap<String, UserRecord>>>,
     pub routes: Vec<Character>,
     pub valentines: Vec<Character>,
@@ -47,6 +50,7 @@ pub struct ContextData {
     pub quiz_questions: Vec<QuizQuestion>,
     pub smite: Smite,
     pub openai_client: async_openai::Client<OpenAIConfig>,
+    pub random_response: RandomResponse,
 }
 
 pub type ContextError = Box<dyn std::error::Error + Send + Sync>;

@@ -24,7 +24,7 @@ impl FromStr for Weight {
         if Self::all_available_units().contains(&lowercase.as_str()) {
             Ok(Self::new(s))
         } else {
-            Err(ParseConverterError("Failed to parse weight unit."))
+            Err(ParseConverterError)
         }
     }
 }
@@ -39,7 +39,7 @@ impl FromStrToConverter for Weight {
             (Ok(source_result), Ok(target_result)) => {
                 Ok(ConverterType::Weight(source_result, target_result, amount))
             }
-            _ => Err(ParseConverterError("Invalid weight unit.")),
+            _ => Err(ParseConverterError),
         }
     }
 }

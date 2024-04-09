@@ -21,8 +21,8 @@ pub async fn pick(
 ) -> Result<(), ContextError> {
     let times = times
         .map(|value| value as i64)
-        .and_then(|value| u64::from_i64(value))
-        .map(|n| if n <= 0 { 1 } else { n })
+        .and_then(u64::from_i64)
+        .map(|n| if n == 0 { 1 } else { n })
         .unwrap_or(1);
 
     let raw_string = choices.trim();
@@ -124,10 +124,7 @@ fn multiple_pick(choices: Vec<String>, times: u64) -> (String, HashMap<String, u
 }
 
 fn build_message(result: String, result_map: HashMap<String, u64>, is_kou: bool) -> String {
-    let mut result_map = result_map
-        .into_iter()
-        .map(|(choice, count)| (choice, count))
-        .collect::<Vec<_>>();
+    let mut result_map = result_map.into_iter().collect::<Vec<_>>();
     result_map.sort_by(|(_, count_1), (_, count_2)| count_2.cmp(count_1));
 
     let result_list: String = result_map

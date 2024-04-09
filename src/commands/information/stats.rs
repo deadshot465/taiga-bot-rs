@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 use poise::CreateReply;
 use serenity::all::{Color, CreateEmbedAuthor};
@@ -155,8 +156,10 @@ fn add_route_character_fields(
             endings.sort_unstable();
             let result = endings
                 .into_iter()
-                .map(|s| format!("__{}__: {}\n", s, character_record[s]))
-                .collect::<String>();
+                .fold(String::new(), |mut output, ending| {
+                    let _ = writeln!(output, "__{}__: {}", ending, character_record[ending]);
+                    output
+                });
             (format!("**{}**", name), result, true)
         })
         .collect::<Vec<_>>();

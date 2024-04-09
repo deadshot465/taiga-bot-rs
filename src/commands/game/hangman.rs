@@ -189,7 +189,7 @@ fn hangman_loop(
         let sent_msg = hangman_data
             .command
             .create_followup(
-                hangman_data.context.http,
+                hangman_data.context.http.clone(),
                 CreateInteractionResponseFollowup::new()
                     .content(format!("{}, {}", &hangman_data.author_name, PROMPT_MESSAGE)),
             )

@@ -57,13 +57,14 @@ pub fn generate_ship_image(avatar_1: &[u8], avatar_2: &[u8]) -> anyhow::Result<V
     Ok(writer.into_inner().unwrap_or_default().into_inner())
 }
 
-pub fn get_ship_message(ctx: Context<'_>, score: u64) -> &'static str {
+pub fn get_ship_message(ctx: Context<'_>, score: u64) -> String {
     ctx.data()
         .ship_messages
         .iter()
         .find(|msg| msg.max_score as u64 >= score)
         .map(|msg| msg.message.as_str())
         .unwrap_or_default()
+        .to_string()
 }
 
 pub fn monochrome_if_lower_score(score: u64, url: String) -> String {

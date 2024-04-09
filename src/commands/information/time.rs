@@ -92,7 +92,7 @@ async fn search_from_google(ctx: Context<'_>, query: &str) -> anyhow::Result<Str
         .json::<GeocodeResponse>()
         .await?;
 
-    if let Some(geocode_result) = geocode.results.get(0) {
+    if let Some(geocode_result) = geocode.results.first() {
         let location = &geocode_result.geometry.location;
         let elapsed_since_epoch = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?

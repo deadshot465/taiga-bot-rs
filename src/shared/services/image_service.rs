@@ -184,7 +184,7 @@ pub async fn get_cat_image(
         let search_result: Vec<CatBreedSearchResult> = response.json().await?;
 
         // If there's a search result, use that breed ID to get cat pictures.
-        if let Some(s) = search_result.get(0) {
+        if let Some(s) = search_result.first() {
             let url = format!(
                 "https://api.thecatapi.com/v1/images/search?breed_ids={}",
                 &s.id
@@ -295,7 +295,7 @@ async fn fetch_cat_image(
     let response = client.get(url).header("x-api-key", token).send().await?;
 
     let search_result: Vec<CatSearchResult> = response.json().await?;
-    if let Some(result) = search_result.get(0) {
+    if let Some(result) = search_result.first() {
         let embed = CreateEmbed::new()
             .title("Download Link")
             .url(&result.url)

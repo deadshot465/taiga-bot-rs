@@ -12,7 +12,7 @@ use serenity::all::{
 use serenity::builder::CreateEmbed;
 
 use crate::shared::constants::{ASSET_DIRECTORY, KOU_COLOR, TAIGA_COLOR};
-use crate::shared::structs::{Context, ContextError};
+use crate::shared::structs::{Context, ContextData, ContextError};
 
 const KOU_GOODBYE: &str = "Thanks for taking a guide with me! I hope you can enjoy your stay! <a:KouFascinated:705279783340212265>";
 const TAIGA_GOODBYE: &str = "Hope you like my guide! Make sure to say hello to other campers! <:chibitaiga:697893400891883531>";
@@ -46,15 +46,21 @@ pub async fn guide(ctx: Context<'_>) -> Result<(), ContextError> {
             };
 
             if let Some(guild) = guild {
-                inner_guide(ctx, guild, member).await?;
+                let context = ctx.serenity_context().clone();
+                inner_guide(context, guild, member, ctx.data().clone()).await?;
             }
         }
     }
     Ok(())
 }
 
-pub async fn inner_guide(ctx: Context<'_>, guild: Guild, member: Member) -> anyhow::Result<()> {
-    let is_kou = ctx.data().kou;
+pub async fn inner_guide(
+    ctx: serenity::prelude::Context,
+    guild: Guild,
+    member: Member,
+    data: ContextData,
+) -> anyhow::Result<()> {
+    let is_kou = data.kou;
 
     let text = if is_kou {
         KOU_INTRO_TEXT
@@ -66,7 +72,7 @@ pub async fn inner_guide(ctx: Context<'_>, guild: Guild, member: Member) -> anyh
             .replace("{guildName}", &guild.name)
     };
 
-    let bot_user = ctx.http().get_current_user().await?;
+    let bot_user = ctx.http.get_current_user().await?;
     let bot_avatar_url = if let Some(avatar_url) = bot_user.avatar_url() {
         avatar_url
     } else {
@@ -85,7 +91,7 @@ pub async fn inner_guide(ctx: Context<'_>, guild: Guild, member: Member) -> anyh
         &thumbnail,
     );
 
-    let global_commands = ctx.http().get_global_commands().await?;
+    let global_commands = ctx.http.get_global_commands().await?;
 
     let mut available_commands = global_commands
         .iter()
@@ -93,14 +99,14 @@ pub async fn inner_guide(ctx: Context<'_>, guild: Guild, member: Member) -> anyh
         .collect::<Vec<_>>();
     available_commands.sort_unstable_by(|(name_1, _), (name_2, _)| name_1.cmp(name_2));
 
-    let sent_msg = build_component(ctx, member.clone(), embed, &available_commands).await?;
+    let sent_msg = build_component(ctx.clone(), member.clone(), embed, &available_commands).await?;
     tour_loop(ctx, member, sent_msg, &available_commands, is_kou).await?;
 
     Ok(())
 }
 
 async fn build_component(
-    ctx: Context<'_>,
+    ctx: serenity::prelude::Context,
     member: Member,
     embed: CreateEmbed,
     available_commands: &[(String, String)],
@@ -113,7 +119,7 @@ async fn build_component(
     let sent_msg = member
         .user
         .direct_message(
-            ctx.http(),
+            ctx.http,
             CreateMessage::new().embed(embed).components(vec![
                 CreateActionRow::SelectMenu(
                     CreateSelectMenu::new(
@@ -156,7 +162,7 @@ fn build_embed(
 }
 
 async fn tour_loop(
-    ctx: Context<'_>,
+    ctx: serenity::prelude::Context,
     member: Member,
     sent_msg: Message,
     available_commands: &[(String, String)],
@@ -173,7 +179,7 @@ async fn tour_loop(
 
         'inner: loop {
             let collector = sent_msg
-                .await_component_interaction(ctx)
+                .await_component_interaction(ctx.clone())
                 .channel_id(sent_msg.channel_id)
                 .author_id(member.user.id)
                 .timeout(std::time::Duration::from_secs(60 * 5))
@@ -181,9 +187,9 @@ async fn tour_loop(
 
             tokio::select! {
                 _ = &mut delay => {
-                    sent_msg.delete(ctx.http()).await?;
+                    sent_msg.delete(ctx.http.clone()).await?;
                     member.user
-                        .direct_message(ctx.http(), CreateMessage::new()
+                        .direct_message(ctx.http, CreateMessage::new()
                         .content(if is_kou {
                             KOU_GOODBYE
                         } else {
@@ -195,9 +201,9 @@ async fn tour_loop(
                     if let Some(ref interaction) = maybe_v {
                         match interaction.data.kind.clone() {
                             ComponentInteractionDataKind::Button => {
-                                sent_msg.delete(ctx.http()).await?;
+                                sent_msg.delete(ctx.http.clone()).await?;
                                 interaction
-                                    .create_response(ctx.http(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                    .create_response(ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
                                     .content(if is_kou {
                                         KOU_GOODBYE
                                     } else {
@@ -212,7 +218,7 @@ async fn tour_loop(
                                 if let Some(value) = values.first() {
                                     if let Some(description) = available_commands.get(value.as_str()) {
                                         interaction
-                                            .create_response(ctx.http(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                            .create_response(ctx.http.clone(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
                                             .content(format!("**{}**: {}", value.as_str(), *description))))
                                             .await?;
                                     }

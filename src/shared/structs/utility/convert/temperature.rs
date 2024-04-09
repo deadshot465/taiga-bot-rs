@@ -21,7 +21,7 @@ impl FromStr for Temperature {
         if Self::all_available_units().contains(&lowercase.as_str()) {
             Ok(Self::new(s))
         } else {
-            Err(ParseConverterError("Failed to parse temperature unit."))
+            Err(ParseConverterError)
         }
     }
 }
@@ -38,7 +38,7 @@ impl FromStrToConverter for Temperature {
                 target_result,
                 amount,
             )),
-            _ => Err(ParseConverterError("Invalid temperature unit.")),
+            _ => Err(ParseConverterError),
         }
     }
 }

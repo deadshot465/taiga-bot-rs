@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::shared::structs::Context;
+use crate::shared::structs::ContextData;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Authentication {
@@ -21,20 +21,20 @@ impl Authentication {
         }
     }
 
-    pub(self) async fn login(&mut self, ctx: Context<'_>) -> anyhow::Result<()> {
+    pub(self) async fn login(&mut self, data: &ContextData) -> anyhow::Result<()> {
         if let Some(expiry) = self.expiry {
             if expiry < Utc::now() {
-                self.inner_login(ctx).await?;
+                self.inner_login(data).await?;
             }
         } else {
-            self.inner_login(ctx).await?;
+            self.inner_login(data).await?;
         }
         Ok(())
     }
 
-    async fn inner_login(&mut self, ctx: Context<'_>) -> anyhow::Result<()> {
+    async fn inner_login(&mut self, data: &ContextData) -> anyhow::Result<()> {
         let (request_data, server_endpoint) = {
-            let configuration = &ctx.data().config;
+            let configuration = &data.config;
 
             let mut data = HashMap::new();
             data.insert("user_name".to_string(), configuration.login_name.clone());
@@ -43,8 +43,7 @@ impl Authentication {
         };
 
         let login_path = server_endpoint + LOGIN_PATH;
-        let response = ctx
-            .data()
+        let response = data
             .http_client
             .post(&login_path)
             .json(&request_data)
@@ -68,8 +67,8 @@ impl Default for Authentication {
     }
 }
 
-pub async fn login(ctx: Context<'_>) -> anyhow::Result<()> {
-    let auth = ctx.data().authentication.clone();
+pub async fn login(data: &ContextData) -> anyhow::Result<()> {
+    let auth = data.authentication.clone();
     let mut authentication_write_lock = auth.write().await;
-    authentication_write_lock.login(ctx).await
+    authentication_write_lock.login(data).await
 }

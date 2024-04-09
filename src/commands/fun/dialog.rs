@@ -32,7 +32,7 @@ pub async fn dialog(
             .await?;
         return Ok(());
     }
-    login(ctx).await?;
+    login(ctx.data()).await?;
 
     let result = get_dialog(ctx, background, character, text).await?;
 
