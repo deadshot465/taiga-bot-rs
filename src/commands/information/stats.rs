@@ -24,7 +24,6 @@ pub enum StatChoice {
 pub async fn stats(
     ctx: Context<'_>,
     #[description = "(Optional) The command of which you want to query the record."]
-    #[autocomplete = "poise::builtins::autocomplete_command"]
     command: Option<StatChoice>,
 ) -> Result<(), ContextError> {
     let user_records = ctx.data().user_records.clone();
@@ -98,11 +97,15 @@ fn build_valentine_records(
         .collect::<Vec<_>>();
     character_name_and_counts.sort_by(|(_, count_1), (_, count_2)| count_2.cmp(count_1));
 
+    let amount = 25_usize;
     let embed = CreateEmbed::new()
         .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
-        .description(format!("Here's {}'s records with `valentine`", author_name));
-    add_valentine_character_fields(embed, character_name_and_counts)
+        .description(format!(
+            "Here's {}'s records with `valentine (top {})`",
+            author_name, amount
+        ));
+    add_valentine_character_fields(embed, character_name_and_counts, amount)
 }
 
 fn build_all(
@@ -136,8 +139,9 @@ fn build_all(
 
     let embed = embed.field("**Route**", "Records for `route`", false);
     let embed = add_route_character_fields(embed, route_names, route_record);
-    let embed = embed.field("**Valentine**", "Records for `valentine`", false);
-    add_valentine_character_fields(embed, valentine_name_and_counts)
+    let amount = 10_usize;
+    let embed = embed.field("**Valentine**", format!("Records for `valentine` (top {})", amount), false);
+    add_valentine_character_fields(embed, valentine_name_and_counts, amount)
 }
 
 fn add_route_character_fields(
@@ -169,11 +173,14 @@ fn add_route_character_fields(
 
 fn add_valentine_character_fields(
     embed: CreateEmbed,
-    valentine_name_and_counts: Vec<(&str, u16)>,
+    mut valentine_name_and_counts: Vec<(&str, u16)>,
+    amount: usize
 ) -> CreateEmbed {
+    valentine_name_and_counts.sort_unstable_by(|(_, count1), (_, count2)| count2.cmp(&count1));
     let fields = valentine_name_and_counts
         .into_iter()
         .map(|(name, count)| (format!("**{}**", name), count.to_string(), true))
+        .take(amount)
         .collect::<Vec<_>>();
 
     embed.fields(fields)

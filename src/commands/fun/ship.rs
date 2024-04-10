@@ -16,10 +16,8 @@ use serenity::model::id::UserId;
 #[poise::command(slash_command, category = "Fun")]
 pub async fn ship(
     ctx: Context<'_>,
-    #[description = "The first user to ship with the second user."]
-    user_1: User,
-    #[description = "The second user to ship with the first user."]
-    user_2: User,
+    #[description = "The first user to ship with the second user."] user_1: User,
+    #[description = "The second user to ship with the first user."] user_2: User,
 ) -> Result<(), ContextError> {
     let reply_handle = ctx
         .send(CreateReply::default().content("Alright! Hold on..."))

@@ -10,6 +10,7 @@ use crate::shared::constants::{KOU_COLOR, TAIGA_COLOR};
 use crate::shared::structs::fun::qotd::QotdInfo;
 use crate::shared::structs::{Context, ContextError};
 
+/// Ask a question of the day and earn 25 credits.
 #[poise::command(slash_command, category = "Fun")]
 pub async fn qotd(
     ctx: Context<'_>,
