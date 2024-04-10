@@ -1,36 +1,33 @@
 use crate::event_handler::hit_or_miss;
 use crate::shared::services::openai_service::build_openai_message;
-use crate::shared::structs::config::common_settings::COMMON_SETTINGS;
-use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use crate::shared::structs::config::random_response::{get_random_message, get_shuffled_keywords};
+use crate::shared::structs::ContextData;
 use rand::prelude::*;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::Result<()> {
+pub async fn handle_responses(
+    ctx: &Context,
+    new_message: &Message,
+    data: &ContextData,
+) -> anyhow::Result<()> {
     if new_message.author.bot {
         return Ok(());
     }
 
-    let random_reply_chance = CONFIGURATION
-        .get()
-        .map(|c| c.random_reply_chance)
-        .unwrap_or_default();
+    let random_reply_chance = data.config.random_reply_chance;
 
     if !hit_or_miss(random_reply_chance) {
         return Ok(());
     }
 
-    let openai_reply_chance = CONFIGURATION
-        .get()
-        .map(|c| c.openai_reply_chance)
-        .unwrap_or_default();
+    let openai_reply_chance = data.config.openai_reply_chance;
 
     let reply_with_openai = hit_or_miss(openai_reply_chance);
 
-    let is_kou = KOU.get().copied().unwrap_or(false);
+    let is_kou = data.kou;
     let message_content = new_message.content.to_lowercase();
-    let shuffled_keywords = get_shuffled_keywords();
+    let shuffled_keywords = get_shuffled_keywords(&data.random_response);
     let mut replied = false;
     for keyword in shuffled_keywords.into_iter() {
         if !message_content.contains(&keyword) {
@@ -42,25 +39,25 @@ pub async fn handle_responses(ctx: &Context, new_message: &Message) -> anyhow::R
             continue;
         }
 
-        let response = get_random_message(trimmed_keyword);
+        let response = get_random_message(&data.random_response, trimmed_keyword);
         new_message.reply(&ctx.http, response).await?;
         replied = true;
         break;
     }
 
     if !replied {
-        let author_id_skippable = CONFIGURATION
-            .get()
-            .map(|c| c.skip_user_ids.contains(&new_message.author.id.0))
-            .unwrap_or(false);
+        let author_id_skippable = data
+            .config
+            .skip_user_ids
+            .contains(&new_message.author.id.get());
 
         let random_common_response = if reply_with_openai && !author_id_skippable {
-            build_openai_message(message_content)
+            build_openai_message(data, new_message)
                 .await
                 .unwrap_or_default()
         } else {
-            let mut rng = rand::thread_rng();
-            COMMON_SETTINGS
+            let mut rng = thread_rng();
+            data.common_settings
                 .common_responses
                 .choose(&mut rng)
                 .cloned()

@@ -1,20 +1,20 @@
-use crate::shared::structs::config::configuration::CONFIGURATION;
-use crate::shared::structs::fun::emote::EMOTE_LIST;
+use crate::shared::structs::ContextData;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
 
-pub async fn handle_emote(ctx: &Context, new_message: &Message) -> anyhow::Result<()> {
+pub async fn handle_emote(
+    ctx: &Context,
+    new_message: &Message,
+    data: &ContextData,
+) -> anyhow::Result<()> {
     let message_content = &new_message.content;
-    let prefix = CONFIGURATION
-        .get()
-        .map(|c| c.prefix.as_str())
-        .unwrap_or("ta!");
+    let prefix = data.config.prefix.as_str();
 
     if !message_content.starts_with(prefix) {
         return Ok(());
     }
 
-    let arguments = (message_content[prefix.chars().count()..])
+    let arguments = message_content[prefix.chars().count()..]
         .split(' ')
         .collect::<Vec<_>>();
     let emote_name = arguments.first().copied().unwrap_or_default();
@@ -24,8 +24,9 @@ pub async fn handle_emote(ctx: &Context, new_message: &Message) -> anyhow::Resul
         .and_then(|s| s.parse::<u8>().ok())
         .unwrap_or_default();
 
+    let emote_list = data.emote_list.clone();
     let emote = {
-        EMOTE_LIST
+        emote_list
             .read()
             .await
             .emotes

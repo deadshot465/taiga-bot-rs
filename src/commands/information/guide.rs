@@ -1,16 +1,18 @@
-use crate::event_handler::commands::{SlashCommandElements, AVAILABLE_COMMANDS};
-use crate::shared::constants::{ASSET_DIRECTORY, KOU_COLOR, TAIGA_COLOR};
-use crate::shared::structs::config::configuration::KOU;
-use once_cell::sync::Lazy;
-use serenity::builder::CreateEmbed;
-use serenity::model::application::component::{ButtonStyle, ComponentType};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::model::prelude::*;
-use serenity::prelude::*;
-use serenity::utils::Color;
+use std::borrow::Cow;
 use std::collections::HashMap;
-use std::future::Future;
-use std::pin::Pin;
+
+use once_cell::sync::Lazy;
+use poise::CreateReply;
+use serenity::all::{
+    ButtonStyle, Color, ComponentInteractionDataKind, CreateActionRow, CreateButton,
+    CreateEmbedAuthor, CreateEmbedFooter, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage, CreateSelectMenu, CreateSelectMenuKind,
+    CreateSelectMenuOption, Guild, Member, Message,
+};
+use serenity::builder::CreateEmbed;
+
+use crate::shared::constants::{ASSET_DIRECTORY, KOU_COLOR, TAIGA_COLOR};
+use crate::shared::structs::{Context, ContextData, ContextError};
 
 const KOU_GOODBYE: &str = "Thanks for taking a guide with me! I hope you can enjoy your stay! <a:KouFascinated:705279783340212265>";
 const TAIGA_GOODBYE: &str = "Hope you like my guide! Make sure to say hello to other campers! <:chibitaiga:697893400891883531>";
@@ -25,15 +27,40 @@ static TAIGA_INTRO_TEXT: Lazy<String> = Lazy::new(|| {
         .expect("Failed to read Taiga's intro text from local disk.")
 });
 
-pub fn guide_async(
-    ctx: Context,
-    command: ApplicationCommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(guide(ctx, command))
+/// Start a step-by-step guide.
+#[poise::command(slash_command, category = "Information")]
+pub async fn guide(ctx: Context<'_>) -> Result<(), ContextError> {
+    ctx.send(CreateReply::default().content("Check your DM!"))
+        .await?;
+
+    if let Some(guild_id) = ctx.guild_id() {
+        if let Some(member) = ctx.author_member().await {
+            let guild = ctx
+                .cache()
+                .guild(guild_id)
+                .map(|guild_ref| guild_ref.clone());
+
+            let member = match member {
+                Cow::Borrowed(m) => m.clone(),
+                Cow::Owned(m) => m,
+            };
+
+            if let Some(guild) = guild {
+                let context = ctx.serenity_context().clone();
+                inner_guide(context, guild, member, ctx.data().clone()).await?;
+            }
+        }
+    }
+    Ok(())
 }
 
-pub async fn inner_guide(ctx: &Context, guild: Guild, member: Member) -> anyhow::Result<()> {
-    let is_kou = KOU.get().copied().unwrap_or(false);
+pub async fn inner_guide(
+    ctx: serenity::prelude::Context,
+    guild: Guild,
+    member: Member,
+    data: ContextData,
+) -> anyhow::Result<()> {
+    let is_kou = data.kou;
 
     let text = if is_kou {
         KOU_INTRO_TEXT
@@ -64,65 +91,52 @@ pub async fn inner_guide(ctx: &Context, guild: Guild, member: Member) -> anyhow:
         &thumbnail,
     );
 
-    let mut available_commands = AVAILABLE_COMMANDS
+    let global_commands = ctx.http.get_global_commands().await?;
+
+    let mut available_commands = global_commands
         .iter()
-        .map(
-            |(
-                name,
-                SlashCommandElements {
-                    description, emoji, ..
-                },
-            )| (name.clone(), (description.clone(), emoji.clone())),
-        )
+        .map(|command| (command.name.clone(), command.description.clone()))
         .collect::<Vec<_>>();
     available_commands.sort_unstable_by(|(name_1, _), (name_2, _)| name_1.cmp(name_2));
 
-    let sent_msg = build_component(ctx, &member, embed, &available_commands).await?;
-    tour_loop(ctx, &member, &sent_msg, &available_commands, is_kou).await?;
+    let sent_msg = build_component(ctx.clone(), member.clone(), embed, &available_commands).await?;
+    tour_loop(ctx, member, sent_msg, &available_commands, is_kou).await?;
 
     Ok(())
 }
 
 async fn build_component(
-    ctx: &Context,
-    member: &Member,
+    ctx: serenity::prelude::Context,
+    member: Member,
     embed: CreateEmbed,
-    available_commands: &[(String, (String, String))],
+    available_commands: &[(String, String)],
 ) -> anyhow::Result<Message> {
+    let command_options = available_commands
+        .iter()
+        .map(|(name, _)| CreateSelectMenuOption::new(name.as_str(), name.as_str()))
+        .collect::<Vec<_>>();
+
     let sent_msg = member
         .user
-        .direct_message(&ctx.http, |msg| {
-            msg.set_embed(embed).components(|components| {
-                components
-                    .create_action_row(|row| {
-                        row.create_select_menu(|menu| {
-                            menu.min_values(1)
-                                .max_values(1)
-                                .custom_id("command")
-                                .placeholder("Select a command!")
-                                .options(|opts| {
-                                    for (name, (_, emoji)) in available_commands.iter() {
-                                        opts.create_option(|opt| {
-                                            opt.emoji(ReactionType::Unicode(emoji.clone()))
-                                                .value(name)
-                                                .label(name)
-                                        });
-                                    }
-                                    opts
-                                });
-                            menu
-                        })
-                    })
-                    .create_action_row(|row| {
-                        row.create_button(|button| {
-                            button
-                                .label("End Tour")
-                                .custom_id("end_tour")
-                                .style(ButtonStyle::Danger)
-                        })
-                    })
-            })
-        })
+        .direct_message(
+            ctx.http,
+            CreateMessage::new().embed(embed).components(vec![
+                CreateActionRow::SelectMenu(
+                    CreateSelectMenu::new(
+                        "command",
+                        CreateSelectMenuKind::String {
+                            options: command_options,
+                        },
+                    )
+                    .min_values(1)
+                    .max_values(1)
+                    .placeholder("Select a command!"),
+                ),
+                CreateActionRow::Buttons(vec![CreateButton::new("end_tour")
+                    .label("End Tour")
+                    .style(ButtonStyle::Danger)]),
+            ]),
+        )
         .await?;
 
     Ok(sent_msg)
@@ -136,44 +150,27 @@ fn build_embed(
     description: &str,
     thumbnail: &str,
 ) -> CreateEmbed {
-    let mut embed = CreateEmbed::default();
-    embed
-        .author(|author| author.name(author_name).icon_url(avatar_url))
+    CreateEmbed::new()
+        .author(CreateEmbedAuthor::new(author_name).icon_url(avatar_url))
         .description(description)
         .title(title)
         .color(color)
         .thumbnail(thumbnail)
-        .footer(|f| f.text("Press `End Tour` button to end the guide!"));
-    embed
-}
-
-async fn guide(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Check your DM!"))
-        })
-        .await?;
-
-    if let Some(guild_id) = command.guild_id {
-        if let Some(member) = command.member {
-            if let Some(guild) = ctx.cache.guild(guild_id) {
-                inner_guide(&ctx, guild, member).await?;
-            }
-        }
-    }
-    Ok(())
+        .footer(CreateEmbedFooter::new(
+            "Press `End Tour` button to end the guide!",
+        ))
 }
 
 async fn tour_loop(
-    ctx: &Context,
-    member: &Member,
-    sent_msg: &Message,
-    available_commands: &[(String, (String, String))],
+    ctx: serenity::prelude::Context,
+    member: Member,
+    sent_msg: Message,
+    available_commands: &[(String, String)],
     is_kou: bool,
 ) -> anyhow::Result<()> {
     let available_commands = available_commands
         .iter()
-        .map(|(name, (description, emoji))| (name, (description, emoji)))
+        .map(|(name, description)| (name.clone(), description.clone()))
         .collect::<HashMap<_, _>>();
 
     'outer: loop {
@@ -182,7 +179,7 @@ async fn tour_loop(
 
         'inner: loop {
             let collector = sent_msg
-                .await_component_interaction(ctx)
+                .await_component_interaction(ctx.clone())
                 .channel_id(sent_msg.channel_id)
                 .author_id(member.user.id)
                 .timeout(std::time::Duration::from_secs(60 * 5))
@@ -190,8 +187,9 @@ async fn tour_loop(
 
             tokio::select! {
                 _ = &mut delay => {
-                    sent_msg.delete(&ctx.http).await?;
-                    member.user.direct_message(&ctx.http, |msg| msg
+                    sent_msg.delete(ctx.http.clone()).await?;
+                    member.user
+                        .direct_message(ctx.http, CreateMessage::new()
                         .content(if is_kou {
                             KOU_GOODBYE
                         } else {
@@ -199,27 +197,30 @@ async fn tour_loop(
                         })).await?;
                     break 'outer;
                 }
-                maybe_v = collector => {
-                    if let Some(interaction) = maybe_v {
-                        match interaction.data.component_type {
-                            ComponentType::Button => {
-                                sent_msg.delete(&ctx.http).await?;
-                                interaction.create_interaction_response(&ctx.http, |response| {
-                                    response.interaction_response_data(|data| data.content(if is_kou {
+                maybe_v = collector.next() => {
+                    if let Some(ref interaction) = maybe_v {
+                        match interaction.data.kind.clone() {
+                            ComponentInteractionDataKind::Button => {
+                                sent_msg.delete(ctx.http.clone()).await?;
+                                interaction
+                                    .create_response(ctx.http, CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                    .content(if is_kou {
                                         KOU_GOODBYE
                                     } else {
                                         TAIGA_GOODBYE
-                                    }))
-                                }).await?;
+                                    })))
+                                    .await?;
                                 break 'outer;
                             },
-                            ComponentType::SelectMenu => {
-                                if let Some(value) = interaction.data.values.get(0) {
-                                    if let Some((description, _)) = available_commands.get(&&value.as_str().to_string()) {
-                                        interaction.create_interaction_response(&ctx.http, |response| {
-                                            response.interaction_response_data(|data| data
-                                                .content(format!("**{}**: {}", value.as_str(), *description)))
-                                        }).await?;
+                            ComponentInteractionDataKind::StringSelect {
+                                values
+                            } => {
+                                if let Some(value) = values.first() {
+                                    if let Some(description) = available_commands.get(value.as_str()) {
+                                        interaction
+                                            .create_response(ctx.http.clone(), CreateInteractionResponse::Message(CreateInteractionResponseMessage::new()
+                                            .content(format!("**{}**: {}", value.as_str(), *description))))
+                                            .await?;
                                     }
                                 }
                                 break 'inner;

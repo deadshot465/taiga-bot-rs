@@ -1,10 +1,6 @@
-use crate::shared::constants::ASSET_DIRECTORY;
-use crate::shared::structs::config::configuration::KOU;
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
-pub static COMMON_SETTINGS: Lazy<CommonSettings> =
-    Lazy::new(|| initialize().expect("Failed to initialize common settings."));
+use crate::shared::constants::ASSET_DIRECTORY;
 
 const COMMON_SETTINGS_FILE_NAME: &str = "/common_settings.toml";
 
@@ -16,13 +12,12 @@ pub struct CommonSettings {
     pub failed_messages: Vec<String>,
 }
 
-fn initialize() -> anyhow::Result<CommonSettings> {
+pub fn initialize_common_settings(is_kou: bool) -> anyhow::Result<CommonSettings> {
     if !std::path::Path::new(ASSET_DIRECTORY).exists() {
         std::fs::create_dir(ASSET_DIRECTORY)?;
     }
 
     let common_settings_path = String::from(ASSET_DIRECTORY) + COMMON_SETTINGS_FILE_NAME;
-    let is_kou = KOU.get().copied().unwrap_or(false);
     if !std::path::Path::new(&common_settings_path).exists() {
         // Read from backup JSON files.
         let json_path = String::from(ASSET_DIRECTORY)

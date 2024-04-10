@@ -1,19 +1,15 @@
-use crate::shared::constants::{ASSET_DIRECTORY, CONFIG_DIRECTORY};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 
-pub static EMOTE_LIST: Lazy<RwLock<EmoteList>> =
-    Lazy::new(|| RwLock::new(initialize().expect("Failed to read emote list from local disk.")));
+use crate::shared::constants::{ASSET_DIRECTORY, CONFIG_DIRECTORY};
 
 const EMOTE_LIST_FILE_NAME: &str = "/emote_list.toml";
 
-#[derive(Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct EmoteList {
     pub emotes: Vec<Emote>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Emote {
     pub name: String,
     pub id: u64,
@@ -30,7 +26,7 @@ impl EmoteList {
     }
 }
 
-fn initialize() -> anyhow::Result<EmoteList> {
+pub fn initialize_emote_list() -> anyhow::Result<EmoteList> {
     if !std::path::Path::new(CONFIG_DIRECTORY).exists() {
         std::fs::create_dir(CONFIG_DIRECTORY)?;
     }

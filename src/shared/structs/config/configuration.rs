@@ -1,9 +1,6 @@
-use crate::shared::constants::CONFIG_DIRECTORY;
-use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 
-pub static CONFIGURATION: OnceCell<Configuration> = OnceCell::new();
-pub static KOU: OnceCell<bool> = OnceCell::new();
+use crate::shared::constants::CONFIG_DIRECTORY;
 
 const CONFIG_FILE_NAME: &str = "/config.toml";
 
@@ -69,7 +66,7 @@ impl Configuration {
     }
 }
 
-pub fn initialize() -> anyhow::Result<()> {
+pub fn initialize() -> anyhow::Result<Configuration> {
     if !std::path::Path::new(CONFIG_DIRECTORY).exists() {
         std::fs::create_dir(CONFIG_DIRECTORY)?;
     }
@@ -78,12 +75,10 @@ pub fn initialize() -> anyhow::Result<()> {
     if !std::path::Path::new(&config_path).exists() {
         let new_config = Configuration::new();
         new_config.write_config()?;
-        CONFIGURATION.get_or_init(|| new_config);
+        Ok(new_config)
     } else {
         let toml = std::fs::read_to_string(config_path)?;
         let deserialized_toml: Configuration = toml::from_str(&toml)?;
-        CONFIGURATION.get_or_init(|| deserialized_toml);
+        Ok(deserialized_toml)
     }
-
-    Ok(())
 }

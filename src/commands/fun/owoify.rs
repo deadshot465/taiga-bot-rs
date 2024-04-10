@@ -1,50 +1,38 @@
-use crate::shared::structs::config::configuration::KOU;
-use crate::shared::utility::get_author_name;
+use std::borrow::Cow;
+
 use owoify_rs::{Owoifiable, OwoifyLevel};
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::*;
-use std::future::Future;
-use std::pin::Pin;
+use poise::CreateReply;
+
+use crate::shared::structs::{Context, ContextError};
+use crate::shared::utility::get_author_name;
 
 const OWOIFY_LENGTH_LIMIT: usize = 1024;
 
-pub fn owoify_async(
-    ctx: Context,
-    command: ApplicationCommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(owoify(ctx, command))
+#[derive(Debug, Copy, Clone, poise::ChoiceParameter)]
+pub enum Owoness {
+    Soft,
+    Medium,
+    Hard,
 }
 
-async fn owoify(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    let level = match command
-        .data
-        .options
-        .get(0)
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_str())
-        .unwrap_or_default()
-    {
-        "soft" => OwoifyLevel::Owo,
-        "medium" => OwoifyLevel::Uwu,
-        "hard" => OwoifyLevel::Uvu,
-        _ => OwoifyLevel::Owo,
+/// This command will owoify your text.
+#[poise::command(slash_command, category = "Fun")]
+pub async fn owoify(
+    ctx: Context<'_>,
+    #[description = "The owoness you want to owoify your text."] level: Option<Owoness>,
+    #[description = "The text to owoify."] text: String,
+) -> Result<(), ContextError> {
+    let level = match level.unwrap_or(Owoness::Soft) {
+        Owoness::Soft => OwoifyLevel::Owo,
+        Owoness::Medium => OwoifyLevel::Uwu,
+        Owoness::Hard => OwoifyLevel::Uvu,
     };
 
-    let text = command
-        .data
-        .options
-        .get(1)
-        .and_then(|opt| opt.value.as_ref())
-        .and_then(|value| value.as_str())
-        .map(|s| s.trim())
-        .unwrap_or_default();
-
-    let is_kou = KOU.get().copied().unwrap_or(false);
+    let is_kou = ctx.data().kou;
 
     if text.is_empty() {
         cancel_owoify(
-            &ctx,
-            &command,
+            ctx,
             if is_kou {
                 "...I don't know what to owo, sorry..."
             } else {
@@ -59,35 +47,32 @@ async fn owoify(ctx: Context, command: ApplicationCommandInteraction) -> anyhow:
         length_exceeded = true;
         &text[..OWOIFY_LENGTH_LIMIT]
     } else {
-        text
+        text.as_str()
     };
 
-    command.create_interaction_response(&ctx.http, |response| response
-        .interaction_response_data(|data| {
-            data.content(if length_exceeded {
-                format!("{}\n\n{}", if is_kou {
-                    "<:KouCry:705054435826597928> I'm not really smart so I can't owoify such a long sentence..."
-                } else {
-                    "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
-                }, trimmed_text.owoify(level))
+    let member = ctx.author_member().await.map(|member| match member {
+        Cow::Borrowed(m) => m.clone(),
+        Cow::Owned(m) => m,
+    });
+    let author = ctx.author();
+
+    ctx
+        .send(CreateReply::default().content(if length_exceeded {
+            format!("{}\n\n{}", if is_kou {
+                "<:KouCry:705054435826597928> I'm not really smart so I can't owoify such a long sentence..."
             } else {
-                let author_name = get_author_name(&command.user, &command.member);
-                format!("OwO-ified for {}~!\n\n{}", author_name, trimmed_text.owoify(level))
-            })
-        })).await?;
+                "<:TaigaUneasy2:700006812673638500> Even idiocy has its limit. Same goes for owoification as well. I won't do any text that is more than 1000 characters."
+            }, trimmed_text.owoify(level))
+        } else {
+            let author_name = get_author_name(author, &member);
+            format!("OwO-ified for {}~!\n\n{}", author_name, trimmed_text.owoify(level))
+        }))
+        .await?;
 
     Ok(())
 }
 
-async fn cancel_owoify(
-    ctx: &Context,
-    command: &ApplicationCommandInteraction,
-    msg: &str,
-) -> anyhow::Result<()> {
-    command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content(msg))
-        })
-        .await?;
+async fn cancel_owoify(ctx: Context<'_>, msg: &str) -> anyhow::Result<()> {
+    ctx.send(CreateReply::default().content(msg)).await?;
     Ok(())
 }

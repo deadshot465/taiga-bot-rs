@@ -1,4 +1,5 @@
 use crate::InterfaceService;
+use serenity::all::Color;
 use serenity::framework::standard::macros::help;
 use serenity::framework::standard::{
     help_commands, Args, Command, CommandGroup, CommandResult, HelpOptions,
@@ -6,7 +7,6 @@ use serenity::framework::standard::{
 use serenity::model::channel::Message;
 use serenity::model::id::UserId;
 use serenity::prelude::Context;
-use serenity::utils::Color;
 use std::collections::{HashMap, HashSet};
 
 #[help]

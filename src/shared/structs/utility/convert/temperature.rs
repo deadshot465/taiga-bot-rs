@@ -1,10 +1,12 @@
 #![allow(clippy::from_over_into)]
+
 use crate::shared::structs::utility::convert::{
     ConverterType, FromStrToConverter, ParseConverterError,
 };
+use std::fmt::Display;
 use std::str::FromStr;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
 pub enum Temperature {
     Celsius,
     Fahrenheit,
@@ -19,7 +21,7 @@ impl FromStr for Temperature {
         if Self::all_available_units().contains(&lowercase.as_str()) {
             Ok(Self::new(s))
         } else {
-            Err(ParseConverterError("Failed to parse temperature unit."))
+            Err(ParseConverterError)
         }
     }
 }
@@ -36,14 +38,14 @@ impl FromStrToConverter for Temperature {
                 target_result,
                 amount,
             )),
-            _ => Err(ParseConverterError("Invalid temperature unit.")),
+            _ => Err(ParseConverterError),
         }
     }
 }
 
-impl ToString for Temperature {
-    fn to_string(&self) -> String {
-        (*self).into()
+impl Display for Temperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", <Temperature as Into<String>>::into(*self))
     }
 }
 

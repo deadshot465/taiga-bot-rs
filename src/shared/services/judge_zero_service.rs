@@ -1,13 +1,14 @@
+#![allow(unused)]
 use crate::shared::constants::{KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
-use crate::shared::services::HTTP_CLIENT;
-use crate::shared::structs::config::configuration::{CONFIGURATION, KOU};
 use crate::shared::structs::utility::judge_zero::{
     JudgeZeroGetResponse, JudgeZeroPostRequest, JudgeZeroPostResponse, JudgeZeroRequestResult,
 };
+use crate::shared::structs::Context;
 use base64::engine::{general_purpose, GeneralPurpose, GeneralPurposeConfig};
 use base64::Engine;
-use once_cell::sync::Lazy;
+use once_cell::sync::OnceCell;
 use reqwest::header::HeaderMap;
+use serenity::all::CreateEmbedAuthor;
 use serenity::builder::CreateEmbed;
 
 const RUST_LANG_CODE: u8 = 73;
@@ -18,35 +19,16 @@ const RESULT_RAW_URL: &str =
     "https://judge0-ce.p.rapidapi.com/submissions/{token}?base64_encoded=true&fields=*";
 const DEFAULT_MAX_ATTEMPTS: u8 = 10;
 
-static HEADER_MAP: Lazy<HeaderMap> = Lazy::new(|| {
-    let api_key = CONFIGURATION
-        .get()
-        .map(|c| c.rapid_api_key.as_str())
-        .unwrap_or_default();
-
-    let mut header_map = HeaderMap::new();
-    header_map.insert(
-        "x-rapidapi-key",
-        api_key
-            .parse()
-            .expect("Failed to parse Rapid API key for header value."),
-    );
-    header_map.insert(
-        "x-rapidapi-host",
-        ENDPOINT
-            .parse()
-            .expect("Failed to parse Rapid API key for header value."),
-    );
-    header_map
-});
+static HEADER_MAP: OnceCell<HeaderMap> = OnceCell::new();
 
 pub fn build_embed(
+    ctx: Context<'_>,
     response: JudgeZeroGetResponse,
     author_name: &str,
     author_avatar_url: &str,
 ) -> CreateEmbed {
     let mut embed = CreateEmbed::default();
-    let is_kou = KOU.get().copied().unwrap_or(false);
+    let is_kou = ctx.data().kou;
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let content = if is_kou {
         format!("Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n", author_name)
@@ -66,33 +48,37 @@ pub fn build_embed(
 
     let content = content + "\n```";
 
-    embed
-        .author(|a| a.name(author_name).icon_url(author_avatar_url))
+    embed = embed
+        .author(CreateEmbedAuthor::new(author_name).icon_url(author_avatar_url))
         .color(color)
         .description(content)
         .thumbnail(RUST_LOGO);
 
     if let Some(time_spent) = response.time {
-        embed.field("Time Spent", format!("{} sec", time_spent), true);
+        embed = embed.field("Time Spent", format!("{} sec", time_spent), true);
     }
 
     if let Some(memory) = response.memory {
-        embed.field("Memory Spent", format!("{} KB", memory), true);
+        embed = embed.field("Memory Spent", format!("{} KB", memory), true);
     }
 
     embed
 }
 
-pub async fn create_eval_request(source_code: String) -> anyhow::Result<String> {
+pub async fn create_eval_request(ctx: Context<'_>, source_code: String) -> anyhow::Result<String> {
     let request = JudgeZeroPostRequest {
         language_id: RUST_LANG_CODE,
         source_code: general_purpose::STANDARD.encode(&source_code),
     };
 
-    let response = HTTP_CLIENT
+    let header_map = HEADER_MAP.get_or_init(|| initialize_header_map(ctx));
+
+    let response = ctx
+        .data()
+        .http_client
         .post(SUBMISSION_URL)
         .json(&request)
-        .headers((*HEADER_MAP).clone())
+        .headers(header_map.clone())
         .send()
         .await?
         .json::<JudgeZeroPostResponse>()
@@ -101,9 +87,12 @@ pub async fn create_eval_request(source_code: String) -> anyhow::Result<String> 
     Ok(response.token)
 }
 
-pub async fn try_get_eval_result(token: String) -> anyhow::Result<JudgeZeroRequestResult> {
+pub async fn try_get_eval_result(
+    ctx: Context<'_>,
+    token: String,
+) -> anyhow::Result<JudgeZeroRequestResult> {
     let result_url = RESULT_RAW_URL.replace("{token}", &token);
-    let mut result = get_eval_result(&result_url).await?;
+    let mut result = get_eval_result(ctx, &result_url).await?;
 
     if result != JudgeZeroRequestResult::InProgress {
         return Ok(result);
@@ -111,7 +100,7 @@ pub async fn try_get_eval_result(token: String) -> anyhow::Result<JudgeZeroReque
 
     for _ in 0..DEFAULT_MAX_ATTEMPTS {
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-        result = get_eval_result(&result_url).await?;
+        result = get_eval_result(ctx, &result_url).await?;
         if result != JudgeZeroRequestResult::InProgress {
             break;
         }
@@ -120,10 +109,35 @@ pub async fn try_get_eval_result(token: String) -> anyhow::Result<JudgeZeroReque
     Ok(result)
 }
 
-async fn get_eval_result(result_url: &str) -> anyhow::Result<JudgeZeroRequestResult> {
-    let response = HTTP_CLIENT
+fn initialize_header_map(ctx: Context<'_>) -> HeaderMap {
+    let api_key = ctx.data().config.rapid_api_key.clone();
+
+    let mut header_map = HeaderMap::new();
+    header_map.insert(
+        "x-rapidapi-key",
+        api_key
+            .parse()
+            .expect("Failed to parse Rapid API key for header value."),
+    );
+    header_map.insert(
+        "x-rapidapi-host",
+        ENDPOINT
+            .parse()
+            .expect("Failed to parse Rapid API key for header value."),
+    );
+    header_map
+}
+
+async fn get_eval_result(
+    ctx: Context<'_>,
+    result_url: &str,
+) -> anyhow::Result<JudgeZeroRequestResult> {
+    let header_map = HEADER_MAP.get_or_init(|| initialize_header_map(ctx));
+    let response = ctx
+        .data()
+        .http_client
         .get(result_url)
-        .headers((*HEADER_MAP).clone())
+        .headers(header_map.clone())
         .send()
         .await?
         .json::<JudgeZeroGetResponse>()

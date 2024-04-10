@@ -1,34 +1,34 @@
-use crate::shared::services::HTTP_CLIENT;
+use poise::CreateReply;
+use serenity::all::{Color, CreateEmbedFooter};
+use serenity::builder::CreateEmbed;
+
 use crate::shared::structs::information::meal::MealData;
-use serenity::model::application::interaction::application_command::ApplicationCommandInteraction;
-use serenity::prelude::Context;
-use serenity::utils::Color;
-use std::future::Future;
-use std::pin::Pin;
+use crate::shared::structs::{Context, ContextError};
 
 const ENDPOINT: &str = "http://www.themealdb.com/api/json/v1/1/random.php";
 
-pub fn meal_async(
-    ctx: Context,
-    command: ApplicationCommandInteraction,
-) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-    Box::pin(meal(ctx, command))
-}
-
-async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::Result<()> {
-    command
-        .create_interaction_response(&ctx.http, |response| {
-            response.interaction_response_data(|data| data.content("Alright! One moment..."))
-        })
+/// Get a random meal recipe.
+#[poise::command(slash_command, category = "Information")]
+pub async fn meal(ctx: Context<'_>) -> Result<(), ContextError> {
+    let reply_handle = ctx
+        .send(CreateReply::default().content("Alright! One moment..."))
         .await?;
 
-    let meal_data: MealData = HTTP_CLIENT.get(ENDPOINT).send().await?.json().await?;
+    let meal_data: MealData = ctx
+        .data()
+        .http_client
+        .get(ENDPOINT)
+        .send()
+        .await?
+        .json()
+        .await?;
 
-    if let Some(meal_data) = meal_data.meals.get(0) {
-        command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response.content("").embed(|embed| {
-                    embed
+    if let Some(meal_data) = meal_data.meals.first() {
+        reply_handle
+            .edit(
+                ctx,
+                CreateReply::default().embed(
+                    CreateEmbed::new()
                         .color(Color::new(0xfd9b3b))
                         .description(if meal_data.str_instructions.len() >= 1900 {
                             &meal_data.str_instructions[0..1900]
@@ -41,16 +41,19 @@ async fn meal(ctx: Context, command: ApplicationCommandInteraction) -> anyhow::R
                         .field("Category", &meal_data.str_category, true)
                         .field("Area", &meal_data.str_area, true)
                         .field("YouTube Video", &meal_data.str_youtube, true)
-                        .footer(|f| f.text("Bon Appétit! Powered by TheMealDB.com."))
-                })
-            })
+                        .footer(CreateEmbedFooter::new(
+                            "Bon Appétit! Powered by TheMealDB.com.",
+                        )),
+                ),
+            )
             .await?;
     } else {
-        command
-            .edit_original_interaction_response(&ctx.http, |response| {
-                response
-                    .content("Sorry, I can't seem to find any recipe for you for the time being!")
-            })
+        reply_handle
+            .edit(
+                ctx,
+                CreateReply::default()
+                    .content("Sorry, I can't seem to find any recipe for you for the time being!"),
+            )
             .await?;
     }
 
