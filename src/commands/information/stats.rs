@@ -102,7 +102,7 @@ fn build_valentine_records(
         .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!(
-            "Here's {}'s records with `valentine (top {})`",
+            "Here's {}'s records with `valentine` (top {})",
             author_name, amount
         ));
     add_valentine_character_fields(embed, character_name_and_counts, amount)
@@ -140,7 +140,11 @@ fn build_all(
     let embed = embed.field("**Route**", "Records for `route`", false);
     let embed = add_route_character_fields(embed, route_names, route_record);
     let amount = 10_usize;
-    let embed = embed.field("**Valentine**", format!("Records for `valentine` (top {})", amount), false);
+    let embed = embed.field(
+        "**Valentine**",
+        format!("Records for `valentine` (top {})", amount),
+        false,
+    );
     add_valentine_character_fields(embed, valentine_name_and_counts, amount)
 }
 
@@ -174,7 +178,7 @@ fn add_route_character_fields(
 fn add_valentine_character_fields(
     embed: CreateEmbed,
     mut valentine_name_and_counts: Vec<(&str, u16)>,
-    amount: usize
+    amount: usize,
 ) -> CreateEmbed {
     valentine_name_and_counts.sort_unstable_by(|(_, count1), (_, count2)| count2.cmp(&count1));
     let fields = valentine_name_and_counts
