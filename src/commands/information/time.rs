@@ -10,7 +10,6 @@ const WORLD_TIME_API_ENDPOINT: &str = "http://worldtimeapi.org/api/timezone/";
 #[poise::command(slash_command, category = "Information")]
 pub async fn time(
     ctx: Context<'_>,
-    #[rename = "city name or address"]
     #[description = "A city name or an address of which to query time."]
     city_name_or_address: String,
 ) -> Result<(), ContextError> {
