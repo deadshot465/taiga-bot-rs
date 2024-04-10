@@ -6,6 +6,7 @@ use crate::shared::structs::utility::save_file::SaveFileRequest;
 use crate::shared::structs::{ContextData, ContextError};
 
 #[derive(Debug, Clone, poise::Modal)]
+#[name = "Save File to Tetsu's Server"]
 struct FilenameModal {
     #[placeholder = "The filename of the file on the server"]
     #[min_length = 1]
