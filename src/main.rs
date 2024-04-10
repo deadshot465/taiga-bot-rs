@@ -2,30 +2,6 @@ mod commands;
 mod event_handler;
 mod shared;
 
-use crate::commands::information::about::about;
-use crate::shared::structs::{Context, ContextData, ContextError};
-
-use crate::commands::admin::admin;
-use crate::commands::fun::dialog::dialog;
-use crate::commands::fun::emote::emote;
-use crate::commands::fun::owoify::owoify;
-use crate::commands::fun::qotd::qotd;
-use crate::commands::fun::ship::ship;
-use crate::commands::game::game;
-use crate::commands::information::guide::guide;
-use crate::commands::information::meal::meal;
-use crate::commands::information::oracle::oracle;
-use crate::commands::information::ping::ping;
-use crate::commands::information::route::route;
-use crate::commands::information::stats::stats;
-use crate::commands::information::time::time;
-use crate::commands::information::valentine::valentine;
-use crate::commands::smite::smite;
-use crate::commands::utility::avatar::avatar;
-use crate::commands::utility::convert::convert;
-use crate::commands::utility::enlarge::enlarge;
-use crate::commands::utility::image::image;
-use crate::commands::utility::pick::pick;
 use crate::event_handler::handle_event;
 use crate::shared::services::openai_service::initialize_openai_client;
 use crate::shared::structs::authentication::Authentication;
@@ -40,6 +16,7 @@ use crate::shared::structs::information::character::{initialize_routes, initiali
 use crate::shared::structs::information::oracle::initialize_oracles;
 use crate::shared::structs::smite::initialize_smite;
 use crate::shared::structs::utility::convert::conversion_table::initialize_conversion_table;
+use crate::shared::structs::{Context, ContextData, ContextError};
 use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
 use poise::{CreateReply, FrameworkError};
 use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
@@ -121,28 +98,29 @@ async fn main() -> anyhow::Result<()> {
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
-                about(),
-                ping(),
-                route(),
-                valentine(),
-                stats(),
-                oracle(),
-                meal(),
-                avatar(),
-                convert(),
-                enlarge(),
-                time(),
-                image(),
-                pick(),
-                dialog(),
-                emote(),
-                owoify(),
-                qotd(),
-                ship(),
-                admin(),
-                game(),
-                guide(),
-                smite(),
+                commands::information::about::about(),
+                commands::information::ping::ping(),
+                commands::information::route::route(),
+                commands::information::valentine::valentine(),
+                commands::information::stats::stats(),
+                commands::information::oracle::oracle(),
+                commands::information::meal::meal(),
+                commands::utility::avatar::avatar(),
+                commands::utility::convert::convert(),
+                commands::utility::enlarge::enlarge(),
+                commands::information::time::time(),
+                commands::utility::image::image(),
+                commands::utility::pick::pick(),
+                commands::fun::dialog::dialog(),
+                commands::fun::emote::emote(),
+                commands::fun::owoify::owoify(),
+                commands::fun::qotd::qotd(),
+                commands::fun::ship::ship(),
+                commands::admin::admin(),
+                commands::game::game(),
+                commands::information::guide::guide(),
+                commands::smite::smite(),
+                commands::utility::save_file::save_file(),
             ],
             on_error: |error| Box::pin(handle_error(error)),
             command_check: Some(check_command),
@@ -253,11 +231,15 @@ async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextEr
     }
 }
 
+const SKIP_CHECK_COMMANDS: [&str; 1] = ["save_file"];
+
 fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> {
     Box::pin(check_command_async(ctx))
 }
 
 async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let channel_id = ctx.channel_id();
-    Ok(ctx.data().enabled_channels.contains(&channel_id))
+    let command_name = ctx.command().name.as_str();
+    Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
+        || ctx.data().enabled_channels.contains(&channel_id))
 }

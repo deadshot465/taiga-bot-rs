@@ -180,7 +180,7 @@ fn add_valentine_character_fields(
     mut valentine_name_and_counts: Vec<(&str, u16)>,
     amount: usize,
 ) -> CreateEmbed {
-    valentine_name_and_counts.sort_unstable_by(|(_, count1), (_, count2)| count2.cmp(&count1));
+    valentine_name_and_counts.sort_unstable_by(|(_, count1), (_, count2)| count2.cmp(count1));
     let fields = valentine_name_and_counts
         .into_iter()
         .map(|(name, count)| (format!("**{}**", name), count.to_string(), true))

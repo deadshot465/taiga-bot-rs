@@ -14,7 +14,8 @@ use serenity::all::Message;
 use crate::shared::structs::config::configuration::Configuration;
 use crate::shared::structs::ContextData;
 
-const MODEL: &str = "gpt-4";
+const TEXT_MODEL: &str = "gpt-4";
+const VISION_PREVIEW_MODEL: &str = "gpt-4-vision-preview";
 const TEMPERATURE: f32 = 1.0;
 const MAX_TOKENS: u16 = 2048;
 
@@ -52,6 +53,8 @@ pub async fn build_openai_message(data: &ContextData, message: &Message) -> anyh
         },
     )];
 
+    let has_attachment = attachment.is_some();
+
     if let Some(attachment) = attachment {
         let messages_for_image = vec![
             ChatCompletionRequestMessageContentPart::Text(
@@ -88,7 +91,11 @@ pub async fn build_openai_message(data: &ContextData, message: &Message) -> anyh
     }
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MODEL)
+        .model(if has_attachment {
+            VISION_PREVIEW_MODEL
+        } else {
+            TEXT_MODEL
+        })
         .temperature(TEMPERATURE)
         .max_tokens(MAX_TOKENS)
         .messages(messages)
