@@ -13,6 +13,12 @@ pub async fn record_message(
     data: &ContextData,
     endpoint: String,
 ) -> anyhow::Result<()> {
+    let author_id_skippable = data.config.skip_user_ids.contains(&message.author.id.get());
+
+    if author_id_skippable {
+        return Ok(());
+    }
+
     login(data).await?;
 
     let bot_user = ctx.http.get_current_user().await?;
