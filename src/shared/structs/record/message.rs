@@ -35,7 +35,7 @@ pub struct GetCompletionRequest {
 pub struct GetCompletionResponse {
     pub bot_id: String,
     pub user_id: String,
-    pub messages: Vec<String>,
+    pub messages: Vec<CompletionRecordSimple>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
