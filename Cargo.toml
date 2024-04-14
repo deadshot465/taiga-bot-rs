@@ -1,6 +1,6 @@
 [package]
 name = "taiga-bot-rs"
-version = "6.1.1"
+version = "6.2.0"
 authors = ["Chehui Chou <deadshot465@users.noreply.github.com>"]
 edition = "2021"
 
@@ -30,6 +30,8 @@ toml = ">=0.8.12"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 log = "0.4.21"
+time = { version = "0.3.36", features = ["serde", "serde-well-known"] }
+tiktoken-rs = { version = "0.5.8", features = ["async-openai"] }
 
 [profile.dev]
 split-debuginfo = "unpacked"

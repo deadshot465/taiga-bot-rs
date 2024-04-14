@@ -52,7 +52,7 @@ pub async fn handle_responses(
             .contains(&new_message.author.id.get());
 
         let random_common_response = if reply_with_openai && !author_id_skippable {
-            build_openai_message(data, new_message)
+            build_openai_message(ctx, new_message, data)
                 .await
                 .unwrap_or_default()
         } else {
