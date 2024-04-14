@@ -152,7 +152,10 @@ async fn build_messages_with_previous_contexts(
                 })
             } else {
                 ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-                    content: ChatCompletionRequestUserMessageContent::Text(rec.message),
+                    content: ChatCompletionRequestUserMessageContent::Text(format!(
+                        "{}: {}",
+                        rec.user_name, rec.message
+                    )),
                     role: Role::User,
                     ..ChatCompletionRequestUserMessage::default()
                 })
