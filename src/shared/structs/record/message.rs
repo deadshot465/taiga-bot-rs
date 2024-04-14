@@ -6,6 +6,7 @@ pub struct MessageInfo {
     pub user_id: String,
     pub user_name: Option<String>,
     pub message: String,
+    pub message_type: String,
     pub channel_id: String,
     pub post_at: String,
 }
@@ -14,6 +15,12 @@ pub struct MessageInfo {
 pub struct MessageRecordSimple {
     pub user_id: String,
     pub user_name: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct CompletionRecordSimple {
+    pub message_type: String,
     pub message: String,
 }
 

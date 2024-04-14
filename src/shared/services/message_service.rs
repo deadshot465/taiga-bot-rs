@@ -39,6 +39,7 @@ pub async fn record_message(
         user_id: user_id.clone(),
         user_name: user_name.clone(),
         message: message.content.clone(),
+        message_type: "text".into(),
         channel_id: message.channel_id.get().to_string(),
         post_at: OffsetDateTime::now_utc()
             .format(&Rfc3339)

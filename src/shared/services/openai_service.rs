@@ -269,6 +269,7 @@ async fn record_openai_response(
         user_id: user_id.clone(),
         user_name: Some(user_name.clone()),
         message: response_message,
+        message_type: "text".into(),
         channel_id: channel_id.to_string(),
         post_at: OffsetDateTime::now_utc()
             .format(&Rfc3339)
