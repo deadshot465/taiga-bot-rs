@@ -1,6 +1,5 @@
 use std::clone::Clone;
 
-use crate::shared::services::message_service::get_messages;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
@@ -12,9 +11,13 @@ use async_openai::types::{
 use async_openai::Client;
 use serenity::all::{Context, Message};
 use tiktoken_rs::get_chat_completion_max_tokens;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
+use crate::shared::services::message_service::get_messages;
+use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
-use crate::shared::structs::record::message::MessageRecordSimple;
+use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
 use crate::shared::structs::ContextData;
 
 const TEXT_MODEL: &str = "gpt-4";
@@ -105,11 +108,22 @@ pub async fn build_openai_message(
 
     match request {
         Ok(request) => match data.openai_client.chat().create(request).await {
-            Ok(response) => Ok(response.choices[0]
-                .message
-                .content
-                .clone()
-                .unwrap_or("Sorry, but I might not be able to respond to that!".into())),
+            Ok(response) => {
+                let response_message = response.choices[0]
+                    .message
+                    .content
+                    .clone()
+                    .unwrap_or("Sorry, but I might not be able to respond to that!".into());
+
+                record_openai_response(
+                    ctx,
+                    data,
+                    message.channel_id.get(),
+                    response_message.clone(),
+                )
+                .await?;
+                Ok(response_message)
+            }
             Err(e) => Err(anyhow::anyhow!("Failed to send OpenAI request: {}", e)),
         },
         Err(e) => Err(anyhow::anyhow!("Failed to create OpenAI request: {}", e)),
@@ -236,4 +250,48 @@ fn to_tiktoken_message(
             function_call: None,
         },
     }
+}
+
+async fn record_openai_response(
+    ctx: &Context,
+    data: &ContextData,
+    channel_id: u64,
+    response_message: String,
+) -> anyhow::Result<()> {
+    login(data).await?;
+
+    let bot_user = ctx.http.get_current_user().await?;
+    let user_name = bot_user.name.clone();
+    let user_id = bot_user.id.get().to_string();
+
+    let payload = MessageInfo {
+        bot_id: user_id.clone(),
+        user_id: user_id.clone(),
+        user_name: Some(user_name.clone()),
+        message: response_message,
+        channel_id: channel_id.to_string(),
+        post_at: OffsetDateTime::now_utc()
+            .format(&Rfc3339)
+            .unwrap_or_default(),
+    };
+
+    let endpoint = format!("{}/message/record/new", &data.config.server_endpoint);
+    let response = data
+        .http_client
+        .post(endpoint)
+        .json(&payload)
+        .bearer_auth(&data.authentication.read().await.token)
+        .send()
+        .await
+        .and_then(|res| res.error_for_status());
+
+    if let Err(e) = response {
+        let error_message = format!(
+            "Failed to record message for {} ({:?}): {}",
+            user_id, user_name, e
+        );
+        tracing::error!("{}", error_message);
+    }
+
+    Ok(())
 }

@@ -1,3 +1,4 @@
+use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::record::message::{
     GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
@@ -15,7 +16,12 @@ pub async fn record_message(
 ) -> anyhow::Result<()> {
     let author_id_skippable = data.config.skip_user_ids.contains(&message.author.id.get());
 
-    if author_id_skippable {
+    if author_id_skippable || message.author.bot {
+        return Ok(());
+    }
+
+    let guild_id = message.guild_id.unwrap_or_default().get();
+    if !data.kou && guild_id == KOU_SERVER_ID {
         return Ok(());
     }
 
