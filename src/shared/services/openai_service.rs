@@ -1,5 +1,6 @@
 use std::clone::Clone;
 
+use crate::shared::constants::IMAGE_TYPES;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
@@ -9,6 +10,8 @@ use async_openai::types::{
     CreateChatCompletionRequestArgs, ImageUrl, ImageUrlDetail, Role,
 };
 use async_openai::Client;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serenity::all::{Context, Message};
 use tiktoken_rs::get_chat_completion_max_tokens;
 use time::format_description::well_known::Rfc3339;
@@ -30,7 +33,9 @@ const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-boun
 
 const TAIGA_SYSTEM_PROMPT: &str = "You are Taiga Akatora from the visual novel game Camp Buddy. You have a tough exterior and you used to cause conflicts before you experience personal growth, opening up to others, and eventually come to terms with your own feelings and emotions. You like writing and handcrafting. Kieran Moreno is your ex. Your boyfriend is Keitaro Nagame. Your responses will be rebellious, snarky, somewhat impatient even though you don't mean ill, and should match the personality of Taiga Akatora. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.";
 
-const IMAGE_TYPES: [&str; 2] = ["image/jpeg", "image/png"];
+static IMAGE_URL_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"\[image_url=(.*?)]").expect("Failed to initialize image url regular expression.")
+});
 
 pub fn initialize_openai_client(config: &Configuration) -> Client<OpenAIConfig> {
     let config = OpenAIConfig::new().with_api_key(config.openai_api_key.clone());
@@ -166,10 +171,39 @@ async fn build_messages_with_previous_contexts(
                 })
             } else {
                 ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-                    content: ChatCompletionRequestUserMessageContent::Text(format!(
-                        "{}: {}",
-                        rec.user_name, rec.message
-                    )),
+                    content: match rec.message_type.as_str() {
+                        "image" => {
+                            let index = rec.message.find("[image_url=").unwrap_or_default();
+                            let prompt_part = (&rec.message[0..index]).trim().to_string();
+                            let image_url = IMAGE_URL_REGEX
+                                .captures(&rec.message)
+                                .and_then(|c| c.get(1))
+                                .map(|m| m.as_str().to_string())
+                                .unwrap_or_default();
+
+                            ChatCompletionRequestUserMessageContent::Array(vec![
+                                ChatCompletionRequestMessageContentPart::Text(
+                                    ChatCompletionRequestMessageContentPartText {
+                                        text: format!("{}: {}", rec.user_name, prompt_part),
+                                        ..Default::default()
+                                    },
+                                ),
+                                ChatCompletionRequestMessageContentPart::Image(
+                                    ChatCompletionRequestMessageContentPartImage {
+                                        image_url: ImageUrl {
+                                            url: image_url,
+                                            detail: ImageUrlDetail::High,
+                                        },
+                                        ..Default::default()
+                                    },
+                                ),
+                            ])
+                        }
+                        _ => ChatCompletionRequestUserMessageContent::Text(format!(
+                            "{}: {}",
+                            rec.user_name, rec.message
+                        )),
+                    },
                     role: Role::User,
                     ..ChatCompletionRequestUserMessage::default()
                 })
@@ -220,11 +254,11 @@ fn to_tiktoken_message(
                         .into_iter()
                         .map(|part| match part {
                             ChatCompletionRequestMessageContentPart::Text(t) => t.text,
-                            ChatCompletionRequestMessageContentPart::Image(_) => "".to_string(),
+                            ChatCompletionRequestMessageContentPart::Image(i) => i.image_url.url,
                         })
                         .filter(|s| !s.is_empty())
                         .collect::<Vec<_>>()
-                        .join("; ");
+                        .join(";");
                     Some(strings)
                 }
             },

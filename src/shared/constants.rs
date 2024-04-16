@@ -27,6 +27,8 @@ pub const SHIBA_KEK_ICON: &str = "https://cdn.discordapp.com/emojis/730239295155
 
 pub const EMOTE_BASE_LINK: &str = "https://cdn.discordapp.com/emojis/";
 
+pub const IMAGE_TYPES: [&str; 2] = ["image/jpeg", "image/png"];
+
 pub static EMOTE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(<a?:\w+:\d+>)").expect("Failed to initialize regular expression."));
 

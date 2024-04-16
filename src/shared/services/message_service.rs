@@ -1,4 +1,4 @@
-use crate::shared::constants::KOU_SERVER_ID;
+use crate::shared::constants::{IMAGE_TYPES, KOU_SERVER_ID};
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::record::message::{
     GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
@@ -34,12 +34,33 @@ pub async fn record_message(
         .or(Some(message.author.name.clone()));
     let user_id = message.author.id.get().to_string();
 
+    let attachment = message.attachments.first().filter(|&attachment| {
+        if let Some(ref content_type) = attachment.content_type {
+            IMAGE_TYPES.contains(&content_type.as_str())
+        } else {
+            false
+        }
+    });
+
+    let (new_message, message_type) = if let Some(attachment) = attachment {
+        (
+            format!(
+                "{} [image_url={}]",
+                message.content.clone(),
+                attachment.url.clone()
+            ),
+            "image".to_string(),
+        )
+    } else {
+        (message.content.clone(), "text".to_string())
+    };
+
     let payload = MessageInfo {
         bot_id: bot_user.id.get().to_string(),
         user_id: user_id.clone(),
         user_name: user_name.clone(),
-        message: message.content.clone(),
-        message_type: "text".into(),
+        message: new_message,
+        message_type,
         channel_id: message.channel_id.get().to_string(),
         post_at: OffsetDateTime::now_utc()
             .format(&Rfc3339)
