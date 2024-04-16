@@ -59,7 +59,7 @@ pub async fn record_message(
         bot_id: bot_user.id.get().to_string(),
         user_id: user_id.clone(),
         user_name: user_name.clone(),
-        generated_by: user_id.clone(),
+        generated_by: None,
         message: new_message,
         message_type,
         channel_id: message.channel_id.get().to_string(),

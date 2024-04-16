@@ -302,7 +302,7 @@ async fn record_openai_response(
         bot_id: user_id.clone(),
         user_id: user_id.clone(),
         user_name: Some(user_name.clone()),
-        generated_by: user_id.clone(),
+        generated_by: None,
         message: response_message,
         message_type: "text".into(),
         channel_id: channel_id.to_string(),
