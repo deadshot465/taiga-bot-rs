@@ -21,8 +21,6 @@ struct AnswerAnonModal {
 /// Answer question of the day anonymously. Note you won't get any credits when answering anonymously.
 #[poise::command(slash_command, dm_only)]
 pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
-    use poise::Modal as _;
-
     let author = ctx.author();
     let guild_info_map = ctx
         .http()
@@ -105,7 +103,7 @@ pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
             .components(components)
     };
 
-    ctx.send(reply).await?;
+    let reply_handle = ctx.send(reply).await?;
 
     if let Some(mci) = serenity::ComponentInteractionCollector::new(ctx)
         .author_id(author.id)
@@ -137,6 +135,8 @@ pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
                                     .content(format!("Anonymous: {}", modal_data.answer)),
                             )
                             .await?;
+
+                        reply_handle.delete(ctx).await?;
                     }
                 }
             }

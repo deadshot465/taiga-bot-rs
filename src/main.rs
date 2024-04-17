@@ -241,6 +241,7 @@ fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> 
 async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let channel_id = ctx.channel_id();
     let command_name = ctx.command().name.as_str();
+    tracing::info!("Checking {}...", command_name);
     Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
         || ctx.data().enabled_channels.contains(&channel_id))
 }
