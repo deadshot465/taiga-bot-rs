@@ -232,7 +232,20 @@ async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextEr
     }
 }
 
-const SKIP_CHECK_COMMANDS: [&str; 4] = ["save_file", "answer_anon", "admin", "convert"];
+const SKIP_CHECK_COMMANDS: [&str; 12] = [
+    "save_file",
+    "answer_anon",
+    "enable",
+    "disable",
+    "allow",
+    "disallow",
+    "purge",
+    "convert",
+    "length",
+    "weight",
+    "temperature",
+    "currency",
+];
 
 fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> {
     Box::pin(check_command_async(ctx))
@@ -241,7 +254,6 @@ fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> 
 async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let channel_id = ctx.channel_id();
     let command_name = ctx.command().name.as_str();
-    tracing::info!("Checking {}...", command_name);
     Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
         || ctx.data().enabled_channels.contains(&channel_id))
 }

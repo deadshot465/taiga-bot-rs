@@ -21,6 +21,8 @@ struct AnswerAnonModal {
 /// Answer question of the day anonymously. Note you won't get any credits when answering anonymously.
 #[poise::command(slash_command, dm_only)]
 pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
+    ctx.defer().await?;
+
     let author = ctx.author();
     let guild_info_map = ctx
         .http()
