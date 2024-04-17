@@ -121,6 +121,7 @@ async fn main() -> anyhow::Result<()> {
                 commands::information::guide::guide(),
                 commands::smite::smite(),
                 commands::utility::save_file::save_file(),
+                commands::fun::answer_anon::answer_anon(),
             ],
             on_error: |error| Box::pin(handle_error(error)),
             command_check: Some(check_command),
@@ -231,7 +232,7 @@ async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextEr
     }
 }
 
-const SKIP_CHECK_COMMANDS: [&str; 1] = ["save_file"];
+const SKIP_CHECK_COMMANDS: [&str; 4] = ["save_file", "answer_anon", "admin", "convert"];
 
 fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> {
     Box::pin(check_command_async(ctx))

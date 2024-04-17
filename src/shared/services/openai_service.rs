@@ -174,7 +174,7 @@ async fn build_messages_with_previous_contexts(
                     content: match rec.message_type.as_str() {
                         "image" => {
                             let index = rec.message.find("[image_url=").unwrap_or_default();
-                            let prompt_part = (&rec.message[0..index]).trim().to_string();
+                            let prompt_part = rec.message[0..index].trim().to_string();
                             let image_url = IMAGE_URL_REGEX
                                 .captures(&rec.message)
                                 .and_then(|c| c.get(1))
