@@ -117,7 +117,7 @@ pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
         if let ComponentInteractionDataKind::StringSelect { values } = mci.data.kind {
             if let Context::Application(context) = ctx {
                 let index = values[0].find(':').unwrap_or_default();
-                let thread_id = &values[0][index..];
+                let thread_id = &values[0][(index + 1)..];
                 let thread_id = ChannelId::new(thread_id.parse::<u64>().unwrap_or_default());
 
                 if let Some(modal_data) = AnswerAnonModal::execute(context).await? {
