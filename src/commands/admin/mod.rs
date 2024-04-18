@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use poise::CreateReply;
-use serenity::all::{Channel, GetMessages};
+use serenity::all::{Channel, GetMessages, PrivateChannel};
 use tokio::sync::RwLock;
 
 use crate::shared::structs::config::channel_control::ChannelControl;
@@ -175,22 +175,34 @@ pub async fn purge(
         .guild_channels(guild_id)
         .and_then(|channels| channels.get(&channel_id).cloned());
 
-    if let Some(channel) = guild_channel {
-        reply_handle
-            .edit(
-                ctx,
-                CreateReply::default().content("Retrieving messages..."),
+    reply_handle
+        .edit(
+            ctx,
+            CreateReply::default().content("Retrieving messages..."),
+        )
+        .await?;
+
+    let amount = amount.unwrap_or(10);
+
+    let sent_message = reply_handle.message().await?;
+    let sent_message = match sent_message {
+        Cow::Borrowed(m) => m.clone(),
+        Cow::Owned(m) => m,
+    };
+
+    let mut dm_channel: Option<PrivateChannel> = None;
+
+    let messages = if let Some(ref guild_channel) = guild_channel {
+        guild_channel
+            .messages(
+                ctx.http(),
+                GetMessages::new()
+                    .limit(amount as u8)
+                    .before(sent_message.id),
             )
-            .await?;
-
-        let amount = amount.unwrap_or(10);
-
-        let sent_message = reply_handle.message().await?;
-        let sent_message = match sent_message {
-            Cow::Borrowed(m) => m.clone(),
-            Cow::Owned(m) => m,
-        };
-
+            .await?
+    } else {
+        let channel = ctx.author().create_dm_channel(ctx.http()).await?;
         let messages = channel
             .messages(
                 ctx.http(),
@@ -199,21 +211,29 @@ pub async fn purge(
                     .before(sent_message.id),
             )
             .await?;
+        dm_channel = Some(channel);
+        messages
+    };
 
-        reply_handle
-            .edit(
-                ctx,
-                CreateReply::default().content(format!(
-                    "The last {} messages in this channel will be deleted in 5 seconds.",
-                    amount
-                )),
-            )
-            .await?;
+    reply_handle
+        .edit(
+            ctx,
+            CreateReply::default().content(format!(
+                "The last {} messages in this channel will be deleted in 5 seconds.",
+                amount
+            )),
+        )
+        .await?;
 
-        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-        channel.delete_messages(ctx.http(), messages).await?;
-        reply_handle.delete(ctx).await?;
+    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+
+    if let Some(guild_channel) = guild_channel {
+        guild_channel.delete_messages(ctx.http(), messages).await?;
+    } else if let Some(dm_channel) = dm_channel {
+        dm_channel.delete_messages(ctx.http(), messages).await?;
     }
+
+    reply_handle.delete(ctx).await?;
 
     Ok(())
 }
