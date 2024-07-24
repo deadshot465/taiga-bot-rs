@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub mod conversion_table;
 pub mod exchange_rate_api_response;
 pub mod length;

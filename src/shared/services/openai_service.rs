@@ -1,37 +1,41 @@
 use std::clone::Clone;
 
-use crate::shared::constants::IMAGE_TYPES;
+use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
     ChatCompletionRequestMessageContentPart, ChatCompletionRequestMessageContentPartImage,
     ChatCompletionRequestMessageContentPartText, ChatCompletionRequestSystemMessage,
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
-    CreateChatCompletionRequestArgs, ImageUrl, ImageUrlDetail, Role,
+    CreateChatCompletionRequestArgs, ImageDetail, ImageUrl,
 };
-use async_openai::Client;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serenity::all::{Context, Message};
-use tiktoken_rs::get_chat_completion_max_tokens;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 
+use crate::shared::constants::IMAGE_TYPES;
 use crate::shared::services::message_service::get_messages;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
-use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
 use crate::shared::structs::ContextData;
+use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
 
-const TEXT_MODEL: &str = "gpt-4";
-const VISION_MODEL: &str = "gpt-4-turbo";
+const TEXT_MODEL: &str = "gpt-4o";
+const VISION_MODEL: &str = "gpt-4o";
 const TEMPERATURE: f32 = 1.0;
 const MAX_TOKENS: u16 = 4_000;
-const GPT4_MAX_ALLOWED_TOKENS: usize = 8_192;
+const GPT4_MAX_ALLOWED_TOKENS: usize = 128_000;
+const ALLOWED_PREVIOUS_CONTEXT_LENGTH: usize = GPT4_MAX_ALLOWED_TOKENS / 20;
 
-const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.";
+const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.\
+\
+Whenever you receive a message, look at both the message history and the incoming message, determine who is the one currently speaking, and respond accordingly. You are in the same chat as other people, so you know exactly who says what.";
 
-const TAIGA_SYSTEM_PROMPT: &str = "You are Taiga Akatora from the visual novel game Camp Buddy. You have a tough exterior and you used to cause conflicts before you experience personal growth, opening up to others, and eventually come to terms with your own feelings and emotions. You like writing and handcrafting. Kieran Moreno is your ex. Your boyfriend is Keitaro Nagame. Your responses will be rebellious, snarky, somewhat impatient even though you don't mean ill, and should match the personality of Taiga Akatora. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.";
+const TAIGA_SYSTEM_PROMPT: &str = "You are Taiga Akatora from the visual novel game Camp Buddy. You have a tough exterior and you used to cause conflicts before you experience personal growth, opening up to others, and eventually come to terms with your own feelings and emotions. You like writing and handcrafting. Kieran Moreno is your ex. Your boyfriend is Keitaro Nagame. Your responses will be rebellious, snarky, somewhat impatient even though you don't mean ill, and should match the personality of Taiga Akatora. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.\
+\
+Whenever you receive a message, look at both the message history and the incoming message, determine who is the one currently speaking, and respond accordingly. You are in the same chat as other people, so you know exactly who says what.";
 
 static IMAGE_URL_REGEX: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\[image_url=(.*?)]").expect("Failed to initialize image url regular expression.")
@@ -58,20 +62,30 @@ pub async fn build_openai_message(
 
     let mut messages = vec![];
     let has_attachment = attachment.is_some();
+    let author_name = message
+        .author_nick(&ctx.http)
+        .await
+        .unwrap_or(message.author.name.clone());
 
     if let Some(attachment) = attachment {
         let messages_for_image = vec![
+            ChatCompletionRequestMessageContentPart::Text(
+                ChatCompletionRequestMessageContentPartText {
+                    text: format!("{}: {}", author_name, message.content.clone()),
+                    ..Default::default()
+                },
+            ),
             ChatCompletionRequestMessageContentPart::Text(
                 ChatCompletionRequestMessageContentPartText {
                     text: "What's your opinion on this image?".to_string(),
                     ..Default::default()
                 },
             ),
-            ChatCompletionRequestMessageContentPart::Image(
+            ChatCompletionRequestMessageContentPart::ImageUrl(
                 ChatCompletionRequestMessageContentPartImage {
                     image_url: ImageUrl {
                         url: attachment.url.clone(),
-                        detail: ImageUrlDetail::High,
+                        detail: Some(ImageDetail::High),
                     },
                     ..Default::default()
                 },
@@ -80,15 +94,17 @@ pub async fn build_openai_message(
         messages.push(ChatCompletionRequestMessage::User(
             ChatCompletionRequestUserMessage {
                 content: ChatCompletionRequestUserMessageContent::Array(messages_for_image),
-                role: Role::User,
                 name: None,
             },
         ))
     } else {
         messages.push(ChatCompletionRequestMessage::User(
             ChatCompletionRequestUserMessage {
-                content: ChatCompletionRequestUserMessageContent::Text(message.content.clone()),
-                role: Role::User,
+                content: ChatCompletionRequestUserMessageContent::Text(format!(
+                    "{}: {}",
+                    author_name,
+                    message.content.clone()
+                )),
                 name: None,
             },
         ));
@@ -141,32 +157,30 @@ async fn build_messages_with_previous_contexts(
     is_kou: bool,
     bot_id: u64,
 ) -> anyhow::Result<Vec<ChatCompletionRequestMessage>> {
+    let system_prompt = if is_kou {
+        KOU_SYSTEM_PROMPT.to_string()
+    } else {
+        TAIGA_SYSTEM_PROMPT.to_string()
+    };
+
+    let system_prompt_length = system_prompt.chars().count();
+
     let system_message = ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-        content: if is_kou {
-            KOU_SYSTEM_PROMPT.to_string()
-        } else {
-            TAIGA_SYSTEM_PROMPT.to_string()
-        },
-        role: Role::System,
+        content: system_prompt,
         name: None,
     });
-    let tiktoken_system_messages = vec![to_tiktoken_message(&system_message)];
-    let system_tokens = get_chat_completion_max_tokens(TEXT_MODEL, &tiktoken_system_messages)?;
 
-    let tiktoken_user_messages = new_messages
-        .iter()
-        .map(to_tiktoken_message)
-        .collect::<Vec<_>>();
-    let user_tokens = get_chat_completion_max_tokens(TEXT_MODEL, &tiktoken_user_messages)?;
     let bot_id = bot_id.to_string();
 
-    let previous_messages = previous_messages
+    let mut previous_messages = previous_messages
         .into_iter()
+        .take_while(|m| {
+            system_prompt_length + m.message.chars().count() <= ALLOWED_PREVIOUS_CONTEXT_LENGTH
+        })
         .map(|rec| {
             if rec.user_id == bot_id.as_str() {
                 ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
                     content: Some(rec.message),
-                    role: Role::Assistant,
                     ..ChatCompletionRequestAssistantMessage::default()
                 })
             } else {
@@ -188,11 +202,11 @@ async fn build_messages_with_previous_contexts(
                                         ..Default::default()
                                     },
                                 ),
-                                ChatCompletionRequestMessageContentPart::Image(
+                                ChatCompletionRequestMessageContentPart::ImageUrl(
                                     ChatCompletionRequestMessageContentPartImage {
                                         image_url: ImageUrl {
                                             url: image_url,
-                                            detail: ImageUrlDetail::High,
+                                            detail: Some(ImageDetail::High),
                                         },
                                         ..Default::default()
                                     },
@@ -204,86 +218,16 @@ async fn build_messages_with_previous_contexts(
                             rec.user_name, rec.message
                         )),
                     },
-                    role: Role::User,
                     ..ChatCompletionRequestUserMessage::default()
                 })
             }
         })
         .collect::<Vec<_>>();
 
-    let tiktoken_previous_messages = previous_messages
-        .iter()
-        .map(to_tiktoken_message)
-        .collect::<Vec<_>>();
-
-    let length = previous_messages.len();
-    let mut previous_messages = previous_messages
-        .into_iter()
-        .enumerate()
-        .skip_while(|(n, _)| {
-            let previous_message_tokens =
-                get_chat_completion_max_tokens(TEXT_MODEL, &tiktoken_previous_messages[*n..length])
-                    .unwrap_or_default();
-            system_tokens + previous_message_tokens + user_tokens > GPT4_MAX_ALLOWED_TOKENS
-        })
-        .map(|(_, msg)| msg)
-        .collect::<Vec<_>>();
-
     let mut built_messages = vec![system_message];
     built_messages.append(&mut previous_messages);
     built_messages.append(&mut new_messages);
     Ok(built_messages)
-}
-
-fn to_tiktoken_message(
-    message: &ChatCompletionRequestMessage,
-) -> tiktoken_rs::ChatCompletionRequestMessage {
-    match message {
-        ChatCompletionRequestMessage::System(m) => tiktoken_rs::ChatCompletionRequestMessage {
-            role: Role::System.to_string(),
-            content: Some(m.content.clone()),
-            name: m.name.clone(),
-            function_call: None,
-        },
-        ChatCompletionRequestMessage::User(m) => tiktoken_rs::ChatCompletionRequestMessage {
-            role: Role::User.to_string(),
-            content: match m.content.clone() {
-                ChatCompletionRequestUserMessageContent::Text(text) => Some(text),
-                ChatCompletionRequestUserMessageContent::Array(array) => {
-                    let strings = array
-                        .into_iter()
-                        .map(|part| match part {
-                            ChatCompletionRequestMessageContentPart::Text(t) => t.text,
-                            ChatCompletionRequestMessageContentPart::Image(i) => i.image_url.url,
-                        })
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<_>>()
-                        .join(";");
-                    Some(strings)
-                }
-            },
-            name: m.name.clone(),
-            function_call: None,
-        },
-        ChatCompletionRequestMessage::Assistant(m) => tiktoken_rs::ChatCompletionRequestMessage {
-            role: Role::Assistant.to_string(),
-            content: m.content.clone(),
-            name: m.name.clone(),
-            function_call: None,
-        },
-        ChatCompletionRequestMessage::Tool(t) => tiktoken_rs::ChatCompletionRequestMessage {
-            role: Role::Tool.to_string(),
-            content: Some(t.content.clone()),
-            name: None,
-            function_call: None,
-        },
-        ChatCompletionRequestMessage::Function(f) => tiktoken_rs::ChatCompletionRequestMessage {
-            role: Role::Function.to_string(),
-            content: f.content.clone(),
-            name: Some(f.name.clone()),
-            function_call: None,
-        },
-    }
 }
 
 async fn record_openai_response(

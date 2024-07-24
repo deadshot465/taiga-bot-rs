@@ -1,12 +1,13 @@
-use crate::shared::constants::{IMAGE_TYPES, KOU_SERVER_ID};
-use crate::shared::structs::authentication::login;
-use crate::shared::structs::record::message::{
-    GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
-};
-use crate::shared::structs::ContextData;
 use serenity::all::{Context, Message};
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+
+use crate::shared::constants::{IMAGE_TYPES, KOU_SERVER_ID};
+use crate::shared::structs::authentication::login;
+use crate::shared::structs::ContextData;
+use crate::shared::structs::record::message::{
+    GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
+};
 
 pub async fn record_message(
     ctx: &Context,
@@ -21,7 +22,7 @@ pub async fn record_message(
     }
 
     let guild_id = message.guild_id.unwrap_or_default().get();
-    if !data.kou && guild_id == KOU_SERVER_ID {
+    if !data.kou && guild_id != KOU_SERVER_ID {
         return Ok(());
     }
 

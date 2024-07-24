@@ -1,3 +1,7 @@
+use rand::prelude::*;
+use serenity::all::FullEvent;
+use serenity::prelude::*;
+
 use crate::event_handler::presences::set_initial_presence;
 use crate::event_handler::responses::certify::handle_certify;
 use crate::event_handler::responses::greet::greet;
@@ -5,11 +9,8 @@ use crate::event_handler::responses::handle_bot_responses;
 use crate::event_handler::responses::qotd::handle_qotd;
 use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::services::message_service::record_message;
-use crate::shared::structs::smite::schedule_unsmite;
 use crate::shared::structs::{ContextData, ContextError};
-use rand::prelude::*;
-use serenity::all::FullEvent;
-use serenity::prelude::*;
+use crate::shared::structs::smite::schedule_unsmite;
 
 pub mod presences;
 pub mod responses;
@@ -40,13 +41,14 @@ pub async fn handle_event(
                 tracing::error!("Error when handling qotd: {}", e);
             }
 
+            let endpoint = format!("{}/message/record/new", &data.config.server_endpoint);
+            record_message(ctx, new_message, data, endpoint).await?;
+
             if let Err(e) = handle_bot_responses(ctx, new_message, data).await {
                 tracing::error!("Error when handling bot responses: {}", e);
             }
 
             handle_certify(ctx, new_message, data).await;
-            let endpoint = format!("{}/message/record/new", &data.config.server_endpoint);
-            record_message(ctx, new_message, data, endpoint).await?;
         }
         FullEvent::Ready { data_about_bot } => {
             set_initial_presence(ctx, data).await;

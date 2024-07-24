@@ -1,6 +1,6 @@
 [package]
 name = "taiga-bot-rs"
-version = "6.3.4"
+version = "6.3.5"
 authors = ["Chehui Chou <deadshot465@users.noreply.github.com>"]
 edition = "2021"
 
@@ -8,10 +8,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = ">=1.0.70"
-async-openai = "0.20.0"
+async-openai = "0.23.4"
 base64 = ">=0.21.0"
 chrono = { version = ">=0.4", features = ["serde"] }
-dashmap = "5.4.0"
+dashmap = "6.0.1"
 google-drive = ">=0.6.0"
 image = ">=0.25.1"
 num-traits = ">=0.2.18"
