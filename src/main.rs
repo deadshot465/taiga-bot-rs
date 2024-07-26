@@ -1,9 +1,20 @@
-mod commands;
-mod event_handler;
-mod shared;
+use std::collections::HashSet;
+use std::sync::Arc;
+
+use poise::{BoxFuture, PrefixFrameworkOptions, serenity_prelude as serenity};
+use poise::{CreateReply, FrameworkError};
+use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
+use tokio::sync::RwLock;
+use tracing::Level;
+
+use shared::structs::config::*;
+use shared::structs::record::*;
 
 use crate::event_handler::handle_event;
+use crate::shared::constants::CONFIG_DIRECTORY;
+use crate::shared::services::open_router_service::initialize_open_router_client;
 use crate::shared::services::openai_service::initialize_openai_client;
+use crate::shared::structs::{Context, ContextData, ContextError};
 use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::common_settings::initialize_common_settings;
 use crate::shared::structs::config::random_response::initialize_random_response;
@@ -16,16 +27,10 @@ use crate::shared::structs::information::character::{initialize_routes, initiali
 use crate::shared::structs::information::oracle::initialize_oracles;
 use crate::shared::structs::smite::initialize_smite;
 use crate::shared::structs::utility::convert::conversion_table::initialize_conversion_table;
-use crate::shared::structs::{Context, ContextData, ContextError};
-use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
-use poise::{CreateReply, FrameworkError};
-use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
-use shared::structs::config::*;
-use shared::structs::record::*;
-use std::collections::HashSet;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::Level;
+
+mod commands;
+mod event_handler;
+mod shared;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -46,6 +51,7 @@ async fn main() -> anyhow::Result<()> {
     let config = configuration::initialize()?;
     let http_client = reqwest::Client::new();
     let openai_client = initialize_openai_client(&config);
+    let open_router_client = initialize_open_router_client(&config);
 
     let context_data = ContextData {
         config,
@@ -68,6 +74,8 @@ async fn main() -> anyhow::Result<()> {
         smite: initialize_smite()?,
         openai_client,
         random_response: initialize_random_response()?,
+        translation_instructions: load_translation_instruction()?,
+        open_router_client,
     };
 
     if context_data.config.token.is_empty() {
@@ -122,6 +130,7 @@ async fn main() -> anyhow::Result<()> {
                 commands::smite::smite(),
                 commands::utility::save_file::save_file(),
                 commands::fun::answer_anon::answer_anon(),
+                commands::utility::translate::translate(),
             ],
             on_error: |error| Box::pin(handle_error(error)),
             command_check: Some(check_command),
@@ -256,4 +265,19 @@ async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let command_name = ctx.command().name.as_str();
     Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
         || ctx.data().enabled_channels.contains(&channel_id))
+}
+
+fn load_translation_instruction() -> anyhow::Result<String> {
+    if !std::path::Path::new(CONFIG_DIRECTORY).exists() {
+        std::fs::create_dir(CONFIG_DIRECTORY)?
+    }
+
+    let translation_instructions_path =
+        String::from(CONFIG_DIRECTORY) + "translation_instructions.txt";
+    if !std::path::Path::new(&translation_instructions_path).exists() {
+        Ok("".to_string())
+    } else {
+        let instructions = std::fs::read_to_string(translation_instructions_path)?;
+        Ok(instructions)
+    }
 }

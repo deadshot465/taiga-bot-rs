@@ -1,3 +1,11 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+
+use async_openai::config::OpenAIConfig;
+use reqwest::Client;
+use serenity::all::ChannelId;
+use tokio::sync::RwLock;
+
 use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::channel_control::ChannelControl;
 use crate::shared::structs::config::common_settings::CommonSettings;
@@ -13,12 +21,6 @@ use crate::shared::structs::information::oracle::Oracle;
 use crate::shared::structs::record::user_record::UserRecord;
 use crate::shared::structs::smite::Smite;
 use crate::shared::structs::utility::convert::conversion_table::ConversionTable;
-use async_openai::config::OpenAIConfig;
-use reqwest::Client;
-use serenity::all::ChannelId;
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
 pub mod authentication;
 pub mod config;
@@ -51,6 +53,8 @@ pub struct ContextData {
     pub smite: Smite,
     pub openai_client: async_openai::Client<OpenAIConfig>,
     pub random_response: RandomResponse,
+    pub translation_instructions: String,
+    pub open_router_client: async_openai::Client<OpenAIConfig>,
 }
 
 pub type ContextError = Box<dyn std::error::Error + Send + Sync>;

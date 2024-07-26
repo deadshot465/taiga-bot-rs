@@ -28,6 +28,7 @@ pub struct Configuration {
     pub openai_api_key: String,
     pub openai_reply_chance: i32,
     pub skip_user_ids: Vec<u64>,
+    pub open_router_api_key: String,
 }
 
 impl Configuration {
@@ -55,6 +56,7 @@ impl Configuration {
             openai_api_key: "".to_string(),
             openai_reply_chance: 25,
             skip_user_ids: vec![],
+            open_router_api_key: "".to_string(),
         }
     }
 
