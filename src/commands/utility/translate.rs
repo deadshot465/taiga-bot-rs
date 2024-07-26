@@ -4,6 +4,7 @@ use serenity::all::Attachment;
 use crate::shared::services::open_router_service::translate_with_deep_seek;
 use crate::shared::structs::{Context, ContextError};
 
+/// Translate English to traditional Chinese. This is designed for Tetsu's Forged in Starlight.
 #[poise::command(slash_command, category = "Utility")]
 pub async fn translate(
     ctx: Context<'_>,
