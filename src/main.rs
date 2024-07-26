@@ -273,7 +273,7 @@ fn load_translation_instruction() -> anyhow::Result<String> {
     }
 
     let translation_instructions_path =
-        String::from(CONFIG_DIRECTORY) + "translation_instructions.txt";
+        String::from(CONFIG_DIRECTORY) + "/translation_instructions.txt";
     if !std::path::Path::new(&translation_instructions_path).exists() {
         Ok("".to_string())
     } else {
