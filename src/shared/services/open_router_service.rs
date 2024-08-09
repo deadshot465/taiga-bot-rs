@@ -1,10 +1,10 @@
-use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
     CreateChatCompletionRequestArgs,
 };
+use async_openai::Client;
 use serenity::all::Attachment;
 
 use crate::shared::structs::config::configuration::Configuration;
@@ -17,7 +17,7 @@ const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 const TRANSLATION_SYSTEM_PROMPT: &str =
     "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
-    你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸，將英文小說的內容翻成繁體中文。\
+    你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
     \
     在翻譯時，請務必記得以下指示：{INSTRUCTION}";
 
