@@ -1,3 +1,6 @@
+use crate::commands::utility::translate::LanguageModel;
+use crate::shared::structs::config::configuration::Configuration;
+use crate::shared::structs::ContextData;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
@@ -7,10 +10,9 @@ use async_openai::types::{
 use async_openai::Client;
 use serenity::all::Attachment;
 
-use crate::shared::structs::config::configuration::Configuration;
-use crate::shared::structs::ContextData;
-
 const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat";
+const YI_LARGE_MODEL: &str = "01-ai/yi-large";
+const GPT_4O_20240806_MODEL: &str = "openai/gpt-4o-2024-08-06";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
@@ -32,12 +34,19 @@ pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAICon
 pub async fn translate_with_deep_seek(
     data: &ContextData,
     attachment: &Attachment,
+    model: LanguageModel,
 ) -> anyhow::Result<String> {
     let raw_bytes = attachment.download().await?;
     let text = String::from_utf8(raw_bytes)?;
     let instructions = data.translation_instructions.clone();
     let replacement = format!("\n{}", instructions);
     let system_prompt = TRANSLATION_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement);
+
+    let model = match model {
+        LanguageModel::DeepSeekV2 => DEEP_SEEK_MODEL,
+        LanguageModel::YiLarge => YI_LARGE_MODEL,
+        LanguageModel::Gpt4o => GPT_4O_20240806_MODEL,
+    };
 
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
@@ -51,7 +60,7 @@ pub async fn translate_with_deep_seek(
     ];
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(DEEP_SEEK_MODEL)
+        .model(model)
         .temperature(TEMPERATURE)
         .messages(messages)
         .build();
