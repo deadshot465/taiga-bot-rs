@@ -8,8 +8,6 @@ use crate::shared::structs::{Context, ContextError};
 pub enum LanguageModel {
     #[name = "DeepSeek-v2"]
     DeepSeekV2,
-    #[name = "Yi Large"]
-    YiLarge,
     #[name = "GPT-4o (2024-08-06)"]
     Gpt4o,
 }

@@ -1,6 +1,8 @@
-use crate::event_handler::hit_or_miss;
-use crate::shared::structs::config::random_response::get_random_message;
+use crate::shared::services::open_router_service::{
+    categorize_question, opine_conversation, opine_specific,
+};
 use crate::shared::structs::ContextData;
+use serenity::all::UserId;
 use serenity::model::prelude::Message;
 use serenity::prelude::*;
 
@@ -13,19 +15,48 @@ pub async fn handle_mention_self(
         return Ok(());
     }
 
-    let mention_reply_chance = data.config.mention_reply_chance;
+    if new_message
+        .mentions
+        .iter()
+        .any(|u| u.id == UserId::new(data.config.bot_id))
+    {
+        match categorize_question(data, new_message.content.clone()).await {
+            Ok(result) => {
+                if result.starts_with("YES") {
+                    let index = result.find("Question:").unwrap_or_default();
+                    let index = index + 9;
+                    let (_, question) = result.split_at(index);
+                    let question = question.trim().into();
 
-    if !hit_or_miss(mention_reply_chance) {
-        return Ok(());
-    }
-
-    let bot_id = data.config.bot_id;
-    let is_kou = data.kou;
-
-    if new_message.content.contains(&bot_id.to_string()) {
-        let random_message =
-            get_random_message(&data.random_response, if is_kou { "kou" } else { "taiga" });
-        new_message.reply(&ctx.http, random_message).await?;
+                    match opine_specific(data, question).await {
+                        Ok(response) => {
+                            new_message.reply(&ctx.http, response).await?;
+                        }
+                        Err(e) => {
+                            let error_message = format!("Failed to reply to mention: {}", e);
+                            tracing::error!("{}", &error_message);
+                            new_message.reply(&ctx.http, error_message).await?;
+                        }
+                    }
+                } else {
+                    match opine_conversation(ctx, data, new_message).await {
+                        Ok(response) => {
+                            new_message.reply(&ctx.http, response).await?;
+                        }
+                        Err(e) => {
+                            let error_message = format!("Failed to reply to mention: {}", e);
+                            tracing::error!("{}", &error_message);
+                            new_message.reply(&ctx.http, error_message).await?;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                let error_message = format!("Failed to reply to mention: {}", e);
+                tracing::error!("{}", &error_message);
+                new_message.reply(&ctx.http, error_message).await?;
+            }
+        }
     }
 
     Ok(())

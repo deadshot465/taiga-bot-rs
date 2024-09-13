@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use poise::{BoxFuture, PrefixFrameworkOptions, serenity_prelude as serenity};
+use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
 use poise::{CreateReply, FrameworkError};
 use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
 use tokio::sync::RwLock;
@@ -14,7 +14,6 @@ use crate::event_handler::handle_event;
 use crate::shared::constants::CONFIG_DIRECTORY;
 use crate::shared::services::open_router_service::initialize_open_router_client;
 use crate::shared::services::openai_service::initialize_openai_client;
-use crate::shared::structs::{Context, ContextData, ContextError};
 use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::common_settings::initialize_common_settings;
 use crate::shared::structs::config::random_response::initialize_random_response;
@@ -27,6 +26,7 @@ use crate::shared::structs::information::character::{initialize_routes, initiali
 use crate::shared::structs::information::oracle::initialize_oracles;
 use crate::shared::structs::smite::initialize_smite;
 use crate::shared::structs::utility::convert::conversion_table::initialize_conversion_table;
+use crate::shared::structs::{Context, ContextData, ContextError};
 
 mod commands;
 mod event_handler;
@@ -131,6 +131,7 @@ async fn main() -> anyhow::Result<()> {
                 commands::utility::save_file::save_file(),
                 commands::fun::answer_anon::answer_anon(),
                 commands::utility::translate::translate(),
+                commands::fun::what_do_you_think::what_do_you_think(),
             ],
             on_error: |error| Box::pin(handle_error(error)),
             command_check: Some(check_command),

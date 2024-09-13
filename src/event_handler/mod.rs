@@ -9,8 +9,8 @@ use crate::event_handler::responses::handle_bot_responses;
 use crate::event_handler::responses::qotd::handle_qotd;
 use crate::shared::constants::KOU_SERVER_ID;
 use crate::shared::services::message_service::record_message;
-use crate::shared::structs::{ContextData, ContextError};
 use crate::shared::structs::smite::schedule_unsmite;
+use crate::shared::structs::{ContextData, ContextError};
 
 pub mod presences;
 pub mod responses;
