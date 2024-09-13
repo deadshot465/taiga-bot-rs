@@ -26,6 +26,8 @@ pub async fn what_do_you_think(
         &author_name, &message.content
     );
 
+    ctx.defer().await?;
+
     match opine_specific(ctx.data, prompt).await {
         Ok(response) => {
             ctx.send(CreateReply::default().content(response)).await?;
