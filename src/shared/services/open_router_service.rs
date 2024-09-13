@@ -15,7 +15,6 @@ use serenity::client::Context;
 const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat";
 const GPT_4O_20240806_MODEL: &str = "openai/gpt-4o-2024-08-06";
 const MISTRAL_LARGE_MODEL: &str = "mistralai/mistral-large";
-const SONNET_35_MODEL: &str = "anthropic/claude-3.5-sonnet:beta";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
@@ -47,24 +46,27 @@ Always reply in the language of the prompt.\
 const CATEGORIZE_QUESTION_SYSTEM_PROMPT: &str = "You are an expert in summarizing questions. Whenever you're asked a question. Follow the following steps:\
 1. Analyze the question. Is it a specific question? Or something that has been talked about that you don't have context?\
 \
-2. If it's a concrete, specific question, reply with the following format (without triple quotation mark):\
-\"\"\"\
-YES
-
+2. If it's a concrete, specific question, reply with the following format (without tags):\
+<format>\
+YES\
+\
 Question: {QUESTION}\
-\"\"\"\
+</format>\
 Summarize the question and put in {QUESTION}.\
 \
-3. If it's something that has been talked about that you don't have context, reply with the following format (without triple quotation mark):\
-\"\"\"\
+3. If it's something that has been talked about that you don't have context, reply with the following format (without tags):\
+<format>\
 NO\
-\"\"\"\
+</format>\
 DO NOT answer the question itself in this case.";
 
 const ADDITIONAL_INSTRUCTION: &str = "Whenever you receive a prompt, follow the following steps:\
-1. Summarize the chat messages so far. PAY ATTENTION TO who said what. Put your summary in a variable called {SUMMARY}\
-2. Based on {SUMMARY}. Put your insights and opinions in a variable called {OUTPUT}. REMEMBER that you are a participant in the conversation, and should address other participants just like your are participating in the conversation.\
-3. Return the content of {OUTPUT} ONLY. NOTHING MORE.";
+1. Focus on the most recent messages. Read back from the most recent message until you think the topic is different than the most recent topic.
+2. Summarize the chat messages so far. Focus on the most recent topic. PAY ATTENTION TO who said what. Put your summary in a variable called {SUMMARY}\
+3. Based on {SUMMARY}. Put your insights and opinions in a variable called {OUTPUT}. REMEMBER that you are a participant in the conversation, and should address other participants just like your are participating in the conversation.\
+4. Return the content of {OUTPUT} ONLY. NOTHING MORE.";
+
+const MOST_RECENT_MESSAGE_COUNT: u8 = 50;
 
 pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAIConfig> {
     let config = OpenAIConfig::new()
@@ -180,7 +182,7 @@ pub async fn categorize_question(data: &ContextData, message: String) -> anyhow:
     ];
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(SONNET_35_MODEL)
+        .model(MISTRAL_LARGE_MODEL)
         .temperature(TEMPERATURE)
         .messages(messages)
         .build();
@@ -191,6 +193,12 @@ pub async fn categorize_question(data: &ContextData, message: String) -> anyhow:
                 .message
                 .content
                 .clone()
+                .map(|s| {
+                    s.replace("<format>", "")
+                        .replace("</format>", "")
+                        .trim()
+                        .to_string()
+                })
                 .ok_or_else(|| anyhow::anyhow!("Failed to categorize question.")),
             Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
         },
@@ -214,7 +222,9 @@ pub async fn opine_conversation(
                 let messages = private_channel
                     .messages(
                         &ctx.http,
-                        GetMessages::new().before(new_message.id).limit(100),
+                        GetMessages::new()
+                            .before(new_message.id)
+                            .limit(MOST_RECENT_MESSAGE_COUNT),
                     )
                     .await?;
 
@@ -229,7 +239,9 @@ pub async fn opine_conversation(
             let messages = guild_channel
                 .messages(
                     &ctx.http,
-                    GetMessages::new().before(new_message.id).limit(100),
+                    GetMessages::new()
+                        .before(new_message.id)
+                        .limit(MOST_RECENT_MESSAGE_COUNT),
                 )
                 .await?;
 

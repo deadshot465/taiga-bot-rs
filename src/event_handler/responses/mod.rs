@@ -23,6 +23,10 @@ pub async fn handle_bot_responses(
         tracing::error!("Failed to send emote: {}", e);
     }
 
+    if let Err(e) = handle_mention_self(ctx, new_message, data).await {
+        tracing::error!("Failed to reply to self mention: {}", e);
+    }
+
     let channel_control = data.channel_control.clone();
 
     let is_channel_ignored = {
@@ -36,10 +40,6 @@ pub async fn handle_bot_responses(
 
     if is_channel_ignored {
         return Ok(());
-    }
-
-    if let Err(e) = handle_mention_self(ctx, new_message, data).await {
-        tracing::error!("Failed to reply to self mention: {}", e);
     }
 
     if let Err(e) = handle_reactions(ctx, new_message, data).await {

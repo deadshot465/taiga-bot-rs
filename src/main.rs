@@ -1,9 +1,8 @@
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
 use poise::{CreateReply, FrameworkError};
-use serenity::all::{ChannelId, CreateAllowedMentions, GatewayIntents};
+use serenity::all::{CreateAllowedMentions, GatewayIntents};
 use tokio::sync::RwLock;
 use tracing::Level;
 
