@@ -1,14 +1,15 @@
 use std::clone::Clone;
 
-use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
-    ChatCompletionRequestAssistantMessage, ChatCompletionRequestMessage,
-    ChatCompletionRequestMessageContentPart, ChatCompletionRequestMessageContentPartImage,
+    ChatCompletionRequestAssistantMessage, ChatCompletionRequestAssistantMessageContent,
+    ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
     ChatCompletionRequestMessageContentPartText, ChatCompletionRequestSystemMessage,
-    ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
+    ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessage,
+    ChatCompletionRequestUserMessageContent, ChatCompletionRequestUserMessageContentPart,
     CreateChatCompletionRequestArgs, ImageDetail, ImageUrl,
 };
+use async_openai::Client;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serenity::all::{Context, Message};
@@ -19,8 +20,8 @@ use crate::shared::constants::IMAGE_TYPES;
 use crate::shared::services::message_service::get_messages;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
-use crate::shared::structs::ContextData;
 use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
+use crate::shared::structs::ContextData;
 
 const TEXT_MODEL: &str = "gpt-4o";
 const VISION_MODEL: &str = "gpt-4o";
@@ -69,19 +70,19 @@ pub async fn build_openai_message(
 
     if let Some(attachment) = attachment {
         let messages_for_image = vec![
-            ChatCompletionRequestMessageContentPart::Text(
+            ChatCompletionRequestUserMessageContentPart::Text(
                 ChatCompletionRequestMessageContentPartText {
                     text: format!("{}: {}", author_name, message.content.clone()),
                     ..Default::default()
                 },
             ),
-            ChatCompletionRequestMessageContentPart::Text(
+            ChatCompletionRequestUserMessageContentPart::Text(
                 ChatCompletionRequestMessageContentPartText {
                     text: "What's your opinion on this image?".to_string(),
                     ..Default::default()
                 },
             ),
-            ChatCompletionRequestMessageContentPart::ImageUrl(
+            ChatCompletionRequestUserMessageContentPart::ImageUrl(
                 ChatCompletionRequestMessageContentPartImage {
                     image_url: ImageUrl {
                         url: attachment.url.clone(),
@@ -166,7 +167,7 @@ async fn build_messages_with_previous_contexts(
     let system_prompt_length = system_prompt.chars().count();
 
     let system_message = ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-        content: system_prompt,
+        content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
         name: None,
     });
 
@@ -180,7 +181,9 @@ async fn build_messages_with_previous_contexts(
         .map(|rec| {
             if rec.user_id == bot_id.as_str() {
                 ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
-                    content: Some(rec.message),
+                    content: Some(ChatCompletionRequestAssistantMessageContent::Text(
+                        rec.message,
+                    )),
                     ..ChatCompletionRequestAssistantMessage::default()
                 })
             } else {
@@ -196,13 +199,13 @@ async fn build_messages_with_previous_contexts(
                                 .unwrap_or_default();
 
                             ChatCompletionRequestUserMessageContent::Array(vec![
-                                ChatCompletionRequestMessageContentPart::Text(
+                                ChatCompletionRequestUserMessageContentPart::Text(
                                     ChatCompletionRequestMessageContentPartText {
                                         text: format!("{}: {}", rec.user_name, prompt_part),
                                         ..Default::default()
                                     },
                                 ),
-                                ChatCompletionRequestMessageContentPart::ImageUrl(
+                                ChatCompletionRequestUserMessageContentPart::ImageUrl(
                                     ChatCompletionRequestMessageContentPartImage {
                                         image_url: ImageUrl {
                                             url: image_url,

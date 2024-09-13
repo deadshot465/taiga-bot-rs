@@ -5,8 +5,8 @@ use crate::shared::utility::build_author_name_map;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
-    ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
-    CreateChatCompletionRequestArgs,
+    ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessage,
+    ChatCompletionRequestUserMessageContent, CreateChatCompletionRequestArgs,
 };
 use async_openai::Client;
 use serenity::all::{Attachment, GetMessages, Message};
@@ -92,7 +92,7 @@ pub async fn translate_with_deep_seek(
 
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: system_prompt,
+            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
             name: None,
         }),
         ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
@@ -138,7 +138,7 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
 
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: system_prompt,
+            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
             name: None,
         }),
         ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
@@ -271,7 +271,7 @@ async fn do_opine_conversation(
 
     let messages = vec![
         ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: system_prompt,
+            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
             name: None,
         }),
         ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {

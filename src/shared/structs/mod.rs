@@ -1,9 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_openai::config::OpenAIConfig;
 use reqwest::Client;
-use serenity::all::ChannelId;
 use tokio::sync::RwLock;
 
 use crate::shared::structs::authentication::Authentication;
@@ -36,7 +35,6 @@ pub struct ContextData {
     pub config: Configuration,
     pub kou: bool,
     pub channel_control: Arc<RwLock<ChannelControl>>,
-    pub enabled_channels: HashSet<ChannelId>,
     pub user_records: Arc<RwLock<HashMap<String, UserRecord>>>,
     pub routes: Vec<Character>,
     pub valentines: Vec<Character>,

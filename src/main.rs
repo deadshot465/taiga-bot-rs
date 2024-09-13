@@ -41,12 +41,6 @@ async fn main() -> anyhow::Result<()> {
     let channel_control = channel_control::initialize()?;
     let user_records = user_record::initialize()?;
 
-    let enabled_channels = channel_control
-        .enabled_channels
-        .iter()
-        .map(|n| ChannelId::from(*n))
-        .collect::<HashSet<_>>();
-
     let kou = args.contains(&"kou".to_string());
     let config = configuration::initialize()?;
     let http_client = reqwest::Client::new();
@@ -57,7 +51,6 @@ async fn main() -> anyhow::Result<()> {
         config,
         kou,
         channel_control: Arc::new(RwLock::new(channel_control)),
-        enabled_channels,
         user_records: Arc::new(RwLock::new(user_records)),
         routes: initialize_routes(),
         valentines: initialize_valentines(),
@@ -264,8 +257,9 @@ fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> 
 async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let channel_id = ctx.channel_id();
     let command_name = ctx.command().name.as_str();
+    let channel_control = ctx.data().channel_control.read().await;
     Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
-        || ctx.data().enabled_channels.contains(&channel_id))
+        || channel_control.enabled_channels.contains(&channel_id.get()))
 }
 
 fn load_translation_instruction() -> anyhow::Result<String> {

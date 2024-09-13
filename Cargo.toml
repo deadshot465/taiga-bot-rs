@@ -1,6 +1,6 @@
 [package]
 name = "taiga-bot-rs"
-version = "6.3.6"
+version = "6.4.0"
 authors = ["Chehui Chou <deadshot465@users.noreply.github.com>"]
 edition = "2021"
 
@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = ">=1.0.70"
-async-openai = "0.23.4"
+async-openai = { git = "https://github.com/deadshot465/async-openai.git" }
 base64 = ">=0.21.0"
 chrono = { version = ">=0.4", features = ["serde"] }
 dashmap = "6.0.1"

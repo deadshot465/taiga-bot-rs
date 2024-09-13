@@ -113,9 +113,8 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.23.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc0e5ff98f9e7c605df4c88783a0439d1dc667ce86bd79e99d4164f8b0c05ccc"
+version = "0.24.0"
+source = "git+https://github.com/deadshot465/async-openai.git#d61a48c31fa69a01b034b9466f211b071375e915"
 dependencies = [
  "async-convert",
  "backoff",
@@ -3022,10 +3021,10 @@ checksum = "7b2093cf4c8eb1e67749a6762251bc9cd836b6fc171623bd0a9d324d37af2417"
 
 [[package]]
 name = "taiga-bot-rs"
-version = "6.3.6"
+version = "6.4.0"
 dependencies = [
  "anyhow",
- "async-openai 0.23.4",
+ "async-openai 0.24.0",
  "base64 0.21.7",
  "chrono",
  "dashmap 6.0.1",
