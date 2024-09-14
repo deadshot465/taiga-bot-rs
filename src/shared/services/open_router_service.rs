@@ -300,9 +300,23 @@ async fn do_opine_conversation(
 
     match request {
         Ok(request) => match data.open_router_client.chat().create(request).await {
-            Ok(response) => response.choices[0].message.content.clone().ok_or_else(|| {
-                anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")
-            }),
+            Ok(response) => response.choices[0]
+                .message
+                .content
+                .clone()
+                .map(|s| {
+                    if s.contains("{OUTPUT}") {
+                        let index = s.find("{OUTPUT}").unwrap_or_default();
+                        let index = index + 8;
+                        let (_, output) = s.split_at(index);
+                        output.trim().to_string()
+                    } else {
+                        s
+                    }
+                })
+                .ok_or_else(|| {
+                    anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")
+                }),
             Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
         },
         Err(e) => Err(anyhow::anyhow!(
