@@ -52,10 +52,10 @@ impl Authentication {
 
         let mut response: HashMap<String, String> = response.json().await?;
         self.token = response
-            .remove(&"token".to_string())
+            .remove("token")
             .expect("Failed to get authentication token.");
         self.expiry = response
-            .remove(&"expiry".to_string())
+            .remove("expiry")
             .and_then(|s| s.parse::<DateTime<Utc>>().ok());
         Ok(())
     }

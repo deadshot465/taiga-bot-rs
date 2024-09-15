@@ -90,6 +90,7 @@ pub async fn translate_with_deep_seek(
     let model = match model {
         LanguageModel::DeepSeekV2 => DEEP_SEEK_MODEL,
         LanguageModel::Gpt4o => GPT_4O_20240806_MODEL,
+        LanguageModel::MistralLarge => MISTRAL_LARGE_MODEL,
     };
 
     let messages = vec![

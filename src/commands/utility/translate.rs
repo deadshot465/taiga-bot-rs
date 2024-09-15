@@ -10,6 +10,8 @@ pub enum LanguageModel {
     DeepSeekV2,
     #[name = "GPT-4o (2024-08-06)"]
     Gpt4o,
+    #[name = "Mistral Large"]
+    MistralLarge,
 }
 
 /// Translate English to traditional Chinese. This is designed for Tetsu's Forged in Starlight.

@@ -78,7 +78,7 @@ pub async fn get_normal_image(
 
     // Get available page count for the keyword
     let response = client
-        .get(&format!(
+        .get(format!(
             "https://api.unsplash.com/search/photos?client_id={}&query={}&page=1",
             &token, &keyword
         ))
@@ -98,7 +98,7 @@ pub async fn get_normal_image(
 
     // Get image data of a specific page and get a specific image from that page.
     let response = client
-        .get(&format!(
+        .get(format!(
             "https://api.unsplash.com/search/photos?client_id={}&query={}&page={}",
             &token, &keyword, random_page_number
         ))
@@ -173,7 +173,7 @@ pub async fn get_cat_image(
 
         // Try searching for the breed.
         let response = client
-            .get(&format!(
+            .get(format!(
                 "https://api.thecatapi.com/v1/breeds/search?q={}",
                 &keyword
             ))

@@ -1,6 +1,7 @@
 use serenity::all::{Context, Message, UserId};
 use serenity::model::guild::Member;
 use serenity::model::prelude::User;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 pub fn find_user_in_members<'a>(user: &'a User, members: &'a [Member]) -> Option<&'a Member> {
@@ -40,12 +41,12 @@ pub async fn build_author_name_map(ctx: &Context, messages: &[Message]) -> HashM
 
     for message in messages {
         let user_id = message.author.id;
-        if !author_name_map.contains_key(&user_id) {
+        if let Entry::Vacant(e) = author_name_map.entry(user_id) {
             let name = message
                 .author_nick(&ctx.http)
                 .await
                 .unwrap_or(message.author.name.clone());
-            author_name_map.insert(user_id, name);
+            e.insert(name);
         }
     }
 

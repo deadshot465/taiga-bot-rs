@@ -73,13 +73,11 @@ pub async fn build_openai_message(
             ChatCompletionRequestUserMessageContentPart::Text(
                 ChatCompletionRequestMessageContentPartText {
                     text: format!("{}: {}", author_name, message.content.clone()),
-                    ..Default::default()
                 },
             ),
             ChatCompletionRequestUserMessageContentPart::Text(
                 ChatCompletionRequestMessageContentPartText {
                     text: "What's your opinion on this image?".to_string(),
-                    ..Default::default()
                 },
             ),
             ChatCompletionRequestUserMessageContentPart::ImageUrl(
@@ -88,7 +86,6 @@ pub async fn build_openai_message(
                         url: attachment.url.clone(),
                         detail: Some(ImageDetail::High),
                     },
-                    ..Default::default()
                 },
             ),
         ];
@@ -202,7 +199,6 @@ async fn build_messages_with_previous_contexts(
                                 ChatCompletionRequestUserMessageContentPart::Text(
                                     ChatCompletionRequestMessageContentPartText {
                                         text: format!("{}: {}", rec.user_name, prompt_part),
-                                        ..Default::default()
                                     },
                                 ),
                                 ChatCompletionRequestUserMessageContentPart::ImageUrl(
@@ -211,7 +207,6 @@ async fn build_messages_with_previous_contexts(
                                             url: image_url,
                                             detail: Some(ImageDetail::High),
                                         },
-                                        ..Default::default()
                                     },
                                 ),
                             ])
