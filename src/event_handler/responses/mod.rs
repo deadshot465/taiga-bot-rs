@@ -2,6 +2,7 @@ use crate::event_handler::responses::emote::handle_emote;
 use crate::event_handler::responses::mention::handle_mention_self;
 use crate::event_handler::responses::reaction::handle_reactions;
 use crate::event_handler::responses::response::handle_responses;
+use crate::shared::services::open_router_service::reply_message_chain;
 use crate::shared::structs::ContextData;
 use serenity::model::prelude::Message;
 use serenity::prelude::*;
@@ -25,6 +26,35 @@ pub async fn handle_bot_responses(
 
     if let Err(e) = handle_mention_self(ctx, new_message, data).await {
         tracing::error!("Failed to reply to self mention: {}", e);
+    }
+
+    if let Some(original_message) = new_message.referenced_message.as_ref() {
+        if original_message.author.id.get() == data.config.bot_id {
+            let mut message_chain = build_message_chain(original_message, vec![]);
+            message_chain.reverse();
+            let mut built_message_chain = vec![];
+            let bot_user = ctx.http.get_current_user().await?;
+            let bot_nick = bot_user.name.clone();
+
+            for message in message_chain.into_iter() {
+                let author_nick = if message.author.id == bot_user.id {
+                    bot_nick.clone()
+                } else {
+                    message
+                        .author_nick(&ctx.http)
+                        .await
+                        .unwrap_or(message.author.name.clone())
+                };
+
+                built_message_chain.push(format!("{}: {}", author_nick, message.content));
+            }
+
+            if let Err(e) = reply_message_chain(data, built_message_chain, bot_nick).await {
+                tracing::error!("Failed to reply to message chain: {}", e);
+            }
+
+            return Ok(());
+        }
     }
 
     let channel_control = data.channel_control.clone();
@@ -51,4 +81,18 @@ pub async fn handle_bot_responses(
     }
 
     Ok(())
+}
+
+fn build_message_chain(
+    original_message: &Message,
+    mut message_chain: Vec<Message>,
+) -> Vec<Message> {
+    let message = original_message.clone();
+    message_chain.push(message);
+
+    if let Some(old_message) = original_message.referenced_message.as_ref() {
+        build_message_chain(old_message, message_chain)
+    } else {
+        message_chain
+    }
 }
