@@ -118,21 +118,15 @@ pub async fn translate_with_deep_seek(
         .model(model)
         .temperature(TEMPERATURE)
         .messages(messages)
-        .build();
+        .build()?;
 
-    match request {
-        Ok(request) => match data.open_router_client.chat().create(request).await {
-            Ok(response) => response.choices[0]
-                .message
-                .content
-                .clone()
-                .ok_or_else(|| anyhow::anyhow!("Sorry, but I can't seem to translate that!")),
-            Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
-        },
-        Err(e) => Err(anyhow::anyhow!(
-            "Failed to create Open Router request: {}",
-            e
-        )),
+    match data.open_router_client.chat().create(request).await {
+        Ok(response) => response.choices[0]
+            .message
+            .content
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("Sorry, but I can't seem to translate that!")),
+        Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
     }
 }
 
@@ -164,19 +158,15 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
         .model(MISTRAL_LARGE_MODEL)
         .messages(messages)
         .temperature(TEMPERATURE)
-        .build();
+        .build()?;
 
-    match request {
-        Ok(request) => match data.open_router_client.chat().create(request).await {
-            Ok(response) => response.choices[0].message.content.clone().ok_or_else(|| {
+    match data.open_router_client.chat().create(request).await {
+        Ok(response) => {
+            response.choices[0].message.content.clone().ok_or_else(|| {
                 anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")
-            }),
-            Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
-        },
-        Err(e) => Err(anyhow::anyhow!(
-            "Failed to create Open Router request: {}",
-            e
-        )),
+            })
+        }
+        Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
     }
 }
 
@@ -196,27 +186,21 @@ pub async fn categorize_question(data: &ContextData, message: String) -> anyhow:
         .model(MISTRAL_LARGE_MODEL)
         .temperature(TEMPERATURE)
         .messages(messages)
-        .build();
+        .build()?;
 
-    match request {
-        Ok(request) => match data.open_router_client.chat().create(request).await {
-            Ok(response) => response.choices[0]
-                .message
-                .content
-                .clone()
-                .map(|s| {
-                    s.replace("<format>", "")
-                        .replace("</format>", "")
-                        .trim()
-                        .to_string()
-                })
-                .ok_or_else(|| anyhow::anyhow!("Failed to categorize question.")),
-            Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
-        },
-        Err(e) => Err(anyhow::anyhow!(
-            "Failed to create Open Router request: {}",
-            e
-        )),
+    match data.open_router_client.chat().create(request).await {
+        Ok(response) => response.choices[0]
+            .message
+            .content
+            .clone()
+            .map(|s| {
+                s.replace("<format>", "")
+                    .replace("</format>", "")
+                    .trim()
+                    .to_string()
+            })
+            .ok_or_else(|| anyhow::anyhow!("Failed to categorize question.")),
+        Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
     }
 }
 
@@ -345,32 +329,24 @@ async fn do_opine_conversation(
         .model(MISTRAL_LARGE_MODEL)
         .temperature(TEMPERATURE)
         .messages(messages)
-        .build();
+        .build()?;
 
-    match request {
-        Ok(request) => match data.open_router_client.chat().create(request).await {
-            Ok(response) => response.choices[0]
-                .message
-                .content
-                .clone()
-                .map(|s| {
-                    if s.contains("{OUTPUT}") {
-                        let index = s.find("{OUTPUT}").unwrap_or_default();
-                        let index = index + 8;
-                        let (_, output) = s.split_at(index);
-                        output.trim().to_string()
-                    } else {
-                        s
-                    }
-                })
-                .ok_or_else(|| {
-                    anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")
-                }),
-            Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
-        },
-        Err(e) => Err(anyhow::anyhow!(
-            "Failed to create Open Router request: {}",
-            e
-        )),
+    match data.open_router_client.chat().create(request).await {
+        Ok(response) => response.choices[0]
+            .message
+            .content
+            .clone()
+            .map(|s| {
+                if s.contains("{OUTPUT}") {
+                    let index = s.find("{OUTPUT}").unwrap_or_default();
+                    let index = index + 8;
+                    let (_, output) = s.split_at(index);
+                    output.trim().to_string()
+                } else {
+                    s
+                }
+            })
+            .ok_or_else(|| anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")),
+        Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
     }
 }
