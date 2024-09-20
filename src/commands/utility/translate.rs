@@ -12,6 +12,10 @@ pub enum LanguageModel {
     Gpt4o,
     #[name = "Mistral Large"]
     MistralLarge,
+    #[name = "Qwen 2.5 72B Instruct"]
+    Qwen2572BInstruct,
+    #[name = "Cohere Command R+ (08-2024)"]
+    CohereCommandRPlus082024,
 }
 
 /// Translate English to traditional Chinese. This is designed for Tetsu's Forged in Starlight.
