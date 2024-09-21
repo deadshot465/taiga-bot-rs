@@ -65,12 +65,12 @@ DO NOT answer the question itself in this case.";
 const REPLY_MESSAGE_CHAIN_SYSTEM_PROMPT_KOU: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou.\
 \
 Your name in the conversation is {BOT_NAME}, and you're having a chat.\
-Read the conversation, determine and remember what you said and what other people said, then reply and continue the chat.";
+Read the conversation, determine and remember what you said and what other people said, then reply and continue the chat. DO NOT mention your name in your reply.";
 
 const REPLY_MESSAGE_CHAIN_SYSTEM_PROMPT_TAIGA: &str = "You are Taiga Akatora from the visual novel game Camp Buddy. You have a tough exterior and you used to cause conflicts before you experience personal growth, opening up to others, and eventually come to terms with your own feelings and emotions. You like writing and handcrafting. Kieran Moreno is your ex. Your boyfriend is Keitaro Nagame. Your responses will be rebellious, snarky, somewhat impatient even though you don't mean ill, and should match the personality of Taiga Akatora.\
 \
 Your name in the conversation is {BOT_NAME}, and you're having a chat.\
-Read the conversation, determine and remember what you said and what other people said, then reply and continue the chat.";
+Read the conversation, determine and remember what you said and what other people said, then reply and continue the chat. DO NOT mention your name in your reply.";
 
 const ADDITIONAL_INSTRUCTION: &str = "Whenever you receive a prompt, follow the following steps:\
 1. Focus on the most recent messages. Read back from the most recent message until you think the topic is different than the most recent topic.
@@ -233,7 +233,7 @@ pub async fn opine_conversation(
                     )
                     .await?;
 
-                do_opine_conversation(ctx, data, messages).await
+                do_opine_conversation(data, messages).await
             } else {
                 Err(anyhow::anyhow!(
                     "This command is only supported in either guild or private channels!"
@@ -250,12 +250,12 @@ pub async fn opine_conversation(
                 )
                 .await?;
 
-            do_opine_conversation(ctx, data, messages).await
+            do_opine_conversation(data, messages).await
         }
     }
 }
 
-pub async fn reply_message_chain(
+pub async fn build_reply_to_message_chain(
     data: &ContextData,
     message_chain: Vec<String>,
     bot_nick: String,
@@ -294,11 +294,10 @@ pub async fn reply_message_chain(
 }
 
 async fn do_opine_conversation(
-    ctx: &Context,
     data: &ContextData,
     messages: Vec<Message>,
 ) -> anyhow::Result<String> {
-    let author_name_map = build_author_name_map(ctx, &messages).await;
+    let author_name_map = build_author_name_map(&messages);
 
     let previous_messages = messages
         .into_iter()

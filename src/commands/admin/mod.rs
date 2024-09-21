@@ -172,8 +172,8 @@ pub async fn purge(
     let channel_id = ctx.channel_id();
     let guild_channel = ctx
         .cache()
-        .guild_channels(guild_id)
-        .and_then(|channels| channels.get(&channel_id).cloned());
+        .guild(guild_id)
+        .and_then(|g| g.channels.get(&channel_id).cloned());
 
     reply_handle
         .edit(

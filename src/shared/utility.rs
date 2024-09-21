@@ -1,4 +1,4 @@
-use serenity::all::{Context, Message, UserId};
+use serenity::all::{Message, UserId};
 use serenity::model::guild::Member;
 use serenity::model::prelude::User;
 use std::collections::hash_map::Entry;
@@ -36,16 +36,13 @@ pub fn get_static_emote_url(emote_id: &str) -> String {
     format!("https://cdn.discordapp.com/emojis/{}.png?v=1", emote_id)
 }
 
-pub async fn build_author_name_map(ctx: &Context, messages: &[Message]) -> HashMap<UserId, String> {
+pub fn build_author_name_map(messages: &[Message]) -> HashMap<UserId, String> {
     let mut author_name_map = HashMap::new();
 
     for message in messages {
         let user_id = message.author.id;
         if let Entry::Vacant(e) = author_name_map.entry(user_id) {
-            let name = message
-                .author_nick(&ctx.http)
-                .await
-                .unwrap_or(message.author.name.clone());
+            let name = message.author.name.clone();
             e.insert(name);
         }
     }

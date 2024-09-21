@@ -2,8 +2,9 @@ use crate::event_handler::responses::emote::handle_emote;
 use crate::event_handler::responses::mention::handle_mention_self;
 use crate::event_handler::responses::reaction::handle_reactions;
 use crate::event_handler::responses::response::handle_responses;
-use crate::shared::services::open_router_service::reply_message_chain;
+use crate::shared::services::open_router_service::build_reply_to_message_chain;
 use crate::shared::structs::ContextData;
+use serenity::all::{GuildChannel, PrivateChannel};
 use serenity::model::prelude::Message;
 use serenity::prelude::*;
 
@@ -30,7 +31,19 @@ pub async fn handle_bot_responses(
 
     if let Some(original_message) = new_message.referenced_message.as_ref() {
         if original_message.author.id.get() == data.config.bot_id {
-            let mut message_chain = build_message_chain(original_message, vec![]);
+            let channel = new_message.channel(&ctx.http).await?;
+            let guild_channel = channel.clone().guild();
+            let private_channel = channel.private();
+
+            let mut message_chain = build_message_chain(
+                ctx,
+                new_message.clone(),
+                guild_channel,
+                private_channel,
+                vec![],
+            )
+            .await?;
+
             message_chain.reverse();
             let mut built_message_chain = vec![];
             let bot_user = ctx.http.get_current_user().await?;
@@ -40,17 +53,21 @@ pub async fn handle_bot_responses(
                 let author_nick = if message.author.id == bot_user.id {
                     bot_nick.clone()
                 } else {
-                    message
-                        .author_nick(&ctx.http)
-                        .await
-                        .unwrap_or(message.author.name.clone())
+                    message.author.name.clone()
                 };
 
                 built_message_chain.push(format!("{}: {}", author_nick, message.content));
             }
 
-            if let Err(e) = reply_message_chain(data, built_message_chain, bot_nick).await {
-                tracing::error!("Failed to reply to message chain: {}", e);
+            match build_reply_to_message_chain(data, built_message_chain, bot_nick).await {
+                Ok(response) => {
+                    new_message.reply(&ctx.http, response).await?;
+                }
+                Err(e) => {
+                    let error_message = format!("Failed to reply to message chain: {}", e);
+                    tracing::error!("{}", &error_message);
+                    new_message.reply(&ctx.http, error_message).await?;
+                }
             }
 
             return Ok(());
@@ -83,16 +100,38 @@ pub async fn handle_bot_responses(
     Ok(())
 }
 
-fn build_message_chain(
-    original_message: &Message,
+async fn build_message_chain(
+    ctx: &Context,
+    original_message: Message,
+    maybe_guild_channel: Option<GuildChannel>,
+    maybe_private_channel: Option<PrivateChannel>,
     mut message_chain: Vec<Message>,
-) -> Vec<Message> {
+) -> anyhow::Result<Vec<Message>> {
     let message = original_message.clone();
     message_chain.push(message);
 
     if let Some(old_message) = original_message.referenced_message.as_ref() {
-        build_message_chain(old_message, message_chain)
+        let old_message_id = old_message.id;
+        let old_message = if let Some(ref guild_channel) = maybe_guild_channel {
+            guild_channel.message(&ctx.http, old_message_id).await?
+        } else {
+            let private_channel = maybe_private_channel
+                .clone()
+                .expect("Failed to get private channel for the message.");
+            private_channel.message(&ctx.http, old_message_id).await?
+        };
+
+        let chain = Box::pin(build_message_chain(
+            ctx,
+            old_message,
+            maybe_guild_channel,
+            maybe_private_channel,
+            message_chain,
+        ))
+        .await?;
+
+        Ok(chain)
     } else {
-        message_chain
+        Ok(message_chain)
     }
 }

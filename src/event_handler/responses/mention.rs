@@ -2,7 +2,6 @@ use crate::shared::services::open_router_service::{
     categorize_question, opine_conversation, opine_specific,
 };
 use crate::shared::structs::ContextData;
-use serenity::all::UserId;
 use serenity::model::prelude::Message;
 use serenity::prelude::*;
 
@@ -16,9 +15,8 @@ pub async fn handle_mention_self(
     }
 
     if new_message
-        .mentions
-        .iter()
-        .any(|u| u.id == UserId::new(data.config.bot_id))
+        .content
+        .contains(&data.config.bot_id.to_string())
     {
         match categorize_question(data, new_message.content.clone()).await {
             Ok(result) => {

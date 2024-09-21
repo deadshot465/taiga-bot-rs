@@ -47,10 +47,7 @@ pub async fn qotd(
         .avatar_url()
         .unwrap_or_else(|| current_user.default_avatar_url());
 
-    let guild_channels = ctx
-        .cache()
-        .guild_channels(guild_id)
-        .map(|channels| channels.clone());
+    let guild_channels = ctx.cache().guild(guild_id).map(|g| g.channels.clone());
 
     for server_info in ctx.data().server_infos.server_infos.iter() {
         for qotd_channel_id in server_info.qotd_channel_ids.iter() {
