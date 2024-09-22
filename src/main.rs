@@ -124,6 +124,7 @@ async fn main() -> anyhow::Result<()> {
                 commands::fun::answer_anon::answer_anon(),
                 commands::utility::translate::translate(),
                 commands::fun::what_do_you_think::what_do_you_think(),
+                commands::utility::batch_translate::batch_translate(),
             ],
             on_error: |error| Box::pin(handle_error(error)),
             command_check: Some(check_command),

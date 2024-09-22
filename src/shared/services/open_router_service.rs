@@ -88,7 +88,7 @@ pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAICon
     Client::with_config(config)
 }
 
-pub async fn translate_with_deep_seek(
+pub async fn translate_with_model(
     data: &ContextData,
     attachment: &Attachment,
     model: LanguageModel,
@@ -100,7 +100,7 @@ pub async fn translate_with_deep_seek(
     let system_prompt = TRANSLATION_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement);
 
     let model_str = match model {
-        LanguageModel::DeepSeekV2 => DEEP_SEEK_MODEL,
+        LanguageModel::DeepSeekV25 => DEEP_SEEK_MODEL,
         LanguageModel::Gpt4o => GPT_4O_20240806_MODEL,
         LanguageModel::MistralLarge => MISTRAL_LARGE_MODEL,
         LanguageModel::Qwen2572BInstruct => QWEN_25_72B_INSTRUCT_MODEL,
