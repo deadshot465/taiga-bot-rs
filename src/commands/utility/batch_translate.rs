@@ -16,10 +16,10 @@ pub async fn batch_translate(
 
     for model in LanguageModel::all().iter() {
         let result = translate_with_model(ctx.data(), &file, *model).await?;
-        results.push(format!("{}:\n{}", model.to_string(), result));
+        results.push(format!("{}:\n{}", model, result));
     }
 
-    let response = results.join("\n\n");
+    let response = results.join("\n--------------------\n");
     ctx.send(
         CreateReply::default()
             .attachment(CreateAttachment::bytes(response.as_bytes(), "result.txt")),
