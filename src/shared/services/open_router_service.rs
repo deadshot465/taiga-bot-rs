@@ -89,13 +89,13 @@ pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAICon
 }
 
 pub async fn translate_with_model(
-    data: &ContextData,
-    attachment: &Attachment,
+    instructions: String,
+    open_router_client: Client<OpenAIConfig>,
+    attachment: Attachment,
     model: LanguageModel,
 ) -> anyhow::Result<String> {
     let raw_bytes = attachment.download().await?;
     let text = String::from_utf8(raw_bytes)?;
-    let instructions = data.translation_instructions.clone();
     let replacement = format!("\n{}", instructions);
     let system_prompt = TRANSLATION_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement);
 
@@ -130,7 +130,7 @@ pub async fn translate_with_model(
         .messages(messages)
         .build()?;
 
-    match data.open_router_client.chat().create(request).await {
+    match open_router_client.chat().create(request).await {
         Ok(response) => response.choices[0]
             .message
             .content

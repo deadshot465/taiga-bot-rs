@@ -4,10 +4,10 @@ use time::OffsetDateTime;
 
 use crate::shared::constants::{IMAGE_TYPES, KOU_SERVER_ID};
 use crate::shared::structs::authentication::login;
-use crate::shared::structs::ContextData;
 use crate::shared::structs::record::message::{
     GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
 };
+use crate::shared::structs::ContextData;
 
 pub async fn record_message(
     ctx: &Context,

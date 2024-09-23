@@ -32,8 +32,10 @@ pub async fn translate(
         .await?;
 
     let model = model.unwrap_or(LanguageModel::DeepSeekV25);
+    let instructions = ctx.data().translation_instructions.clone();
+    let client = ctx.data().open_router_client.clone();
 
-    let result = translate_with_model(ctx.data(), &file, model).await?;
+    let result = translate_with_model(instructions, client, file, model).await?;
 
     reply_handle
         .edit(ctx, CreateReply::default().content(result))
