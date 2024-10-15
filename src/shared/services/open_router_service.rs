@@ -17,6 +17,7 @@ const GPT_4O_20240806_MODEL: &str = "openai/gpt-4o-2024-08-06";
 const MISTRAL_LARGE_MODEL: &str = "mistralai/mistral-large";
 const QWEN_25_72B_INSTRUCT_MODEL: &str = "qwen/qwen-2.5-72b-instruct";
 const COHERE_COMMAND_R_PLUS_082024: &str = "cohere/command-r-plus-08-2024";
+const GROK2_MODEL: &str = "x-ai/grok-2";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
@@ -107,6 +108,7 @@ pub async fn translate_with_model(
         LanguageModel::MistralLarge => MISTRAL_LARGE_MODEL,
         LanguageModel::Qwen2572BInstruct => QWEN_25_72B_INSTRUCT_MODEL,
         LanguageModel::CohereCommandRPlus082024 => COHERE_COMMAND_R_PLUS_082024,
+        LanguageModel::Grok2 => GROK2_MODEL,
     };
 
     let messages = vec![

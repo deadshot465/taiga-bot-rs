@@ -17,6 +17,8 @@ pub enum LanguageModel {
     Qwen2572BInstruct,
     #[name = "Cohere Command R+ (08-2024)"]
     CohereCommandRPlus082024,
+    #[name = "Grok 2"]
+    Grok2,
 }
 
 /// Translate English to traditional Chinese. This is designed for Tetsu's Forged in Starlight.
@@ -52,6 +54,7 @@ impl LanguageModel {
             LanguageModel::MistralLarge,
             LanguageModel::Qwen2572BInstruct,
             LanguageModel::CohereCommandRPlus082024,
+            LanguageModel::Grok2
         ]
     }
 }
@@ -70,6 +73,7 @@ impl From<LanguageModel> for String {
             LanguageModel::MistralLarge => "Mistral Large".into(),
             LanguageModel::Qwen2572BInstruct => "Qwen 2.5 72B Instruct".into(),
             LanguageModel::CohereCommandRPlus082024 => "Cohere Command R+ (08-2024)".into(),
+            LanguageModel::Grok2 => "Grok 2".into()
         }
     }
 }
