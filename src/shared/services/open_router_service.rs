@@ -5,9 +5,10 @@ use crate::shared::utility::build_author_name_map;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestDeveloperMessage, ChatCompletionRequestDeveloperMessageContent,
-    ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
-    ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessage,
-    ChatCompletionRequestUserMessageContent, CreateChatCompletionRequestArgs, ReasoningEffort,
+    ChatCompletionRequestMessage, ChatCompletionRequestProvider,
+    ChatCompletionRequestSystemMessage, ChatCompletionRequestSystemMessageContent,
+    ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
+    CreateChatCompletionRequestArgs, ReasoningEffort,
 };
 use async_openai::Client;
 use serenity::all::{Attachment, GetMessages, Message};
@@ -22,8 +23,8 @@ const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
 const GROK2_1212_MODEL: &str = "x-ai/grok-2-1212";
 const GEMINI_FLASH_2_EXP_MODEL: &str = "google/gemini-2.0-flash-exp:free";
 const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
-const O3_MINI_MODEL: &str = "openai/o3-mini";
-const O1_MODEL: &str = "openai/o1";
+const O3_MINI_MODEL: &str = "o3-mini";
+const O1_MODEL: &str = "o1";
 const PHI_4_MODEL: &str = "microsoft/phi-4";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
 const TEMPERATURE: f32 = 1.0;
@@ -165,6 +166,9 @@ pub async fn translate_with_model(
     request
         .model(model_str)
         .temperature(TEMPERATURE)
+        .provider(ChatCompletionRequestProvider {
+            order: vec!["DeepSeek".into()],
+        })
         .messages(messages);
 
     let request = match model {
