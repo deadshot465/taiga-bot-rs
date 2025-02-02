@@ -170,12 +170,13 @@ pub async fn translate_with_model(
         m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
             request.reasoning_effort(ReasoningEffort::High).build()?
         }
-        _ => request
+        m if m == LanguageModel::DeepSeekV3 || m == LanguageModel::DeepSeekR1 => request
             .provider(ChatCompletionRequestProvider {
                 order: vec!["DeepSeek".into()],
                 allow_fallbacks: false,
             })
             .build()?,
+        _ => request.build()?,
     };
 
     let result = match model {
