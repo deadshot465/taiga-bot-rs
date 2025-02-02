@@ -279,7 +279,7 @@ async fn progress_game(
         .collect::<HashMap<_, _>>();
     if let Context::Application(app_context) = ctx {
         let quiz_questions = {
-            let mut rng = thread_rng();
+            let mut rng = rand::rng();
             ctx.data()
                 .quiz_questions
                 .choose_multiple(&mut rng, max_rounds as usize)
@@ -396,7 +396,7 @@ async fn build_multiple_choice_question(
     let mut shuffled_answers = wrong_answers.to_vec();
     shuffled_answers.push(answer.into());
     {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         shuffled_answers.shuffle(&mut rng);
     }
 
@@ -542,7 +542,7 @@ async fn finalize(
 }
 
 fn get_random_response(is_kou: bool) -> &'static str {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     if is_kou {
         KOU_RESPONSES.choose(&mut rng).cloned().unwrap_or_default()
     } else {

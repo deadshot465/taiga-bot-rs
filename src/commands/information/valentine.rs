@@ -14,7 +14,7 @@ use crate::shared::utility::{
 #[poise::command(slash_command, category = "Information")]
 pub async fn valentine(ctx: Context<'_>) -> Result<(), ContextError> {
     let valentine = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         ctx.data()
             .valentines
             .choose(&mut rng)

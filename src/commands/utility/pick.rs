@@ -92,7 +92,7 @@ fn sanitize_options(raw_string: &str) -> Vec<&str> {
 }
 
 fn single_pick<'a>(choices: &'a [&str]) -> &'a str {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     choices.choose(&mut rng).copied().unwrap_or_default()
 }
 
@@ -103,7 +103,7 @@ fn multiple_pick(choices: Vec<String>, times: u64) -> (String, HashMap<String, u
         .collect::<HashMap<_, _>>();
 
     {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         for _ in 0..times {
             if let Some(opt) = choices.choose(&mut rng) {
                 let entry = result_map

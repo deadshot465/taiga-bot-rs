@@ -64,7 +64,7 @@ pub async fn hangman(ctx: Context<'_>) -> Result<(), ContextError> {
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     let answer = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         HANGMAN_QUESTIONS
             .choose(&mut rng)
             .map(|s| s.as_str())

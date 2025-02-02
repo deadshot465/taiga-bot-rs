@@ -46,7 +46,7 @@ pub fn get_random_message(random_response: &RandomResponse, keyword: &str) -> St
         .iter()
         .find(|m| m.keyword.as_str() == keyword)
         .and_then(|res| {
-            let mut rng = thread_rng();
+            let mut rng = rand::rng();
             res.messages.choose(&mut rng)
         })
         .cloned()
@@ -61,7 +61,7 @@ pub fn get_random_reaction(random_response: &RandomResponse, keyword: &str) -> S
         .iter()
         .find(|m| m.keyword.as_str() == keyword)
         .and_then(|res| {
-            let mut rng = thread_rng();
+            let mut rng = rand::rng();
             res.reactions.choose(&mut rng)
         })
         .cloned()
@@ -70,7 +70,7 @@ pub fn get_random_reaction(random_response: &RandomResponse, keyword: &str) -> S
 
 pub fn get_shuffled_keywords(random_response: &RandomResponse) -> Vec<String> {
     let mut keywords = random_response.keywords.to_vec();
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     keywords.shuffle(&mut rng);
     keywords
 }

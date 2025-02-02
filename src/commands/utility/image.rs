@@ -90,7 +90,7 @@ pub async fn cat(
 
     let keyword = keyword.unwrap_or_default();
 
-    let result = if thread_rng().gen_range(0..2) > 0 {
+    let result = if rand::rng().random_range(0..2) > 0 {
         // Invoke the Cat API
         get_cat_image(
             ctx,
@@ -161,7 +161,7 @@ pub async fn dog(
 
     let keyword = keyword.unwrap_or_default();
 
-    let result = if thread_rng().gen_range(0..2) > 0 {
+    let result = if rand::rng().random_range(0..2) > 0 {
         // Invoke the Dog API
         get_dog_image(
             &keyword,

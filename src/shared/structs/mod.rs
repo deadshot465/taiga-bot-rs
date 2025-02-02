@@ -51,7 +51,8 @@ pub struct ContextData {
     pub smite: Smite,
     pub openai_client: async_openai::Client<OpenAIConfig>,
     pub random_response: RandomResponse,
-    pub translation_instructions: String,
+    pub forged_in_starlight_instructions: String,
+    pub chronosplit_instructions: String,
     pub open_router_client: async_openai::Client<OpenAIConfig>,
 }
 

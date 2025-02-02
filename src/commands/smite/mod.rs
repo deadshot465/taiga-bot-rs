@@ -27,7 +27,7 @@ pub async fn smite(
                 .is_ok()
             {
                 let gif_link = {
-                    let mut rng = thread_rng();
+                    let mut rng = rand::rng();
                     ctx.data()
                         .smite
                         .smite_gif_links

@@ -12,7 +12,7 @@ pub async fn greet(
 ) -> anyhow::Result<()> {
     let guild_channels = &guild.channels;
     let greeting_message = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         data.common_settings
             .greetings
             .choose(&mut rng)

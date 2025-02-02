@@ -14,7 +14,7 @@ const THUMBNAIL_URL: &str = "https://cdn.discordapp.com/emojis/70191802616499404
 #[poise::command(slash_command, category = "Information")]
 pub async fn oracle(ctx: Context<'_>) -> Result<(), ContextError> {
     let oracle = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         ctx.data()
             .oracles
             .choose(&mut rng)

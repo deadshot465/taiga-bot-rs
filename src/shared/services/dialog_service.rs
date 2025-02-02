@@ -135,7 +135,7 @@ pub async fn validate_dialog(
     if let Some(backgrounds) = dialog_options.get("backgrounds") {
         if !backgrounds.contains(background) {
             *background = {
-                let mut rng = thread_rng();
+                let mut rng = rand::rng();
                 backgrounds.choose(&mut rng).cloned().unwrap_or_default()
             }
         }

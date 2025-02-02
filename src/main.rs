@@ -66,7 +66,8 @@ async fn main() -> anyhow::Result<()> {
         smite: initialize_smite()?,
         openai_client,
         random_response: initialize_random_response()?,
-        translation_instructions: load_translation_instruction()?,
+        forged_in_starlight_instructions: load_forged_in_starlight_instructions()?,
+        chronosplit_instructions: load_chronosplit_instructions()?,
         open_router_client,
     };
 
@@ -262,13 +263,28 @@ async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
         || channel_control.enabled_channels.contains(&channel_id.get()))
 }
 
-fn load_translation_instruction() -> anyhow::Result<String> {
-    if !std::path::Path::new(CONFIG_DIRECTORY).exists() {
-        std::fs::create_dir(CONFIG_DIRECTORY)?
+fn load_forged_in_starlight_instructions() -> anyhow::Result<String> {
+    let instructions_path = format!("{}/instructions", CONFIG_DIRECTORY);
+    if !std::path::Path::new(&instructions_path).exists() {
+        std::fs::create_dir_all(&instructions_path)?
     }
 
-    let translation_instructions_path =
-        String::from(CONFIG_DIRECTORY) + "/translation_instructions.txt";
+    let translation_instructions_path = instructions_path + "/forged_in_starlight.txt";
+    if !std::path::Path::new(&translation_instructions_path).exists() {
+        Ok("".to_string())
+    } else {
+        let instructions = std::fs::read_to_string(translation_instructions_path)?;
+        Ok(instructions)
+    }
+}
+
+fn load_chronosplit_instructions() -> anyhow::Result<String> {
+    let instructions_path = format!("{}/instructions", CONFIG_DIRECTORY);
+    if !std::path::Path::new(&instructions_path).exists() {
+        std::fs::create_dir_all(&instructions_path)?
+    }
+
+    let translation_instructions_path = instructions_path + "/chronosplit.txt";
     if !std::path::Path::new(&translation_instructions_path).exists() {
         Ok("".to_string())
     } else {

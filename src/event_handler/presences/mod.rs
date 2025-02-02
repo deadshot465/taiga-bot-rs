@@ -15,7 +15,7 @@ pub async fn set_initial_presence(ctx: &Context, data: &ContextData) {
 
 async fn set_activity(ctx: &Context, activities: &[String]) {
     let activity = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         activities.choose(&mut rng)
     };
 

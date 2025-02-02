@@ -61,5 +61,5 @@ pub async fn handle_event(
 }
 
 pub fn hit_or_miss(probability: i32) -> bool {
-    thread_rng().gen_range(0..100) < probability
+    rand::rng().random_range(0..100) < probability
 }

@@ -94,7 +94,7 @@ pub async fn get_normal_image(
 
     // Limit to the first 25% of pages and get a random page number from it.
     let upper_page_limit = ((total_pages as f32) * 0.25_f32).ceil();
-    let random_page_number = thread_rng().gen_range(0_u32..(upper_page_limit as u32) + 1_u32);
+    let random_page_number = rand::rng().random_range(0_u32..(upper_page_limit as u32) + 1_u32);
 
     // Get image data of a specific page and get a specific image from that page.
     let response = client
@@ -107,11 +107,11 @@ pub async fn get_normal_image(
     let search_result: SearchResult = response.json().await?;
     let modulo = search_result.total % ITEM_PER_PAGE;
     let item_no = {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         if random_page_number == total_pages || random_page_number <= 1 {
-            rng.gen_range(0..modulo as usize)
+            rng.random_range(0..modulo as usize)
         } else {
-            rng.gen_range(0..ITEM_PER_PAGE as usize)
+            rng.random_range(0..ITEM_PER_PAGE as usize)
         }
     };
 

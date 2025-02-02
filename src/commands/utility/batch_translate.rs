@@ -1,4 +1,4 @@
-use crate::commands::utility::translate::LanguageModel;
+use crate::commands::utility::translate::{LanguageModel, Novel};
 use crate::shared::services::open_router_service::translate_with_model;
 use crate::shared::structs::{Context, ContextError};
 use poise::CreateReply;
@@ -9,18 +9,40 @@ use tokio::task::JoinSet;
 #[poise::command(slash_command, category = "Utility")]
 pub async fn batch_translate(
     ctx: Context<'_>,
+    #[description = "The novel's title to translate."] novel: Novel,
     #[description = "The document to translate to traditional Chinese."] file: Attachment,
+    #[description = "Whether to translate with o1 (High) as well. Default to false."]
+    with_o1: Option<bool>,
 ) -> Result<(), ContextError> {
     ctx.defer().await?;
 
     let mut join_set = JoinSet::new();
+    let with_o1 = with_o1.unwrap_or(false);
 
-    for model in LanguageModel::all().into_iter() {
-        let instructions = ctx.data().translation_instructions.clone();
-        let client = ctx.data().open_router_client.clone();
+    let models = if with_o1 {
+        LanguageModel::all()
+    } else {
+        LanguageModel::all_except_o1()
+    };
+
+    for model in models.into_iter() {
+        let instructions = match novel {
+            Novel::ForgedInStarlight => ctx.data().forged_in_starlight_instructions.clone(),
+            Novel::Chronosplit => ctx.data().chronosplit_instructions.clone(),
+        };
+        let openai_client = ctx.data().openai_client.clone();
+        let open_router_client = ctx.data().open_router_client.clone();
         let attachment = file.clone();
         join_set.spawn(async move {
-            let result = translate_with_model(instructions, client, attachment, model).await;
+            let result = translate_with_model(
+                novel,
+                instructions,
+                openai_client,
+                open_router_client,
+                attachment,
+                model,
+            )
+            .await;
             match result {
                 Ok(s) => {
                     format!("{}:\n{}", model, s)

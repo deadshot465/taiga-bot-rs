@@ -43,7 +43,7 @@ pub async fn route(ctx: Context<'_>) -> Result<(), ContextError> {
     let ending = if route.name.contains("Mature") || route.name.contains("Kou") {
         "Perfect"
     } else {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         ENDINGS
             .choose(&mut rng)
             .expect("Failed to choose an ending.")
@@ -67,14 +67,14 @@ pub async fn route(ctx: Context<'_>) -> Result<(), ContextError> {
                 .footer(CreateEmbedFooter::new(footer))
                 .description(&route.description)
                 .thumbnail(if route.name.contains("Mature") {
-                    let mut rng = thread_rng();
+                    let mut rng = rand::rng();
                     let emote_id = MATURE_HIRO_EMOTE_IDS
                         .choose(&mut rng)
                         .cloned()
                         .expect("Failed to get an emote ID for mature Hiro.");
                     get_animated_emote_url(emote_id)
                 } else if route.name.contains("Kou") {
-                    let mut rng = thread_rng();
+                    let mut rng = rand::rng();
                     KOU_GIFS
                         .choose(&mut rng)
                         .expect("Failed to get an emote ID for Kou")
@@ -107,8 +107,8 @@ pub async fn route(ctx: Context<'_>) -> Result<(), ContextError> {
 }
 
 fn get_route(routes: &[Character]) -> Character {
-    let mut rng = thread_rng();
-    let random_numbers = rng.gen_range(0..100);
+    let mut rng = rand::rng();
+    let random_numbers = rng.random_range(0..100);
     match random_numbers {
         x if (0..=14).contains(&x) => routes[0].clone(),
         x if (15..=19).contains(&x) => routes[1].clone(),

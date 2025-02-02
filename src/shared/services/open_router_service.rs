@@ -1,28 +1,43 @@
-use crate::commands::utility::translate::LanguageModel;
+use crate::commands::utility::translate::{LanguageModel, Novel};
 use crate::shared::structs::config::configuration::Configuration;
 use crate::shared::structs::ContextData;
 use crate::shared::utility::build_author_name_map;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
+    ChatCompletionRequestDeveloperMessage, ChatCompletionRequestDeveloperMessageContent,
     ChatCompletionRequestMessage, ChatCompletionRequestSystemMessage,
     ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessage,
-    ChatCompletionRequestUserMessageContent, CreateChatCompletionRequestArgs,
+    ChatCompletionRequestUserMessageContent, CreateChatCompletionRequestArgs, ReasoningEffort,
 };
 use async_openai::Client;
 use serenity::all::{Attachment, GetMessages, Message};
 use serenity::client::Context;
 
 const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat";
-const GPT_4O_20240806_MODEL: &str = "openai/gpt-4o-2024-08-06";
-const MISTRAL_LARGE_MODEL: &str = "mistralai/mistral-large";
-const QWEN_25_72B_INSTRUCT_MODEL: &str = "qwen/qwen-2.5-72b-instruct";
-const COHERE_COMMAND_R_PLUS_082024: &str = "cohere/command-r-plus-08-2024";
-const GROK2_MODEL: &str = "x-ai/grok-2";
+const GPT_4O_20241120_MODEL: &str = "openai/gpt-4o-2024-11-20";
+const MISTRAL_LARGE_2411_MODEL: &str = "mistralai/mistral-large-2411";
+const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
+const COHERE_COMMAND_R_PLUS_082024_MODEL: &str = "cohere/command-r-plus-08-2024";
+const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
+const GROK2_1212_MODEL: &str = "x-ai/grok-2-1212";
+const GEMINI_FLASH_2_EXP_MODEL: &str = "google/gemini-2.0-flash-exp:free";
+const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
+const O3_MINI_MODEL: &str = "openai/o3-mini";
+const O1_MODEL: &str = "openai/o1";
+const PHI_4_MODEL: &str = "microsoft/phi-4";
+const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
-const TRANSLATION_SYSTEM_PROMPT: &str =
+const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str =
     "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
+    你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
+    你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
+    \
+    在翻譯時，請務必記得以下指示：{INSTRUCTION}";
+
+const CHRONOSPLIT_SYSTEM_PROMPT: &str =
+    "你是一位獲獎無數的中文都市奇幻與科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
     你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
     \
@@ -92,7 +107,9 @@ pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAICon
 }
 
 pub async fn translate_with_model(
+    novel: Novel,
     instructions: String,
+    openai_client: Client<OpenAIConfig>,
     open_router_client: Client<OpenAIConfig>,
     attachment: Attachment,
     model: LanguageModel,
@@ -100,41 +117,71 @@ pub async fn translate_with_model(
     let raw_bytes = attachment.download().await?;
     let text = String::from_utf8(raw_bytes)?;
     let replacement = format!("\n{}", instructions);
-    let system_prompt = TRANSLATION_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement);
-
-    let model_str = match model {
-        LanguageModel::DeepSeekV25 => DEEP_SEEK_MODEL,
-        LanguageModel::Gpt4o => GPT_4O_20240806_MODEL,
-        LanguageModel::MistralLarge => MISTRAL_LARGE_MODEL,
-        LanguageModel::Qwen2572BInstruct => QWEN_25_72B_INSTRUCT_MODEL,
-        LanguageModel::CohereCommandRPlus082024 => COHERE_COMMAND_R_PLUS_082024,
-        LanguageModel::Grok2 => GROK2_MODEL,
+    let system_prompt = match novel {
+        Novel::ForgedInStarlight => {
+            FORGED_IN_STARLIGHT_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement)
+        }
+        Novel::Chronosplit => CHRONOSPLIT_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement),
     };
 
-    let messages = vec![
-        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
+    let model_str = match model {
+        LanguageModel::DeepSeekV3 => DEEP_SEEK_MODEL,
+        LanguageModel::Gpt4o => GPT_4O_20241120_MODEL,
+        LanguageModel::MistralLarge => MISTRAL_LARGE_2411_MODEL,
+        LanguageModel::QwenMax => QWEN_MAX_MODEL,
+        LanguageModel::CohereCommandRPlus082024 => COHERE_COMMAND_R_PLUS_082024_MODEL,
+        LanguageModel::Grok2 => GROK2_1212_MODEL,
+        LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
+        LanguageModel::GeminiFlash2Experimental => GEMINI_FLASH_2_EXP_MODEL,
+        LanguageModel::MiniMax01 => MINIMAX_01_MODEL,
+        LanguageModel::O3MiniHigh => O3_MINI_MODEL,
+        LanguageModel::O1High => O1_MODEL,
+        LanguageModel::Phi4 => PHI_4_MODEL,
+        LanguageModel::NovaPro => NOVA_PRO_MODEL,
+    };
+
+    let system_prompt = match model {
+        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+            ChatCompletionRequestMessage::Developer(ChatCompletionRequestDeveloperMessage {
+                content: ChatCompletionRequestDeveloperMessageContent::Text(system_prompt),
+                name: None,
+            })
+        }
+        _ => ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
             content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
             name: None,
         }),
+    };
+
+    let messages = vec![
+        system_prompt,
         ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
             content: ChatCompletionRequestUserMessageContent::Text(text),
             name: None,
         }),
     ];
 
-    let temperature = if model == LanguageModel::Qwen2572BInstruct {
-        0.7
-    } else {
-        TEMPERATURE
+    let mut request = CreateChatCompletionRequestArgs::default();
+    request
+        .model(model_str)
+        .temperature(TEMPERATURE)
+        .messages(messages);
+
+    let request = match model {
+        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+            request.reasoning_effort(ReasoningEffort::High).build()?
+        }
+        _ => request.build()?,
     };
 
-    let request = CreateChatCompletionRequestArgs::default()
-        .model(model_str)
-        .temperature(temperature)
-        .messages(messages)
-        .build()?;
+    let result = match model {
+        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+            openai_client.chat().create(request).await
+        }
+        _ => open_router_client.chat().create(request).await,
+    };
 
-    match open_router_client.chat().create(request).await {
+    match result {
         Ok(response) => response.choices[0]
             .message
             .content
@@ -169,7 +216,7 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
     ];
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_MODEL)
+        .model(MISTRAL_LARGE_2411_MODEL)
         .messages(messages)
         .temperature(TEMPERATURE)
         .build()?;
@@ -197,7 +244,7 @@ pub async fn categorize_question(data: &ContextData, message: String) -> anyhow:
     ];
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_MODEL)
+        .model(MISTRAL_LARGE_2411_MODEL)
         .temperature(TEMPERATURE)
         .messages(messages)
         .build()?;
@@ -283,7 +330,7 @@ pub async fn build_reply_to_message_chain(
 
     let request = CreateChatCompletionRequestArgs::default()
         .temperature(TEMPERATURE)
-        .model(MISTRAL_LARGE_MODEL)
+        .model(MISTRAL_LARGE_2411_MODEL)
         .messages(messages)
         .build()?;
 
@@ -339,7 +386,7 @@ async fn do_opine_conversation(
     ];
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_MODEL)
+        .model(MISTRAL_LARGE_2411_MODEL)
         .temperature(TEMPERATURE)
         .messages(messages)
         .build()?;

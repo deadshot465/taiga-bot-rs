@@ -57,7 +57,7 @@ pub async fn handle_responses(
                 .await
                 .unwrap_or_default()
         } else {
-            let mut rng = thread_rng();
+            let mut rng = rand::rng();
             data.common_settings
                 .common_responses
                 .choose(&mut rng)
