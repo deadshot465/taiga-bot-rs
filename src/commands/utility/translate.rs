@@ -29,8 +29,6 @@ pub enum LanguageModel {
     O3MiniHigh,
     #[name = "o1 (High)"]
     O1High,
-    #[name = "Microsoft Phi 4"]
-    Phi4,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
 }
@@ -94,7 +92,6 @@ impl LanguageModel {
             LanguageModel::MiniMax01,
             LanguageModel::O3MiniHigh,
             LanguageModel::O1High,
-            LanguageModel::Phi4,
             LanguageModel::NovaPro,
         ]
     }
@@ -127,7 +124,6 @@ impl From<LanguageModel> for String {
             LanguageModel::MiniMax01 => "MiniMax-01".into(),
             LanguageModel::O3MiniHigh => "o3-mini (High)".into(),
             LanguageModel::O1High => "o1 (High)".into(),
-            LanguageModel::Phi4 => "Microsoft Phi 4".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
         }
     }

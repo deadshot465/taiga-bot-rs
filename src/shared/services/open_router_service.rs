@@ -25,7 +25,6 @@ const GEMINI_FLASH_2_EXP_MODEL: &str = "google/gemini-2.0-flash-exp:free";
 const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
 const O3_MINI_MODEL: &str = "o3-mini";
 const O1_MODEL: &str = "o1";
-const PHI_4_MODEL: &str = "microsoft/phi-4";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
@@ -137,7 +136,6 @@ pub async fn translate_with_model(
         LanguageModel::MiniMax01 => MINIMAX_01_MODEL,
         LanguageModel::O3MiniHigh => O3_MINI_MODEL,
         LanguageModel::O1High => O1_MODEL,
-        LanguageModel::Phi4 => PHI_4_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
     };
 
@@ -166,16 +164,18 @@ pub async fn translate_with_model(
     request
         .model(model_str)
         .temperature(TEMPERATURE)
-        .provider(ChatCompletionRequestProvider {
-            order: vec!["DeepSeek".into()],
-        })
         .messages(messages);
 
     let request = match model {
         m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
             request.reasoning_effort(ReasoningEffort::High).build()?
         }
-        _ => request.build()?,
+        _ => request
+            .provider(ChatCompletionRequestProvider {
+                order: vec!["DeepSeek".into()],
+                allow_fallbacks: false,
+            })
+            .build()?,
     };
 
     let result = match model {
