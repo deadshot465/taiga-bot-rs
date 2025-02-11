@@ -21,11 +21,12 @@ const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
 const COHERE_COMMAND_R_PLUS_082024_MODEL: &str = "cohere/command-r-plus-08-2024";
 const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
 const GROK2_1212_MODEL: &str = "x-ai/grok-2-1212";
-const GEMINI_FLASH_2_EXP_MODEL: &str = "google/gemini-2.0-flash-exp:free";
+const GEMINI_2_FLASH_MODEL: &str = "google/gemini-2.0-flash-001";
 const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
 const O3_MINI_MODEL: &str = "o3-mini";
 const O1_MODEL: &str = "o1";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
+const GEMINI_PRO_2_EXP_MODEL: &str = "google/gemini-2.0-pro-exp-02-05:free";
 const TEMPERATURE: f32 = 1.0;
 const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
@@ -132,11 +133,12 @@ pub async fn translate_with_model(
         LanguageModel::CohereCommandRPlus082024 => COHERE_COMMAND_R_PLUS_082024_MODEL,
         LanguageModel::Grok2 => GROK2_1212_MODEL,
         LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
-        LanguageModel::GeminiFlash2Experimental => GEMINI_FLASH_2_EXP_MODEL,
+        LanguageModel::Gemini2Flash => GEMINI_2_FLASH_MODEL,
         LanguageModel::MiniMax01 => MINIMAX_01_MODEL,
         LanguageModel::O3MiniHigh => O3_MINI_MODEL,
         LanguageModel::O1High => O1_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
+        LanguageModel::Gemini2ProExperimental => GEMINI_PRO_2_EXP_MODEL,
     };
 
     let system_prompt = match model {

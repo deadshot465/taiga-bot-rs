@@ -21,8 +21,8 @@ pub enum LanguageModel {
     Grok2,
     #[name = "DeepSeek R1"]
     DeepSeekR1,
-    #[name = "Gemini Flash 2.0 Experimental"]
-    GeminiFlash2Experimental,
+    #[name = "Gemini 2.0 Flash"]
+    Gemini2Flash,
     #[name = "MiniMax-01"]
     MiniMax01,
     #[name = "o3-mini (High)"]
@@ -31,6 +31,8 @@ pub enum LanguageModel {
     O1High,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
+    #[name = "Gemini Pro 2.0 Experimental"]
+    Gemini2ProExperimental,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
@@ -88,11 +90,12 @@ impl LanguageModel {
             LanguageModel::CohereCommandRPlus082024,
             LanguageModel::Grok2,
             LanguageModel::DeepSeekR1,
-            LanguageModel::GeminiFlash2Experimental,
+            LanguageModel::Gemini2Flash,
             LanguageModel::MiniMax01,
             LanguageModel::O3MiniHigh,
             LanguageModel::O1High,
             LanguageModel::NovaPro,
+            LanguageModel::Gemini2ProExperimental,
         ]
     }
 
@@ -120,11 +123,12 @@ impl From<LanguageModel> for String {
             LanguageModel::CohereCommandRPlus082024 => "Cohere Command R+ (08-2024)".into(),
             LanguageModel::Grok2 => "Grok 2 (1212)".into(),
             LanguageModel::DeepSeekR1 => "DeepSeek R1".into(),
-            LanguageModel::GeminiFlash2Experimental => "Gemini Flash 2.0 Experimental".into(),
+            LanguageModel::Gemini2Flash => "Gemini 2.0 Flash".into(),
             LanguageModel::MiniMax01 => "MiniMax-01".into(),
             LanguageModel::O3MiniHigh => "o3-mini (High)".into(),
             LanguageModel::O1High => "o1 (High)".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
+            LanguageModel::Gemini2ProExperimental => "Gemini Pro 2.0 Experimental".into(),
         }
     }
 }
