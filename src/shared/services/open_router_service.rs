@@ -1,6 +1,5 @@
 use crate::commands::utility::translate::{LanguageModel, Novel};
-use crate::shared::structs::config::configuration::Configuration;
-use crate::shared::structs::ContextData;
+use crate::shared::structs::{ContextData, OpenAICompatibleClients};
 use crate::shared::utility::build_author_name_map;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
@@ -13,6 +12,7 @@ use async_openai::types::{
 use async_openai::Client;
 use serenity::all::{Attachment, GetMessages, Message};
 use serenity::client::Context;
+use std::sync::Arc;
 
 const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat";
 const GPT_4O_20241120_MODEL: &str = "openai/gpt-4o-2024-11-20";
@@ -27,8 +27,10 @@ const O3_MINI_MODEL: &str = "o3-mini";
 const O1_MODEL: &str = "o1";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
 const GEMINI_PRO_2_EXP_MODEL: &str = "google/gemini-2.0-pro-exp-02-05:free";
+const DOUBAO_15_PRO_256K_MODEL: &str = "ep-20250218185054-vnnbk";
+const KIMI_LATEST_MODEL: &str = "kimi-latest";
+const STEP_2_16K_MODEL: &str = "step-2-16k";
 const TEMPERATURE: f32 = 1.0;
-const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 
 const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str =
     "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
@@ -99,10 +101,10 @@ const ADDITIONAL_INSTRUCTION: &str = "Whenever you receive a prompt, follow the 
 
 const MOST_RECENT_MESSAGE_COUNT: u8 = 50;
 
-pub fn initialize_open_router_client(config: &Configuration) -> Client<OpenAIConfig> {
+pub fn initialize_openai_compatible_client(base_url: &str, api_key: &str) -> Client<OpenAIConfig> {
     let config = OpenAIConfig::new()
-        .with_api_base(OPEN_ROUTER_BASE_URL)
-        .with_api_key(config.open_router_api_key.clone());
+        .with_api_base(base_url)
+        .with_api_key(api_key);
 
     Client::with_config(config)
 }
@@ -111,7 +113,7 @@ pub async fn translate_with_model(
     novel: Novel,
     instructions: String,
     openai_client: Client<OpenAIConfig>,
-    open_router_client: Client<OpenAIConfig>,
+    openai_compatible_clients: Arc<OpenAICompatibleClients>,
     attachment: Attachment,
     model: LanguageModel,
 ) -> anyhow::Result<String> {
@@ -139,6 +141,9 @@ pub async fn translate_with_model(
         LanguageModel::O1High => O1_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
         LanguageModel::Gemini2ProExperimental => GEMINI_PRO_2_EXP_MODEL,
+        LanguageModel::Doubao15Pro256k => DOUBAO_15_PRO_256K_MODEL,
+        LanguageModel::KimiLatest => KIMI_LATEST_MODEL,
+        LanguageModel::Step16k => STEP_2_16K_MODEL,
     };
 
     let system_prompt = match model {
@@ -185,7 +190,34 @@ pub async fn translate_with_model(
         m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
             openai_client.chat().create(request).await
         }
-        _ => open_router_client.chat().create(request).await,
+        LanguageModel::Doubao15Pro256k => {
+            openai_compatible_clients
+                .volc_engine_client
+                .chat()
+                .create(request)
+                .await
+        }
+        LanguageModel::KimiLatest => {
+            openai_compatible_clients
+                .moonshot_client
+                .chat()
+                .create(request)
+                .await
+        }
+        LanguageModel::Step16k => {
+            openai_compatible_clients
+                .step_client
+                .chat()
+                .create(request)
+                .await
+        }
+        _ => {
+            openai_compatible_clients
+                .open_router_client
+                .chat()
+                .create(request)
+                .await
+        }
     };
 
     match result {
@@ -228,7 +260,13 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
         .temperature(TEMPERATURE)
         .build()?;
 
-    match data.open_router_client.chat().create(request).await {
+    match data
+        .openai_compatible_clients
+        .open_router_client
+        .chat()
+        .create(request)
+        .await
+    {
         Ok(response) => {
             response.choices[0].message.content.clone().ok_or_else(|| {
                 anyhow::anyhow!("Sorry, but I can't seem to answer to that question!")
@@ -256,7 +294,13 @@ pub async fn categorize_question(data: &ContextData, message: String) -> anyhow:
         .messages(messages)
         .build()?;
 
-    match data.open_router_client.chat().create(request).await {
+    match data
+        .openai_compatible_clients
+        .open_router_client
+        .chat()
+        .create(request)
+        .await
+    {
         Ok(response) => response.choices[0]
             .message
             .content
@@ -341,7 +385,13 @@ pub async fn build_reply_to_message_chain(
         .messages(messages)
         .build()?;
 
-    match data.open_router_client.chat().create(request).await {
+    match data
+        .openai_compatible_clients
+        .open_router_client
+        .chat()
+        .create(request)
+        .await
+    {
         Ok(response) => response.choices[0]
             .message
             .content
@@ -398,7 +448,13 @@ async fn do_opine_conversation(
         .messages(messages)
         .build()?;
 
-    match data.open_router_client.chat().create(request).await {
+    match data
+        .openai_compatible_clients
+        .open_router_client
+        .chat()
+        .create(request)
+        .await
+    {
         Ok(response) => response.choices[0]
             .message
             .content

@@ -29,6 +29,9 @@ pub struct Configuration {
     pub openai_reply_chance: i32,
     pub skip_user_ids: Vec<u64>,
     pub open_router_api_key: String,
+    pub volc_engine_api_key: String,
+    pub moonshot_api_key: String,
+    pub step_api_key: String,
 }
 
 impl Configuration {
@@ -57,6 +60,9 @@ impl Configuration {
             openai_reply_chance: 25,
             skip_user_ids: vec![],
             open_router_api_key: "".to_string(),
+            volc_engine_api_key: "".to_string(),
+            moonshot_api_key: "".to_string(),
+            step_api_key: "".to_string(),
         }
     }
 

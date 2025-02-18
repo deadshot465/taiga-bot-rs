@@ -31,14 +31,14 @@ pub async fn batch_translate(
             Novel::Chronosplit => ctx.data().chronosplit_instructions.clone(),
         };
         let openai_client = ctx.data().openai_client.clone();
-        let open_router_client = ctx.data().open_router_client.clone();
+        let openai_compatible_clients = ctx.data().openai_compatible_clients.clone();
         let attachment = file.clone();
         join_set.spawn(async move {
             let result = translate_with_model(
                 novel,
                 instructions,
                 openai_client,
-                open_router_client,
+                openai_compatible_clients,
                 attachment,
                 model,
             )

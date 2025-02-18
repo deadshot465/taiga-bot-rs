@@ -11,7 +11,6 @@ use shared::structs::record::*;
 
 use crate::event_handler::handle_event;
 use crate::shared::constants::CONFIG_DIRECTORY;
-use crate::shared::services::open_router_service::initialize_open_router_client;
 use crate::shared::services::openai_service::initialize_openai_client;
 use crate::shared::structs::authentication::Authentication;
 use crate::shared::structs::config::common_settings::initialize_common_settings;
@@ -25,7 +24,7 @@ use crate::shared::structs::information::character::{initialize_routes, initiali
 use crate::shared::structs::information::oracle::initialize_oracles;
 use crate::shared::structs::smite::initialize_smite;
 use crate::shared::structs::utility::convert::conversion_table::initialize_conversion_table;
-use crate::shared::structs::{Context, ContextData, ContextError};
+use crate::shared::structs::{Context, ContextData, ContextError, OpenAICompatibleClients};
 
 mod commands;
 mod event_handler;
@@ -44,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
     let config = configuration::initialize()?;
     let http_client = reqwest::Client::new();
     let openai_client = initialize_openai_client(&config);
-    let open_router_client = initialize_open_router_client(&config);
+    let openai_compatible_clients = OpenAICompatibleClients::new(&config);
 
     let context_data = ContextData {
         config,
@@ -68,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
         random_response: initialize_random_response()?,
         forged_in_starlight_instructions: load_forged_in_starlight_instructions()?,
         chronosplit_instructions: load_chronosplit_instructions()?,
-        open_router_client,
+        openai_compatible_clients: Arc::new(openai_compatible_clients),
     };
 
     if context_data.config.token.is_empty() {

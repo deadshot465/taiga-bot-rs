@@ -33,6 +33,12 @@ pub enum LanguageModel {
     NovaPro,
     #[name = "Gemini Pro 2.0 Experimental"]
     Gemini2ProExperimental,
+    #[name = "Doubao 1.5 Pro 256k"]
+    Doubao15Pro256k,
+    #[name = "Kimi Latest"]
+    KimiLatest,
+    #[name = "Step 2 16k"]
+    Step16k,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
@@ -61,13 +67,13 @@ pub async fn translate(
         Novel::Chronosplit => ctx.data().chronosplit_instructions.clone(),
     };
     let openai_client = ctx.data().openai_client.clone();
-    let open_router_client = ctx.data().open_router_client.clone();
+    let openai_compatible_clients = ctx.data().openai_compatible_clients.clone();
 
     let result = translate_with_model(
         novel,
         instructions,
         openai_client,
-        open_router_client,
+        openai_compatible_clients,
         file,
         model,
     )
@@ -96,6 +102,9 @@ impl LanguageModel {
             LanguageModel::O1High,
             LanguageModel::NovaPro,
             LanguageModel::Gemini2ProExperimental,
+            LanguageModel::Doubao15Pro256k,
+            LanguageModel::KimiLatest,
+            LanguageModel::Step16k,
         ]
     }
 
@@ -129,6 +138,9 @@ impl From<LanguageModel> for String {
             LanguageModel::O1High => "o1 (High)".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
             LanguageModel::Gemini2ProExperimental => "Gemini Pro 2.0 Experimental".into(),
+            LanguageModel::Doubao15Pro256k => "Doubao 1.5 Pro 256k".into(),
+            LanguageModel::KimiLatest => "Kimi Latest".into(),
+            LanguageModel::Step16k => "Step 2 16k".into(),
         }
     }
 }
