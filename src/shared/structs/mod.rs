@@ -34,6 +34,7 @@ const OPEN_ROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 const VOLC_ENGINE_BASE_URL: &str = "https://ark.cn-beijing.volces.com/api/v3";
 const MOONSHOT_BASE_URL: &str = "https://api.moonshot.cn/v1";
 const STEP_BASE_URL: &str = "https://api.stepfun.com/v1";
+const ZHIPU_BASE_URL: &str = "https://open.bigmodel.cn/api/paas/v4";
 
 #[derive(Debug, Clone)]
 pub struct ContextData {
@@ -67,6 +68,7 @@ pub struct OpenAICompatibleClients {
     pub volc_engine_client: async_openai::Client<OpenAIConfig>,
     pub moonshot_client: async_openai::Client<OpenAIConfig>,
     pub step_client: async_openai::Client<OpenAIConfig>,
+    pub zhipu_client: async_openai::Client<OpenAIConfig>,
 }
 
 pub type ContextError = Box<dyn std::error::Error + Send + Sync>;
@@ -88,6 +90,10 @@ impl OpenAICompatibleClients {
                 &config.moonshot_api_key,
             ),
             step_client: initialize_openai_compatible_client(STEP_BASE_URL, &config.step_api_key),
+            zhipu_client: initialize_openai_compatible_client(
+                ZHIPU_BASE_URL,
+                &config.zhipu_api_key,
+            ),
         }
     }
 }

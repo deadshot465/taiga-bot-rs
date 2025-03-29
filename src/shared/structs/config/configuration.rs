@@ -32,6 +32,7 @@ pub struct Configuration {
     pub volc_engine_api_key: String,
     pub moonshot_api_key: String,
     pub step_api_key: String,
+    pub zhipu_api_key: String,
 }
 
 impl Configuration {
@@ -63,6 +64,7 @@ impl Configuration {
             volc_engine_api_key: "".to_string(),
             moonshot_api_key: "".to_string(),
             step_api_key: "".to_string(),
+            zhipu_api_key: "".to_string(),
         }
     }
 

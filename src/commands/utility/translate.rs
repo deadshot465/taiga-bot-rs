@@ -7,7 +7,7 @@ use crate::shared::structs::{Context, ContextError};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
 pub enum LanguageModel {
-    #[name = "DeepSeek-v3"]
+    #[name = "DeepSeek-v3-0324"]
     DeepSeekV3,
     #[name = "GPT-4o (2024-11-20)"]
     Gpt4o,
@@ -15,8 +15,8 @@ pub enum LanguageModel {
     MistralLarge,
     #[name = "Qwen-Max"]
     QwenMax,
-    #[name = "Cohere Command R+ (08-2024)"]
-    CohereCommandRPlus082024,
+    #[name = "Cohere Command A"]
+    CohereCommandA,
     #[name = "Grok 2 (1212)"]
     Grok2,
     #[name = "DeepSeek R1"]
@@ -31,14 +31,16 @@ pub enum LanguageModel {
     O1High,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
-    #[name = "Gemini Pro 2.0 Experimental"]
-    Gemini2ProExperimental,
+    #[name = "Gemini Pro 2.5 Experimental"]
+    Gemini25ProExperimental,
     #[name = "Doubao 1.5 Pro 256k"]
     Doubao15Pro256k,
     #[name = "Kimi Latest"]
     KimiLatest,
     #[name = "Step 2 16k"]
     Step16k,
+    #[name = "GLM-4-Plus"]
+    Glm4Plus,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
@@ -93,7 +95,7 @@ impl LanguageModel {
             LanguageModel::Gpt4o,
             LanguageModel::MistralLarge,
             LanguageModel::QwenMax,
-            LanguageModel::CohereCommandRPlus082024,
+            LanguageModel::CohereCommandA,
             LanguageModel::Grok2,
             LanguageModel::DeepSeekR1,
             LanguageModel::Gemini2Flash,
@@ -101,10 +103,11 @@ impl LanguageModel {
             LanguageModel::O3MiniHigh,
             LanguageModel::O1High,
             LanguageModel::NovaPro,
-            LanguageModel::Gemini2ProExperimental,
+            LanguageModel::Gemini25ProExperimental,
             LanguageModel::Doubao15Pro256k,
             LanguageModel::KimiLatest,
             LanguageModel::Step16k,
+            LanguageModel::Glm4Plus,
         ]
     }
 
@@ -125,11 +128,11 @@ impl Display for LanguageModel {
 impl From<LanguageModel> for String {
     fn from(value: LanguageModel) -> Self {
         match value {
-            LanguageModel::DeepSeekV3 => "DeepSeek v3".into(),
+            LanguageModel::DeepSeekV3 => "DeepSeek v3 0324".into(),
             LanguageModel::Gpt4o => "GPT-4o (2024-11-20)".into(),
             LanguageModel::MistralLarge => "Mistral Large (2411)".into(),
             LanguageModel::QwenMax => "Qwen-Max".into(),
-            LanguageModel::CohereCommandRPlus082024 => "Cohere Command R+ (08-2024)".into(),
+            LanguageModel::CohereCommandA => "Cohere Command A".into(),
             LanguageModel::Grok2 => "Grok 2 (1212)".into(),
             LanguageModel::DeepSeekR1 => "DeepSeek R1".into(),
             LanguageModel::Gemini2Flash => "Gemini 2.0 Flash".into(),
@@ -137,10 +140,11 @@ impl From<LanguageModel> for String {
             LanguageModel::O3MiniHigh => "o3-mini (High)".into(),
             LanguageModel::O1High => "o1 (High)".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
-            LanguageModel::Gemini2ProExperimental => "Gemini Pro 2.0 Experimental".into(),
+            LanguageModel::Gemini25ProExperimental => "Gemini Pro 2.5 Experimental".into(),
             LanguageModel::Doubao15Pro256k => "Doubao 1.5 Pro 256k".into(),
             LanguageModel::KimiLatest => "Kimi Latest".into(),
             LanguageModel::Step16k => "Step 2 16k".into(),
+            LanguageModel::Glm4Plus => "GLM-4-Plus".into(),
         }
     }
 }

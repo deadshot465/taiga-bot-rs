@@ -14,11 +14,11 @@ use serenity::all::{Attachment, GetMessages, Message};
 use serenity::client::Context;
 use std::sync::Arc;
 
-const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat";
+const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat-v3-0324";
 const GPT_4O_20241120_MODEL: &str = "openai/gpt-4o-2024-11-20";
 const MISTRAL_LARGE_2411_MODEL: &str = "mistralai/mistral-large-2411";
 const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
-const COHERE_COMMAND_R_PLUS_082024_MODEL: &str = "cohere/command-r-plus-08-2024";
+const COHERE_COMMAND_A_MODEL: &str = "cohere/command-a";
 const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
 const GROK2_1212_MODEL: &str = "x-ai/grok-2-1212";
 const GEMINI_2_FLASH_MODEL: &str = "google/gemini-2.0-flash-001";
@@ -26,23 +26,29 @@ const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
 const O3_MINI_MODEL: &str = "o3-mini";
 const O1_MODEL: &str = "o1";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
-const GEMINI_PRO_2_EXP_MODEL: &str = "google/gemini-2.0-pro-exp-02-05:free";
+const GEMINI_PRO_25_EXP_MODEL: &str = "google/gemini-2.5-pro-exp-03-25:free";
 const DOUBAO_15_PRO_256K_MODEL: &str = "ep-20250218185054-vnnbk";
 const KIMI_LATEST_MODEL: &str = "kimi-latest";
 const STEP_2_16K_MODEL: &str = "step-2-16k";
+const GLM_4_PLUS_MODEL: &str = "GLM-4-Plus";
 const TEMPERATURE: f32 = 1.0;
+const TOP_P: f32 = 1.0;
 
 const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str =
     "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
     你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
+    請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
+    記住：你的主要讀者及對象是居住在台灣的台灣居民，因此在翻譯角色間的對話時，必須翻譯成符合台灣人對話方式的中文。\
     \
     在翻譯時，請務必記得以下指示：{INSTRUCTION}";
 
 const CHRONOSPLIT_SYSTEM_PROMPT: &str =
     "你是一位獲獎無數的中文都市奇幻與科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
-    你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
+    你充滿創意與自由，擅長使用你獲獎無數的中文都市奇幻與科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
+    請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
+    記住：你的主要讀者及對象是居住在台灣的台灣居民，因此在翻譯角色間的對話時，必須翻譯成符合台灣人對話方式的中文。\
     \
     在翻譯時，請務必記得以下指示：{INSTRUCTION}";
 
@@ -132,7 +138,7 @@ pub async fn translate_with_model(
         LanguageModel::Gpt4o => GPT_4O_20241120_MODEL,
         LanguageModel::MistralLarge => MISTRAL_LARGE_2411_MODEL,
         LanguageModel::QwenMax => QWEN_MAX_MODEL,
-        LanguageModel::CohereCommandRPlus082024 => COHERE_COMMAND_R_PLUS_082024_MODEL,
+        LanguageModel::CohereCommandA => COHERE_COMMAND_A_MODEL,
         LanguageModel::Grok2 => GROK2_1212_MODEL,
         LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
         LanguageModel::Gemini2Flash => GEMINI_2_FLASH_MODEL,
@@ -140,10 +146,11 @@ pub async fn translate_with_model(
         LanguageModel::O3MiniHigh => O3_MINI_MODEL,
         LanguageModel::O1High => O1_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
-        LanguageModel::Gemini2ProExperimental => GEMINI_PRO_2_EXP_MODEL,
+        LanguageModel::Gemini25ProExperimental => GEMINI_PRO_25_EXP_MODEL,
         LanguageModel::Doubao15Pro256k => DOUBAO_15_PRO_256K_MODEL,
         LanguageModel::KimiLatest => KIMI_LATEST_MODEL,
         LanguageModel::Step16k => STEP_2_16K_MODEL,
+        LanguageModel::Glm4Plus => GLM_4_PLUS_MODEL,
     };
 
     let system_prompt = match model {
@@ -167,10 +174,22 @@ pub async fn translate_with_model(
         }),
     ];
 
+    let temperature = match model {
+        LanguageModel::KimiLatest => 0.3,
+        LanguageModel::DeepSeekV3 => 1.8,
+        _ => TEMPERATURE,
+    };
+
+    let top_p = match model {
+        LanguageModel::DeepSeekV3 => 0.98,
+        _ => TOP_P,
+    };
+
     let mut request = CreateChatCompletionRequestArgs::default();
     request
         .model(model_str)
-        .temperature(TEMPERATURE)
+        .temperature(temperature)
+        .top_p(top_p)
         .messages(messages);
 
     let request = match model {
@@ -207,6 +226,13 @@ pub async fn translate_with_model(
         LanguageModel::Step16k => {
             openai_compatible_clients
                 .step_client
+                .chat()
+                .create(request)
+                .await
+        }
+        LanguageModel::Glm4Plus => {
+            openai_compatible_clients
+                .zhipu_client
                 .chat()
                 .create(request)
                 .await
