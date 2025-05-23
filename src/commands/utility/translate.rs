@@ -9,30 +9,30 @@ use crate::shared::structs::{Context, ContextError};
 pub enum LanguageModel {
     #[name = "DeepSeek-v3-0324"]
     DeepSeekV3,
-    #[name = "GPT-4o (2024-11-20)"]
-    Gpt4o,
+    #[name = "GPT-4.1"]
+    Gpt41,
     #[name = "Mistral Large (2411)"]
     MistralLarge,
     #[name = "Qwen-Max"]
     QwenMax,
     #[name = "Cohere Command A"]
     CohereCommandA,
-    #[name = "Grok 2 (1212)"]
-    Grok2,
+    #[name = "Grok 3"]
+    Grok3,
     #[name = "DeepSeek R1"]
     DeepSeekR1,
-    #[name = "Gemini 2.0 Flash"]
-    Gemini2Flash,
+    #[name = "Gemini 2.5 Flash Preview"]
+    Gemini25FlashPreview,
     #[name = "MiniMax-01"]
     MiniMax01,
-    #[name = "o3-mini (High)"]
-    O3MiniHigh,
+    #[name = "o4-mini (High)"]
+    O4MiniHigh,
     #[name = "o1 (High)"]
     O1High,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
-    #[name = "Gemini Pro 2.5 Experimental"]
-    Gemini25ProExperimental,
+    #[name = "Gemini Pro 2.5 Preview"]
+    Gemini25ProPreview,
     #[name = "Doubao 1.5 Pro 256k"]
     Doubao15Pro256k,
     #[name = "Kimi Latest"]
@@ -41,6 +41,10 @@ pub enum LanguageModel {
     Step16k,
     #[name = "GLM-4-Plus"]
     Glm4Plus,
+    #[name = "Claude Opus 4"]
+    Opus4,
+    #[name = "Claude Sonnet 4"]
+    Sonnet4,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
@@ -92,18 +96,18 @@ impl LanguageModel {
     pub fn all() -> Vec<Self> {
         vec![
             LanguageModel::DeepSeekV3,
-            LanguageModel::Gpt4o,
+            LanguageModel::Gpt41,
             LanguageModel::MistralLarge,
             LanguageModel::QwenMax,
             LanguageModel::CohereCommandA,
-            LanguageModel::Grok2,
+            LanguageModel::Grok3,
             LanguageModel::DeepSeekR1,
-            LanguageModel::Gemini2Flash,
+            LanguageModel::Gemini25FlashPreview,
             LanguageModel::MiniMax01,
-            LanguageModel::O3MiniHigh,
+            LanguageModel::O4MiniHigh,
             LanguageModel::O1High,
             LanguageModel::NovaPro,
-            LanguageModel::Gemini25ProExperimental,
+            LanguageModel::Gemini25ProPreview,
             LanguageModel::Doubao15Pro256k,
             LanguageModel::KimiLatest,
             LanguageModel::Step16k,
@@ -129,22 +133,24 @@ impl From<LanguageModel> for String {
     fn from(value: LanguageModel) -> Self {
         match value {
             LanguageModel::DeepSeekV3 => "DeepSeek v3 0324".into(),
-            LanguageModel::Gpt4o => "GPT-4o (2024-11-20)".into(),
+            LanguageModel::Gpt41 => "GPT-4.1".into(),
             LanguageModel::MistralLarge => "Mistral Large (2411)".into(),
             LanguageModel::QwenMax => "Qwen-Max".into(),
             LanguageModel::CohereCommandA => "Cohere Command A".into(),
-            LanguageModel::Grok2 => "Grok 2 (1212)".into(),
+            LanguageModel::Grok3 => "Grok 3".into(),
             LanguageModel::DeepSeekR1 => "DeepSeek R1".into(),
-            LanguageModel::Gemini2Flash => "Gemini 2.0 Flash".into(),
+            LanguageModel::Gemini25FlashPreview => "Gemini 2.5 Flash Preview".into(),
             LanguageModel::MiniMax01 => "MiniMax-01".into(),
-            LanguageModel::O3MiniHigh => "o3-mini (High)".into(),
+            LanguageModel::O4MiniHigh => "o4-mini (High)".into(),
             LanguageModel::O1High => "o1 (High)".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
-            LanguageModel::Gemini25ProExperimental => "Gemini Pro 2.5 Experimental".into(),
+            LanguageModel::Gemini25ProPreview => "Gemini Pro 2.5 Preview".into(),
             LanguageModel::Doubao15Pro256k => "Doubao 1.5 Pro 256k".into(),
             LanguageModel::KimiLatest => "Kimi Latest".into(),
             LanguageModel::Step16k => "Step 2 16k".into(),
             LanguageModel::Glm4Plus => "GLM-4-Plus".into(),
+            LanguageModel::Opus4 => "Claude Opus 4".into(),
+            LanguageModel::Sonnet4 => "Claude Sonnet 4".into(),
         }
     }
 }

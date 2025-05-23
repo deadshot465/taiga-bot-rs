@@ -15,22 +15,24 @@ use serenity::client::Context;
 use std::sync::Arc;
 
 const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat-v3-0324";
-const GPT_4O_20241120_MODEL: &str = "openai/gpt-4o-2024-11-20";
+const GPT_41_MODEL: &str = "openai/gpt-4.1";
 const MISTRAL_LARGE_2411_MODEL: &str = "mistralai/mistral-large-2411";
 const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
 const COHERE_COMMAND_A_MODEL: &str = "cohere/command-a";
 const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
-const GROK2_1212_MODEL: &str = "x-ai/grok-2-1212";
-const GEMINI_2_FLASH_MODEL: &str = "google/gemini-2.0-flash-001";
+const GROK_3_BETA_MODEL: &str = "x-ai/grok-3-beta";
+const GEMINI_25_FLASH_PREVIEW_MODEL: &str = "google/gemini-2.5-flash-preview-05-20";
 const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
-const O3_MINI_MODEL: &str = "o3-mini";
+const O4_MINI_MODEL: &str = "o4-mini";
 const O1_MODEL: &str = "o1";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
-const GEMINI_PRO_25_EXP_MODEL: &str = "google/gemini-2.5-pro-exp-03-25:free";
+const GEMINI_PRO_25_PREVIEW_MODEL: &str = "google/gemini-2.5-pro-preview";
 const DOUBAO_15_PRO_256K_MODEL: &str = "ep-20250218185054-vnnbk";
 const KIMI_LATEST_MODEL: &str = "kimi-latest";
 const STEP_2_16K_MODEL: &str = "step-2-16k";
 const GLM_4_PLUS_MODEL: &str = "GLM-4-Plus";
+const OPUS_4_MODEL: &str = "anthropic/claude-opus-4";
+const SONNET_4_MODEL: &str = "anthropic/claude-sonnet-4";
 const TEMPERATURE: f32 = 1.0;
 const TOP_P: f32 = 1.0;
 
@@ -135,26 +137,28 @@ pub async fn translate_with_model(
 
     let model_str = match model {
         LanguageModel::DeepSeekV3 => DEEP_SEEK_MODEL,
-        LanguageModel::Gpt4o => GPT_4O_20241120_MODEL,
+        LanguageModel::Gpt41 => GPT_41_MODEL,
         LanguageModel::MistralLarge => MISTRAL_LARGE_2411_MODEL,
         LanguageModel::QwenMax => QWEN_MAX_MODEL,
         LanguageModel::CohereCommandA => COHERE_COMMAND_A_MODEL,
-        LanguageModel::Grok2 => GROK2_1212_MODEL,
+        LanguageModel::Grok3 => GROK_3_BETA_MODEL,
         LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
-        LanguageModel::Gemini2Flash => GEMINI_2_FLASH_MODEL,
+        LanguageModel::Gemini25FlashPreview => GEMINI_25_FLASH_PREVIEW_MODEL,
         LanguageModel::MiniMax01 => MINIMAX_01_MODEL,
-        LanguageModel::O3MiniHigh => O3_MINI_MODEL,
+        LanguageModel::O4MiniHigh => O4_MINI_MODEL,
         LanguageModel::O1High => O1_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
-        LanguageModel::Gemini25ProExperimental => GEMINI_PRO_25_EXP_MODEL,
+        LanguageModel::Gemini25ProPreview => GEMINI_PRO_25_PREVIEW_MODEL,
         LanguageModel::Doubao15Pro256k => DOUBAO_15_PRO_256K_MODEL,
         LanguageModel::KimiLatest => KIMI_LATEST_MODEL,
         LanguageModel::Step16k => STEP_2_16K_MODEL,
         LanguageModel::Glm4Plus => GLM_4_PLUS_MODEL,
+        LanguageModel::Opus4 => OPUS_4_MODEL,
+        LanguageModel::Sonnet4 => SONNET_4_MODEL,
     };
 
     let system_prompt = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
             ChatCompletionRequestMessage::Developer(ChatCompletionRequestDeveloperMessage {
                 content: ChatCompletionRequestDeveloperMessageContent::Text(system_prompt),
                 name: None,
@@ -193,7 +197,7 @@ pub async fn translate_with_model(
         .messages(messages);
 
     let request = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
             request.reasoning_effort(ReasoningEffort::High).build()?
         }
         m if m == LanguageModel::DeepSeekV3 || m == LanguageModel::DeepSeekR1 => request
@@ -206,7 +210,7 @@ pub async fn translate_with_model(
     };
 
     let result = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O3MiniHigh => {
+        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
             openai_client.chat().create(request).await
         }
         LanguageModel::Doubao15Pro256k => {
