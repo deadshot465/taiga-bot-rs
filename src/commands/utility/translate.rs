@@ -112,6 +112,8 @@ impl LanguageModel {
             LanguageModel::KimiLatest,
             LanguageModel::Step16k,
             LanguageModel::Glm4Plus,
+            LanguageModel::Opus4,
+            LanguageModel::Sonnet4
         ]
     }
 
