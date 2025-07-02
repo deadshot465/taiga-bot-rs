@@ -1,11 +1,11 @@
 #![allow(unused)]
 use crate::shared::constants::{KOU_COLOR, RUST_LOGO, TAIGA_COLOR};
+use crate::shared::structs::Context;
 use crate::shared::structs::utility::judge_zero::{
     JudgeZeroGetResponse, JudgeZeroPostRequest, JudgeZeroPostResponse, JudgeZeroRequestResult,
 };
-use crate::shared::structs::Context;
-use base64::engine::{general_purpose, GeneralPurpose, GeneralPurposeConfig};
 use base64::Engine;
+use base64::engine::{GeneralPurpose, GeneralPurposeConfig, general_purpose};
 use once_cell::sync::OnceCell;
 use reqwest::header::HeaderMap;
 use serenity::all::CreateEmbedAuthor;
@@ -31,9 +31,15 @@ pub fn build_embed(
     let is_kou = ctx.data().kou;
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let content = if is_kou {
-        format!("Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n", author_name)
+        format!(
+            "Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n",
+            author_name
+        )
     } else {
-        format!("Guess I have to lend my hand to you because you're just like Eduard and Lee, {}! <:TaigaSmug:702210822310723614>\n```rust\n", author_name)
+        format!(
+            "Guess I have to lend my hand to you because you're just like Eduard and Lee, {}! <:TaigaSmug:702210822310723614>\n```rust\n",
+            author_name
+        )
     };
 
     let content = response

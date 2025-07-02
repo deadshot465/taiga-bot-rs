@@ -21,20 +21,18 @@ pub enum LanguageModel {
     Grok3,
     #[name = "DeepSeek R1"]
     DeepSeekR1,
-    #[name = "Gemini 2.5 Flash Preview"]
-    Gemini25FlashPreview,
-    #[name = "MiniMax-01"]
-    MiniMax01,
-    #[name = "o4-mini (High)"]
-    O4MiniHigh,
-    #[name = "o1 (High)"]
-    O1High,
+    #[name = "Gemini 2.5 Flash"]
+    Gemini25Flash,
+    #[name = "MiniMax-M1"]
+    MiniMaxM1,
+    #[name = "o3"]
+    O3,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
-    #[name = "Gemini Pro 2.5 Preview"]
-    Gemini25ProPreview,
-    #[name = "Doubao 1.5 Pro 256k"]
-    Doubao15Pro256k,
+    #[name = "Gemini 2.5 Pro"]
+    Gemini25Pro,
+    #[name = "Doubao Seed 1.6"]
+    DoubaoSeed16,
     #[name = "Kimi Latest"]
     KimiLatest,
     #[name = "Step 2 16k"]
@@ -102,25 +100,24 @@ impl LanguageModel {
             LanguageModel::CohereCommandA,
             LanguageModel::Grok3,
             LanguageModel::DeepSeekR1,
-            LanguageModel::Gemini25FlashPreview,
-            LanguageModel::MiniMax01,
-            LanguageModel::O4MiniHigh,
-            LanguageModel::O1High,
+            LanguageModel::Gemini25Flash,
+            LanguageModel::MiniMaxM1,
+            LanguageModel::O3,
             LanguageModel::NovaPro,
-            LanguageModel::Gemini25ProPreview,
-            LanguageModel::Doubao15Pro256k,
+            LanguageModel::Gemini25Pro,
+            LanguageModel::DoubaoSeed16,
             LanguageModel::KimiLatest,
             LanguageModel::Step16k,
             LanguageModel::Glm4Plus,
             LanguageModel::Opus4,
-            LanguageModel::Sonnet4
+            LanguageModel::Sonnet4,
         ]
     }
 
     pub fn all_except_o1() -> Vec<Self> {
         Self::all()
             .into_iter()
-            .filter(|model| *model != LanguageModel::O1High)
+            .filter(|model| *model != LanguageModel::O3)
             .collect()
     }
 }
@@ -141,13 +138,12 @@ impl From<LanguageModel> for String {
             LanguageModel::CohereCommandA => "Cohere Command A".into(),
             LanguageModel::Grok3 => "Grok 3".into(),
             LanguageModel::DeepSeekR1 => "DeepSeek R1".into(),
-            LanguageModel::Gemini25FlashPreview => "Gemini 2.5 Flash Preview".into(),
-            LanguageModel::MiniMax01 => "MiniMax-01".into(),
-            LanguageModel::O4MiniHigh => "o4-mini (High)".into(),
-            LanguageModel::O1High => "o1 (High)".into(),
+            LanguageModel::Gemini25Flash => "Gemini 2.5 Flash".into(),
+            LanguageModel::MiniMaxM1 => "MiniMax M1".into(),
+            LanguageModel::O3 => "o3".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
-            LanguageModel::Gemini25ProPreview => "Gemini Pro 2.5 Preview".into(),
-            LanguageModel::Doubao15Pro256k => "Doubao 1.5 Pro 256k".into(),
+            LanguageModel::Gemini25Pro => "Gemini Pro 2.5".into(),
+            LanguageModel::DoubaoSeed16 => "Doubao Seed 1.6".into(),
             LanguageModel::KimiLatest => "Kimi Latest".into(),
             LanguageModel::Step16k => "Step 2 16k".into(),
             LanguageModel::Glm4Plus => "GLM-4-Plus".into(),

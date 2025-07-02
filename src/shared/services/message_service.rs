@@ -1,13 +1,13 @@
 use serenity::all::{Context, Message};
-use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+use time::format_description::well_known::Rfc3339;
 
 use crate::shared::constants::{IMAGE_TYPES, KOU_SERVER_ID};
+use crate::shared::structs::ContextData;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::record::message::{
     GetMessageRequest, GetMessageResponse, MessageInfo, MessageRecordSimple,
 };
-use crate::shared::structs::ContextData;
 
 pub async fn record_message(
     ctx: &Context,

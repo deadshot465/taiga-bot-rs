@@ -1,5 +1,6 @@
 use std::clone::Clone;
 
+use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestAssistantMessage, ChatCompletionRequestAssistantMessageContent,
@@ -9,19 +10,18 @@ use async_openai::types::{
     ChatCompletionRequestUserMessageContent, ChatCompletionRequestUserMessageContentPart,
     CreateChatCompletionRequestArgs, ImageDetail, ImageUrl,
 };
-use async_openai::Client;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serenity::all::{Context, Message};
-use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+use time::format_description::well_known::Rfc3339;
 
 use crate::shared::constants::IMAGE_TYPES;
 use crate::shared::services::message_service::get_messages;
+use crate::shared::structs::ContextData;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
 use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
-use crate::shared::structs::ContextData;
 
 const TEXT_MODEL: &str = "gpt-4o";
 const VISION_MODEL: &str = "gpt-4o";

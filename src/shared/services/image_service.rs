@@ -210,8 +210,7 @@ pub async fn get_cat_image(
             // If there are no results, just return a random cat.
             let description = format!(
                 "I'm sorry, but I can't find any picture of **{}**!\nHere is a random cat for you.\nPhoto by [The Cat API]({})",
-                &keyword,
-                "https://thecatapi.com/"
+                &keyword, "https://thecatapi.com/"
             );
 
             let mut result = fetch_cat_image(
@@ -273,8 +272,7 @@ pub async fn get_dog_image(
             // If there are no results, just return a random dog.
             let description = format!(
                 "I'm sorry, but I can't find any picture of **{}**!\nHere is a random dog for you.\nPhoto by [Dog API]({})",
-                keyword,
-                "https://dog.ceo/dog-api/"
+                keyword, "https://dog.ceo/dog-api/"
             );
             let mut result =
                 fetch_dog_image(DOG_API_URL, client, author_name, author_avatar_url, color).await?;

@@ -1,8 +1,8 @@
 use reqwest::StatusCode;
 
+use crate::shared::structs::ContextData;
 use crate::shared::structs::authentication::login;
 use crate::shared::structs::record::user_credit::{UserCredit, UserCreditUpdateInfo};
-use crate::shared::structs::ContextData;
 
 pub async fn add_user_credit(
     user_id: u64,

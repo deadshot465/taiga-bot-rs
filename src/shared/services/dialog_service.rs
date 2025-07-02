@@ -1,6 +1,6 @@
 #![allow(clippy::ptr_arg)]
-use crate::shared::structs::fun::dialog::Dialog;
 use crate::shared::structs::Context;
+use crate::shared::structs::fun::dialog::Dialog;
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use regex::Regex;

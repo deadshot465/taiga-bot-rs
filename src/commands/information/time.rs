@@ -17,12 +17,15 @@ pub async fn time(
         .send(CreateReply::default().content("Alright! One second (pun intended)..."))
         .await?;
 
-    let timezone_name = match search_from_endpoint(ctx, &city_name_or_address).await? {
-        Some(s) => s,
-        None => search_from_google(ctx, &city_name_or_address).await?,
+    let timezone_name = if let Ok(opt) = search_from_endpoint(ctx, &city_name_or_address).await
+        && let Some(s) = opt
+    {
+        s
+    } else {
+        search_from_google(ctx, &city_name_or_address).await?
     };
 
-    let time_data = ctx
+    let response = ctx
         .data()
         .http_client
         .get(format!(
@@ -30,33 +33,54 @@ pub async fn time(
             &timezone_name
         ))
         .send()
-        .await?
-        .json::<TimeData>()
-        .await?;
+        .await;
 
-    match time_data.datetime.parse::<DateTime<FixedOffset>>() {
-        Ok(result) => {
-            reply_handle
-                .edit(
-                    ctx,
-                    CreateReply::default().content(format!(
-                        "The current local time of **{}** is: {}.",
-                        timezone_name.replace('_', " "),
-                        result.format("%Y-%m-%d %H:%M:%S")
-                    )),
-                )
-                .await?;
-        }
+    match response {
+        Ok(res) => match res.json::<TimeData>().await {
+            Ok(time_data) => match time_data.datetime.parse::<DateTime<FixedOffset>>() {
+                Ok(result) => {
+                    reply_handle
+                        .edit(
+                            ctx,
+                            CreateReply::default().content(format!(
+                                "The current local time of **{}** is: {}.",
+                                timezone_name.replace('_', " "),
+                                result.format("%Y-%m-%d %H:%M:%S")
+                            )),
+                        )
+                        .await?;
+                }
+                Err(e) => {
+                    reply_handle
+                        .edit(
+                            ctx,
+                            CreateReply::default()
+                                .content(format!("Sorry, an error occurred! Error: {e:?}")),
+                        )
+                        .await?;
+                }
+            },
+            Err(e) => {
+                reply_handle
+                    .edit(
+                        ctx,
+                        CreateReply::default()
+                            .content(format!("Sorry, an error occurred! Error: {e:?}")),
+                    )
+                    .await?;
+            }
+        },
         Err(e) => {
             reply_handle
                 .edit(
                     ctx,
                     CreateReply::default()
-                        .content(format!("Sorry, an error occurred! Error: {}", e)),
+                        .content(format!("Sorry, an error occurred! Error: {e:?}")),
                 )
                 .await?;
         }
     }
+
     Ok(())
 }
 

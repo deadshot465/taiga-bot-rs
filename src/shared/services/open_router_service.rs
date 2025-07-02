@@ -1,6 +1,7 @@
 use crate::commands::utility::translate::{LanguageModel, Novel};
 use crate::shared::structs::{ContextData, OpenAICompatibleClients};
 use crate::shared::utility::build_author_name_map;
+use async_openai::Client;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestDeveloperMessage, ChatCompletionRequestDeveloperMessageContent,
@@ -9,7 +10,6 @@ use async_openai::types::{
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
     CreateChatCompletionRequestArgs, ReasoningEffort,
 };
-use async_openai::Client;
 use serenity::all::{Attachment, GetMessages, Message};
 use serenity::client::Context;
 use std::sync::Arc;
@@ -19,15 +19,14 @@ const GPT_41_MODEL: &str = "openai/gpt-4.1";
 const MISTRAL_LARGE_2411_MODEL: &str = "mistralai/mistral-large-2411";
 const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
 const COHERE_COMMAND_A_MODEL: &str = "cohere/command-a";
-const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1";
-const GROK_3_BETA_MODEL: &str = "x-ai/grok-3-beta";
-const GEMINI_25_FLASH_PREVIEW_MODEL: &str = "google/gemini-2.5-flash-preview-05-20";
-const MINIMAX_01_MODEL: &str = "minimax/minimax-01";
-const O4_MINI_MODEL: &str = "o4-mini";
-const O1_MODEL: &str = "o1";
+const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1-0528";
+const GROK_3_MODEL: &str = "x-ai/grok-3";
+const GEMINI_25_FLASH_MODEL: &str = "google/gemini-2.5-flash";
+const MINIMAX_M1_MODEL: &str = "minimax/minimax-m1";
+const O3_MODEL: &str = "o3";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
-const GEMINI_PRO_25_PREVIEW_MODEL: &str = "google/gemini-2.5-pro-preview";
-const DOUBAO_15_PRO_256K_MODEL: &str = "ep-20250218185054-vnnbk";
+const GEMINI_PRO_25_MODEL: &str = "google/gemini-2.5-pro";
+const DOUBAO_SEED_16_MODEL: &str = "doubao-seed-1-6-250615";
 const KIMI_LATEST_MODEL: &str = "kimi-latest";
 const STEP_2_16K_MODEL: &str = "step-2-16k";
 const GLM_4_PLUS_MODEL: &str = "GLM-4-Plus";
@@ -36,8 +35,7 @@ const SONNET_4_MODEL: &str = "anthropic/claude-sonnet-4";
 const TEMPERATURE: f32 = 1.0;
 const TOP_P: f32 = 1.0;
 
-const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str =
-    "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
+const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str = "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
     你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
     請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
@@ -45,8 +43,7 @@ const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str =
     \
     在翻譯時，請務必記得以下指示：{INSTRUCTION}";
 
-const CHRONOSPLIT_SYSTEM_PROMPT: &str =
-    "你是一位獲獎無數的中文都市奇幻與科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
+const CHRONOSPLIT_SYSTEM_PROMPT: &str = "你是一位獲獎無數的中文都市奇幻與科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
     你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
     你充滿創意與自由，擅長使用你獲獎無數的中文都市奇幻與科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
     請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
@@ -141,15 +138,14 @@ pub async fn translate_with_model(
         LanguageModel::MistralLarge => MISTRAL_LARGE_2411_MODEL,
         LanguageModel::QwenMax => QWEN_MAX_MODEL,
         LanguageModel::CohereCommandA => COHERE_COMMAND_A_MODEL,
-        LanguageModel::Grok3 => GROK_3_BETA_MODEL,
+        LanguageModel::Grok3 => GROK_3_MODEL,
         LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
-        LanguageModel::Gemini25FlashPreview => GEMINI_25_FLASH_PREVIEW_MODEL,
-        LanguageModel::MiniMax01 => MINIMAX_01_MODEL,
-        LanguageModel::O4MiniHigh => O4_MINI_MODEL,
-        LanguageModel::O1High => O1_MODEL,
+        LanguageModel::Gemini25Flash => GEMINI_25_FLASH_MODEL,
+        LanguageModel::MiniMaxM1 => MINIMAX_M1_MODEL,
+        LanguageModel::O3 => O3_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
-        LanguageModel::Gemini25ProPreview => GEMINI_PRO_25_PREVIEW_MODEL,
-        LanguageModel::Doubao15Pro256k => DOUBAO_15_PRO_256K_MODEL,
+        LanguageModel::Gemini25Pro => GEMINI_PRO_25_MODEL,
+        LanguageModel::DoubaoSeed16 => DOUBAO_SEED_16_MODEL,
         LanguageModel::KimiLatest => KIMI_LATEST_MODEL,
         LanguageModel::Step16k => STEP_2_16K_MODEL,
         LanguageModel::Glm4Plus => GLM_4_PLUS_MODEL,
@@ -158,7 +154,7 @@ pub async fn translate_with_model(
     };
 
     let system_prompt = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
+        LanguageModel::O3 => {
             ChatCompletionRequestMessage::Developer(ChatCompletionRequestDeveloperMessage {
                 content: ChatCompletionRequestDeveloperMessageContent::Text(system_prompt),
                 name: None,
@@ -197,9 +193,7 @@ pub async fn translate_with_model(
         .messages(messages);
 
     let request = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
-            request.reasoning_effort(ReasoningEffort::High).build()?
-        }
+        LanguageModel::O3 => request.reasoning_effort(ReasoningEffort::High).build()?,
         m if m == LanguageModel::DeepSeekV3 || m == LanguageModel::DeepSeekR1 => request
             .provider(ChatCompletionRequestProvider {
                 order: vec!["DeepSeek".into()],
@@ -210,10 +204,8 @@ pub async fn translate_with_model(
     };
 
     let result = match model {
-        m if m == LanguageModel::O1High || m == LanguageModel::O4MiniHigh => {
-            openai_client.chat().create(request).await
-        }
-        LanguageModel::Doubao15Pro256k => {
+        LanguageModel::O3 => openai_client.chat().create(request).await,
+        LanguageModel::DoubaoSeed16 => {
             openai_compatible_clients
                 .volc_engine_client
                 .chat()

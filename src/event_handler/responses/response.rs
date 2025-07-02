@@ -4,8 +4,8 @@ use serenity::prelude::*;
 
 use crate::event_handler::hit_or_miss;
 use crate::shared::services::openai_service::build_openai_message;
-use crate::shared::structs::config::random_response::{get_random_message, get_shuffled_keywords};
 use crate::shared::structs::ContextData;
+use crate::shared::structs::config::random_response::{get_random_message, get_shuffled_keywords};
 
 pub async fn handle_responses(
     ctx: &Context,

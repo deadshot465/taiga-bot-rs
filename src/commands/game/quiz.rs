@@ -112,11 +112,12 @@ async fn join_game(ctx: Context<'_>, color: Color, is_kou: bool) -> anyhow::Resu
     }
 
     let joining_end_time = Utc::now() + Duration::seconds(10);
-    let description = format!("React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!", if is_kou {
-        ""
-    } else {
-        " or NSFW themes"
-    }, "", (joining_end_time - Utc::now()).num_seconds());
+    let description = format!(
+        "React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!",
+        if is_kou { "" } else { " or NSFW themes" },
+        "",
+        (joining_end_time - Utc::now()).num_seconds()
+    );
 
     let embed = build_embed("Minigame Starting!", &description, color, None);
     if let Context::Application(app_context) = ctx {
@@ -138,11 +139,12 @@ async fn join_game(ctx: Context<'_>, color: Color, is_kou: bool) -> anyhow::Resu
                 .map(|u| u.mention().to_string())
                 .collect::<Vec<_>>();
 
-            let description = format!("React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!", if is_kou {
-                ""
-            } else {
-                " or NSFW themes"
-            }, user_mentions.join(", "), (joining_end_time - Utc::now()).num_seconds());
+            let description = format!(
+                "React below to join the game!\nThis game may contain spoilers{}.\nCurrent players:{}\n{} seconds left!",
+                if is_kou { "" } else { " or NSFW themes" },
+                user_mentions.join(", "),
+                (joining_end_time - Utc::now()).num_seconds()
+            );
 
             let embed = build_embed("Minigame Starting!", &description, color, None);
 

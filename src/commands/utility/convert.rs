@@ -1,10 +1,10 @@
 use poise::CreateReply;
 
+use crate::shared::structs::utility::convert::ConverterType;
 use crate::shared::structs::utility::convert::exchange_rate_api_response::ExchangeRateAPIResponse;
 use crate::shared::structs::utility::convert::length::Length;
 use crate::shared::structs::utility::convert::temperature::Temperature;
 use crate::shared::structs::utility::convert::weight::Weight;
-use crate::shared::structs::utility::convert::ConverterType;
 use crate::shared::structs::{Context, ContextError};
 
 const EXCHANGE_RATE_API_BASE_URL: &str = "http://api.exchangeratesapi.io/v1/latest";

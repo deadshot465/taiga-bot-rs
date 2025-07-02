@@ -3,6 +3,7 @@ use crate::shared::structs::{Context, ContextError};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use poise::CreateReply;
 use rand::prelude::*;
+use serenity::FutureExt;
 use serenity::all::{
     Color, CommandInteraction, CreateEmbedAuthor, CreateEmbedFooter,
     CreateInteractionResponseFollowup,
@@ -10,7 +11,6 @@ use serenity::all::{
 use serenity::builder::CreateEmbed;
 use serenity::futures::prelude::future::BoxFuture;
 use serenity::model::prelude::User;
-use serenity::FutureExt;
 use std::borrow::Cow;
 
 const HANGMAN_COLOR: Color = Color::new(0xffd43b);

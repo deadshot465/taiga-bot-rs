@@ -1,7 +1,7 @@
 use crate::shared::constants::ASSET_DIRECTORY;
 use crate::shared::structs::Context;
-use image::imageops::{overlay, FilterType};
 use image::DynamicImage;
+use image::imageops::{FilterType, overlay};
 use std::io::{BufWriter, Cursor};
 
 const HEART_FILE_NAME: &str = "/png/heart2.png";

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use poise::{serenity_prelude as serenity, BoxFuture, PrefixFrameworkOptions};
+use poise::{BoxFuture, PrefixFrameworkOptions, serenity_prelude as serenity};
 use poise::{CreateReply, FrameworkError};
 use serenity::all::{CreateAllowedMentions, GatewayIntents};
 use tokio::sync::RwLock;

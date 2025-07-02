@@ -1,7 +1,7 @@
 use crate::event_handler::hit_or_miss;
 use crate::shared::constants::EMOTE_IS_ANIMATED_REGEX;
-use crate::shared::structs::config::random_response::get_random_reaction;
 use crate::shared::structs::ContextData;
+use crate::shared::structs::config::random_response::get_random_reaction;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serenity::model::channel::ReactionType;

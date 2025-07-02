@@ -132,9 +132,11 @@ async fn build_component(
                     .max_values(1)
                     .placeholder("Select a command!"),
                 ),
-                CreateActionRow::Buttons(vec![CreateButton::new("end_tour")
-                    .label("End Tour")
-                    .style(ButtonStyle::Danger)]),
+                CreateActionRow::Buttons(vec![
+                    CreateButton::new("end_tour")
+                        .label("End Tour")
+                        .style(ButtonStyle::Danger),
+                ]),
             ]),
         )
         .await?;

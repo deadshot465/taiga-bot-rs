@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use poise::{execute_modal_on_component_interaction, serenity_prelude as serenity, CreateReply};
+use poise::{CreateReply, execute_modal_on_component_interaction, serenity_prelude as serenity};
 use serenity::all::{
     ChannelId, ComponentInteractionDataKind, CreateSelectMenu, CreateSelectMenuKind,
     CreateSelectMenuOption,

@@ -1,10 +1,10 @@
 use crate::shared::structs::ContextData;
 use rand::prelude::*;
+use serenity::FutureExt;
 use serenity::all::ActivityData;
 use serenity::futures::prelude::future::BoxFuture;
 use serenity::model::prelude::OnlineStatus;
 use serenity::prelude::*;
-use serenity::FutureExt;
 
 pub async fn set_initial_presence(ctx: &Context, data: &ContextData) {
     set_activity(ctx, &data.common_settings.activities).await;

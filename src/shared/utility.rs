@@ -1,8 +1,8 @@
 use serenity::all::{Message, UserId};
 use serenity::model::guild::Member;
 use serenity::model::prelude::User;
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 pub fn find_user_in_members<'a>(user: &'a User, members: &'a [Member]) -> Option<&'a Member> {
     members
