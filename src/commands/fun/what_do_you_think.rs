@@ -34,7 +34,7 @@ pub async fn what_do_you_think(
         }
         Err(e) => {
             let error_message =
-                format!("An error occurred when answering what do you think: {}", e);
+                format!("An error occurred when answering what do you think: {e:?}");
             tracing::error!("{}", &error_message);
             ctx.send(CreateReply::default().content(error_message))
                 .await?;

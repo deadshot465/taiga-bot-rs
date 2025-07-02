@@ -88,7 +88,7 @@ pub async fn add(
         ".png"
     };
 
-    let link = format!("{}{}{}", EMOTE_BASE_LINK, emote_id, file_extension);
+    let link = format!("{EMOTE_BASE_LINK}{emote_id}{file_extension}");
 
     {
         let mut emote_list_write_lock = emote_list.write().await;

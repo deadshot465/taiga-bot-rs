@@ -72,15 +72,15 @@ fn build_route_records(
 ) -> CreateEmbed {
     let route_record = &user_record.route;
     let mut character_names = route_record
-        .iter()
-        .map(|(name, _)| name.as_str())
+        .keys()
+        .map(|name| name.as_str())
         .collect::<Vec<_>>();
     character_names.sort_unstable();
 
     let embed = CreateEmbed::new()
         .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
-        .description(format!("Here's {}'s records with `route`", author_name));
+        .description(format!("Here's {author_name}'s records with `route`"));
     add_route_character_fields(embed, character_names, route_record)
 }
 
@@ -102,8 +102,7 @@ fn build_valentine_records(
         .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!(
-            "Here's {}'s records with `valentine` (top {})",
-            author_name, amount
+            "Here's {author_name}'s records with `valentine` (top {amount})"
         ));
     add_valentine_character_fields(embed, character_name_and_counts, amount)
 }
@@ -118,8 +117,8 @@ fn build_all(
     let valentine_record = &user_record.valentine;
 
     let mut route_names = route_record
-        .iter()
-        .map(|(name, _)| name.as_str())
+        .keys()
+        .map(|name| name.as_str())
         .collect::<Vec<_>>();
     route_names.sort_unstable();
 
@@ -133,8 +132,7 @@ fn build_all(
         .author(CreateEmbedAuthor::new(&author_name).icon_url(author_avatar_url))
         .color(color)
         .description(format!(
-            "Here's {}'s records with `route, valentine`",
-            author_name
+            "Here's {author_name}'s records with `route, valentine`"
         ));
 
     let embed = embed.field("**Route**", "Records for `route`", false);
@@ -142,7 +140,7 @@ fn build_all(
     let amount = 10_usize;
     let embed = embed.field(
         "**Valentine**",
-        format!("Records for `valentine` (top {})", amount),
+        format!("Records for `valentine` (top {amount})"),
         false,
     );
     add_valentine_character_fields(embed, valentine_name_and_counts, amount)
@@ -158,8 +156,8 @@ fn add_route_character_fields(
         .map(|name| {
             let character_record = &route_record[name];
             let mut endings = character_record
-                .iter()
-                .map(|(ending, _)| ending.as_str())
+                .keys()
+                .map(|ending| ending.as_str())
                 .collect::<Vec<_>>();
             endings.sort_unstable();
             let result = endings
@@ -168,7 +166,7 @@ fn add_route_character_fields(
                     let _ = writeln!(output, "__{}__: {}", ending, character_record[ending]);
                     output
                 });
-            (format!("**{}**", name), result, true)
+            (format!("**{name}**"), result, true)
         })
         .collect::<Vec<_>>();
 
@@ -183,7 +181,7 @@ fn add_valentine_character_fields(
     valentine_name_and_counts.sort_unstable_by(|(_, count1), (_, count2)| count2.cmp(count1));
     let fields = valentine_name_and_counts
         .into_iter()
-        .map(|(name, count)| (format!("**{}**", name), count.to_string(), true))
+        .map(|(name, count)| (format!("**{name}**"), count.to_string(), true))
         .take(amount)
         .collect::<Vec<_>>();
 

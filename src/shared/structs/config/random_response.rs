@@ -101,6 +101,6 @@ fn initialize_random_responses_keywords(responses: &Responses) -> Vec<String> {
         .random_responses
         .iter()
         .map(|res| &res.keyword)
-        .map(|s| format!(" {} ", s))
+        .map(|s| format!(" {s} "))
         .collect::<Vec<_>>()
 }

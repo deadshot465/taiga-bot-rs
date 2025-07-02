@@ -31,7 +31,7 @@ pub async fn handle_mention_self(
                             new_message.reply(&ctx.http, response).await?;
                         }
                         Err(e) => {
-                            let error_message = format!("Failed to reply to mention: {}", e);
+                            let error_message = format!("Failed to reply to mention: {e:?}");
                             tracing::error!("{}", &error_message);
                             new_message.reply(&ctx.http, error_message).await?;
                         }
@@ -42,7 +42,7 @@ pub async fn handle_mention_self(
                             new_message.reply(&ctx.http, response).await?;
                         }
                         Err(e) => {
-                            let error_message = format!("Failed to reply to mention: {}", e);
+                            let error_message = format!("Failed to reply to mention: {e:?}");
                             tracing::error!("{}", &error_message);
                             new_message.reply(&ctx.http, error_message).await?;
                         }
@@ -50,7 +50,7 @@ pub async fn handle_mention_self(
                 }
             }
             Err(e) => {
-                let error_message = format!("Failed to reply to mention: {}", e);
+                let error_message = format!("Failed to reply to mention: {e:?}");
                 tracing::error!("{}", &error_message);
                 new_message.reply(&ctx.http, error_message).await?;
             }

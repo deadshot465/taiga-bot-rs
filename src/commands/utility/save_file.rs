@@ -58,8 +58,7 @@ pub async fn save_file(
         if let Err(e) = response {
             tracing::error!("Failed to save file to the server: {}", e);
             ctx.send(CreateReply::default().content(format!(
-                "An error occurred when saving file to the server!\nError: {}",
-                e
+                "An error occurred when saving file to the server!\nError: {e:?}"
             )))
             .await?;
         } else {

@@ -107,8 +107,7 @@ async fn search_from_google(ctx: Context<'_>, query: &str) -> anyhow::Result<Str
         .data()
         .http_client
         .get(format!(
-            "https://maps.googleapis.com/maps/api/geocode/json?address={}&key={}",
-            query, google_api_key
+            "https://maps.googleapis.com/maps/api/geocode/json?address={query}&key={google_api_key}"
         ))
         .send()
         .await?

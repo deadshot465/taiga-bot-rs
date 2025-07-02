@@ -32,13 +32,11 @@ pub fn build_embed(
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     let content = if is_kou {
         format!(
-            "Hey, {}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n",
-            author_name
+            "Hey, {author_name}! I tried my best and this is what I got for you! <a:kou_anime:700020702585290782>\n```rust\n"
         )
     } else {
         format!(
-            "Guess I have to lend my hand to you because you're just like Eduard and Lee, {}! <:TaigaSmug:702210822310723614>\n```rust\n",
-            author_name
+            "Guess I have to lend my hand to you because you're just like Eduard and Lee, {author_name}! <:TaigaSmug:702210822310723614>\n```rust\n"
         )
     };
 
@@ -61,11 +59,11 @@ pub fn build_embed(
         .thumbnail(RUST_LOGO);
 
     if let Some(time_spent) = response.time {
-        embed = embed.field("Time Spent", format!("{} sec", time_spent), true);
+        embed = embed.field("Time Spent", format!("{time_spent} sec"), true);
     }
 
     if let Some(memory) = response.memory {
-        embed = embed.field("Memory Spent", format!("{} KB", memory), true);
+        embed = embed.field("Memory Spent", format!("{memory} KB"), true);
     }
 
     embed

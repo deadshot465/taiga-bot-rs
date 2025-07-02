@@ -31,7 +31,7 @@ pub async fn get_dialog(
 
     let server_endpoint = ctx.data().config.server_endpoint.clone();
 
-    let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
+    let dialog_path = format!("{server_endpoint}{DIALOG_PATH}");
     let auth = ctx.data().authentication.clone();
     let token = auth.read().await.token.clone();
     let response = ctx
@@ -122,7 +122,7 @@ pub async fn validate_dialog(
 ) -> anyhow::Result<()> {
     let server_endpoint = ctx.data().config.server_endpoint.clone();
 
-    let dialog_path = format!("{}{}", server_endpoint, DIALOG_PATH);
+    let dialog_path = format!("{server_endpoint}{DIALOG_PATH}");
     let dialog_options: HashMap<String, Vec<String>> = ctx
         .data()
         .http_client
@@ -145,7 +145,7 @@ pub async fn validate_dialog(
         if !characters.contains(character) {
             let characters_text: String = characters
                 .iter()
-                .map(|s| format!("`{}`", s))
+                .map(|s| format!("`{s}`"))
                 .collect::<Vec<_>>()
                 .join(", ");
 

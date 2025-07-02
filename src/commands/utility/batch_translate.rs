@@ -45,10 +45,10 @@ pub async fn batch_translate(
             .await;
             match result {
                 Ok(s) => {
-                    format!("{}:\n{}", model, s)
+                    format!("{model}:\n{s}")
                 }
                 Err(e) => {
-                    format!("Failed to get response using {}: {}", model, e)
+                    format!("Failed to get response using {model}: {e:?}")
                 }
             }
         });

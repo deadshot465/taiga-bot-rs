@@ -56,7 +56,7 @@ pub async fn qotd(
                 .and_then(|channels| channels.get(&ChannelId::new(*qotd_channel_id)).cloned())
             {
                 let mut result_embed = CreateEmbed::new()
-                    .title(format!("Day {}", elapsed_days))
+                    .title(format!("Day {elapsed_days}"))
                     .color(color)
                     .thumbnail(&avatar_url)
                     .footer(CreateEmbedFooter::new("Answer qotd to earn 25 credits!"))
@@ -73,7 +73,7 @@ pub async fn qotd(
                     .create_thread_from_message(
                         ctx.http(),
                         msg.id,
-                        CreateThread::new(format!("Day {} QotD", elapsed_days))
+                        CreateThread::new(format!("Day {elapsed_days} QotD"))
                             .kind(ChannelType::PublicThread)
                             .auto_archive_duration(AutoArchiveDuration::OneDay),
                     )

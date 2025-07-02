@@ -79,10 +79,8 @@ pub async fn record_message(
         .and_then(|res| res.error_for_status());
 
     if let Err(e) = response {
-        let error_message = format!(
-            "Failed to record message for {} ({:?}): {}",
-            user_id, user_name, e
-        );
+        let error_message =
+            format!("Failed to record message for {user_id} ({user_name:?}): {e:?}");
         tracing::error!("{}", error_message);
     }
 

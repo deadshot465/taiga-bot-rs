@@ -129,7 +129,7 @@ fn build_message(result: String, result_map: HashMap<String, u64>, is_kou: bool)
 
     let result_list: String = result_map
         .into_iter()
-        .map(|(choice, count)| format!("- {} - {} times", choice, count))
+        .map(|(choice, count)| format!("- {choice} - {count} times"))
         .collect::<Vec<_>>()
         .join("\n");
 

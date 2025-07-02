@@ -124,7 +124,7 @@ pub async fn translate_with_model(
 ) -> anyhow::Result<String> {
     let raw_bytes = attachment.download().await?;
     let text = String::from_utf8(raw_bytes)?;
-    let replacement = format!("\n{}", instructions);
+    let replacement = format!("\n{instructions}");
     let system_prompt = match novel {
         Novel::ForgedInStarlight => {
             FORGED_IN_STARLIGHT_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement)

@@ -263,7 +263,7 @@ async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
 }
 
 fn load_forged_in_starlight_instructions() -> anyhow::Result<String> {
-    let instructions_path = format!("{}/instructions", CONFIG_DIRECTORY);
+    let instructions_path = format!("{CONFIG_DIRECTORY}/instructions");
     if !std::path::Path::new(&instructions_path).exists() {
         std::fs::create_dir_all(&instructions_path)?
     }
@@ -278,7 +278,7 @@ fn load_forged_in_starlight_instructions() -> anyhow::Result<String> {
 }
 
 fn load_chronosplit_instructions() -> anyhow::Result<String> {
-    let instructions_path = format!("{}/instructions", CONFIG_DIRECTORY);
+    let instructions_path = format!("{CONFIG_DIRECTORY}/instructions");
     if !std::path::Path::new(&instructions_path).exists() {
         std::fs::create_dir_all(&instructions_path)?
     }

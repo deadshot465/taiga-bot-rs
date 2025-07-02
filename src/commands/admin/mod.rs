@@ -34,7 +34,7 @@ pub async fn enable(
     if check_if_channel_id_exists_in_enabled(&channel_control, channel_id).await {
         ctx.send(
             CreateReply::default()
-                .content(format!("The channel <#{}> is already enabled!", channel_id)),
+                .content(format!("The channel <#{channel_id}> is already enabled!")),
         )
         .await?;
     } else {
@@ -45,7 +45,7 @@ pub async fn enable(
         }
         ctx.send(
             CreateReply::default()
-                .content(format!("Successfully enabled channel <#{}>!", channel_id)),
+                .content(format!("Successfully enabled channel <#{channel_id}>!")),
         )
         .await?;
     }
@@ -65,7 +65,7 @@ pub async fn disable(
     if !check_if_channel_id_exists_in_enabled(&channel_control, channel_id).await {
         ctx.send(
             CreateReply::default()
-                .content(format!("The channel <#{}> is not yet enabled!", channel_id)),
+                .content(format!("The channel <#{channel_id}> is not yet enabled!")),
         )
         .await?;
     } else {
@@ -82,7 +82,7 @@ pub async fn disable(
         }
         ctx.send(
             CreateReply::default()
-                .content(format!("Successfully disabled channel <#{}>!", channel_id)),
+                .content(format!("Successfully disabled channel <#{channel_id}>!")),
         )
         .await?;
     }
@@ -101,8 +101,7 @@ pub async fn allow(
 
     if !check_if_channel_id_exists_in_ignored(&channel_control, channel_id).await {
         ctx.send(CreateReply::default().content(format!(
-            "The channel <#{}> is not yet disallowed!",
-            channel_id
+            "The channel <#{channel_id}> is not yet disallowed!"
         )))
         .await?;
     } else {
@@ -118,8 +117,7 @@ pub async fn allow(
             channel_control_write_lock.write_channel_control()?;
         }
         ctx.send(CreateReply::default().content(format!(
-            "Successfully allowed channel <#{}> for bot responses!",
-            channel_id
+            "Successfully allowed channel <#{channel_id}> for bot responses!"
         )))
         .await?;
     }
@@ -138,8 +136,7 @@ pub async fn disallow(
 
     if check_if_channel_id_exists_in_ignored(&channel_control, channel_id).await {
         ctx.send(CreateReply::default().content(format!(
-            "The channel <#{}> is already disallowed!",
-            channel_id
+            "The channel <#{channel_id}> is already disallowed!"
         )))
         .await?;
     } else {
@@ -149,8 +146,7 @@ pub async fn disallow(
             channel_control_write_lock.write_channel_control()?;
         }
         ctx.send(CreateReply::default().content(format!(
-            "Successfully disallowed channel <#{}> for bot responses!",
-            channel_id
+            "Successfully disallowed channel <#{channel_id}> for bot responses!"
         )))
         .await?;
     }
@@ -219,8 +215,7 @@ pub async fn purge(
         .edit(
             ctx,
             CreateReply::default().content(format!(
-                "The last {} messages in this channel will be deleted in 5 seconds.",
-                amount
+                "The last {amount} messages in this channel will be deleted in 5 seconds."
             )),
         )
         .await?;

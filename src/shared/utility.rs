@@ -11,7 +11,7 @@ pub fn find_user_in_members<'a>(user: &'a User, members: &'a [Member]) -> Option
 }
 
 pub fn get_animated_emote_url(emote_id: &str) -> String {
-    format!("https://cdn.discordapp.com/emojis/{}.gif?v=1", emote_id)
+    format!("https://cdn.discordapp.com/emojis/{emote_id}.gif?v=1")
 }
 
 pub fn get_author_avatar(user: &User) -> String {
@@ -33,7 +33,7 @@ pub fn get_first_name(name: &str) -> &str {
 }
 
 pub fn get_static_emote_url(emote_id: &str) -> String {
-    format!("https://cdn.discordapp.com/emojis/{}.png?v=1", emote_id)
+    format!("https://cdn.discordapp.com/emojis/{emote_id}.png?v=1")
 }
 
 pub fn build_author_name_map(messages: &[Message]) -> HashMap<UserId, String> {

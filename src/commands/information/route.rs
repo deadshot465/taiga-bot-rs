@@ -97,7 +97,7 @@ pub async fn route(ctx: Context<'_>) -> Result<(), ContextError> {
             .route
             .entry(route.name.clone())
             .or_default();
-        *route_entry.entry(format!("{} Ending", ending)).or_default() += 1;
+        *route_entry.entry(format!("{ending} Ending")).or_default() += 1;
     }
 
     let user_records_lock = user_records.read().await;

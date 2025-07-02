@@ -53,7 +53,7 @@ pub async fn ship(
     let result_handle =
         tokio::spawn(async move { generate_ship_image(&user_1_avatar, &user_2_avatar) });
 
-    let ship_score_text = format!("Your love score is {}!", ship_score);
+    let ship_score_text = format!("Your love score is {ship_score}!");
     let is_kou = ctx.data().kou;
     let color = if is_kou { KOU_COLOR } else { TAIGA_COLOR };
     match result_handle.await? {
@@ -93,7 +93,7 @@ pub async fn ship(
                         .edit(
                             ctx,
                             CreateReply::default()
-                                .content(format!("Sorry, an occurred! Error: {}", e)),
+                                .content(format!("Sorry, an occurred! Error: {e:?}")),
                         )
                         .await?;
                 }
@@ -135,11 +135,8 @@ async fn send_ship_embed(
             files,
             CreateMessage::new().embed(
                 CreateEmbed::new()
-                    .title(format!(
-                        "{} and {}",
-                        user_1_display_name, user_2_display_name
-                    ))
-                    .description(format!("{}\n\n{}", ship_score_text, ship_msg))
+                    .title(format!("{user_1_display_name} and {user_2_display_name}"))
+                    .description(format!("{ship_score_text}\n\n{ship_msg}"))
                     .attachment("result.png")
                     .color(color),
             ),

@@ -256,7 +256,7 @@ pub async fn get_dog_image(
         Ok(result)
     } else {
         // Try searching for the breed.
-        let url = format!("https://dog.ceo/api/breed/{}/images/random", keyword);
+        let url = format!("https://dog.ceo/api/breed/{keyword}/images/random");
         let search_result =
             fetch_dog_image(&url, client, author_name, author_avatar_url, color).await;
 

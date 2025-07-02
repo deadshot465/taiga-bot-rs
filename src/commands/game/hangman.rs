@@ -91,7 +91,7 @@ pub async fn hangman(ctx: Context<'_>) -> Result<(), ContextError> {
             CreateReply::default().embed(
                 CreateEmbed::new()
                     .author(CreateEmbedAuthor::new(&author_name).icon_url(&author_avatar_url))
-                    .description(format!("You have {} attempts left.", DEFAULT_MAX_ATTEMPTS))
+                    .description(format!("You have {DEFAULT_MAX_ATTEMPTS} attempts left."))
                     .color(HANGMAN_COLOR)
                     .title(&word)
                     .thumbnail(HANGMAN_THUMBNAIL)
@@ -271,7 +271,7 @@ fn hangman_loop(
             .guesses
             .clone()
             .into_iter()
-            .map(|c| format!("'{}'", c))
+            .map(|c| format!("'{c}'"))
             .collect::<Vec<_>>()
             .join(", ");
 

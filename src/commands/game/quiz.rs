@@ -75,7 +75,7 @@ async fn new_game(
 ) -> anyhow::Result<()> {
     let max_rounds = rounds.unwrap_or(DEFAULT_ROUNDS);
     ctx.send(
-        CreateReply::default().content(format!("Starting a game with {} rounds...", max_rounds)),
+        CreateReply::default().content(format!("Starting a game with {max_rounds} rounds...")),
     )
     .await?;
 

@@ -64,7 +64,7 @@ pub async fn handle_bot_responses(
                     new_message.reply(&ctx.http, response).await?;
                 }
                 Err(e) => {
-                    let error_message = format!("Failed to reply to message chain: {}", e);
+                    let error_message = format!("Failed to reply to message chain: {e:?}");
                     tracing::error!("{}", &error_message);
                     new_message.reply(&ctx.http, error_message).await?;
                 }
