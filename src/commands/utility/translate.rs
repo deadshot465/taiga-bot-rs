@@ -19,28 +19,30 @@ pub enum LanguageModel {
     CohereCommandA,
     #[name = "Grok 3"]
     Grok3,
+    #[name = "Grok 4"]
+    Grok4,
     #[name = "DeepSeek R1"]
     DeepSeekR1,
     #[name = "Gemini 2.5 Flash"]
     Gemini25Flash,
     #[name = "MiniMax-M1"]
     MiniMaxM1,
-    #[name = "o3"]
-    O3,
+    #[name = "GPT 5"]
+    Gpt5,
     #[name = "Amazon Nova Pro 1.0"]
     NovaPro,
     #[name = "Gemini 2.5 Pro"]
     Gemini25Pro,
     #[name = "Doubao Seed 1.6"]
     DoubaoSeed16,
-    #[name = "Kimi Latest"]
-    KimiLatest,
+    #[name = "Kimi K2"]
+    KimiK2,
     #[name = "Step 2 16k"]
     Step16k,
-    #[name = "GLM-4-Plus"]
-    Glm4Plus,
-    #[name = "Claude Opus 4"]
-    Opus4,
+    #[name = "GLM 4.5"]
+    Glm45,
+    #[name = "Claude Opus 4.1"]
+    Opus41,
     #[name = "Claude Sonnet 4"]
     Sonnet4,
 }
@@ -99,17 +101,18 @@ impl LanguageModel {
             LanguageModel::QwenMax,
             LanguageModel::CohereCommandA,
             LanguageModel::Grok3,
+            LanguageModel::Grok4,
             LanguageModel::DeepSeekR1,
             LanguageModel::Gemini25Flash,
             LanguageModel::MiniMaxM1,
-            LanguageModel::O3,
+            LanguageModel::Gpt5,
             LanguageModel::NovaPro,
             LanguageModel::Gemini25Pro,
             LanguageModel::DoubaoSeed16,
-            LanguageModel::KimiLatest,
+            LanguageModel::KimiK2,
             LanguageModel::Step16k,
-            LanguageModel::Glm4Plus,
-            LanguageModel::Opus4,
+            LanguageModel::Glm45,
+            LanguageModel::Opus41,
             LanguageModel::Sonnet4,
         ]
     }
@@ -117,7 +120,7 @@ impl LanguageModel {
     pub fn all_except_o1() -> Vec<Self> {
         Self::all()
             .into_iter()
-            .filter(|model| *model != LanguageModel::O3)
+            .filter(|model| *model != LanguageModel::Gpt5)
             .collect()
     }
 }
@@ -137,17 +140,18 @@ impl From<LanguageModel> for String {
             LanguageModel::QwenMax => "Qwen-Max".into(),
             LanguageModel::CohereCommandA => "Cohere Command A".into(),
             LanguageModel::Grok3 => "Grok 3".into(),
+            LanguageModel::Grok4 => "Grok 4".into(),
             LanguageModel::DeepSeekR1 => "DeepSeek R1".into(),
             LanguageModel::Gemini25Flash => "Gemini 2.5 Flash".into(),
             LanguageModel::MiniMaxM1 => "MiniMax M1".into(),
-            LanguageModel::O3 => "o3".into(),
+            LanguageModel::Gpt5 => "GPT 5".into(),
             LanguageModel::NovaPro => "Amazon Nova Pro 1.0".into(),
             LanguageModel::Gemini25Pro => "Gemini Pro 2.5".into(),
             LanguageModel::DoubaoSeed16 => "Doubao Seed 1.6".into(),
-            LanguageModel::KimiLatest => "Kimi Latest".into(),
+            LanguageModel::KimiK2 => "Kimi K2".into(),
             LanguageModel::Step16k => "Step 2 16k".into(),
-            LanguageModel::Glm4Plus => "GLM-4-Plus".into(),
-            LanguageModel::Opus4 => "Claude Opus 4".into(),
+            LanguageModel::Glm45 => "GLM 4.5".into(),
+            LanguageModel::Opus41 => "Claude Opus 4.1".into(),
             LanguageModel::Sonnet4 => "Claude Sonnet 4".into(),
         }
     }

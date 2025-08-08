@@ -21,16 +21,17 @@ const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
 const COHERE_COMMAND_A_MODEL: &str = "cohere/command-a";
 const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1-0528";
 const GROK_3_MODEL: &str = "x-ai/grok-3";
+const GROK_4_MODEL: &str = "x-ai/grok-4";
 const GEMINI_25_FLASH_MODEL: &str = "google/gemini-2.5-flash";
 const MINIMAX_M1_MODEL: &str = "minimax/minimax-m1";
-const O3_MODEL: &str = "o3";
+const GPT_5_MODEL: &str = "gpt-5";
 const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
 const GEMINI_PRO_25_MODEL: &str = "google/gemini-2.5-pro";
 const DOUBAO_SEED_16_MODEL: &str = "doubao-seed-1-6-250615";
-const KIMI_LATEST_MODEL: &str = "kimi-latest";
+const KIMI_K2_MODEL: &str = "kimi-k2-0711-preview";
 const STEP_2_16K_MODEL: &str = "step-2-16k";
-const GLM_4_PLUS_MODEL: &str = "GLM-4-Plus";
-const OPUS_4_MODEL: &str = "anthropic/claude-opus-4";
+const GLM_45_MODEL: &str = "glm-4.5";
+const OPUS_41_MODEL: &str = "anthropic/claude-opus-4.1";
 const SONNET_4_MODEL: &str = "anthropic/claude-sonnet-4";
 const TEMPERATURE: f32 = 1.0;
 const TOP_P: f32 = 1.0;
@@ -139,22 +140,23 @@ pub async fn translate_with_model(
         LanguageModel::QwenMax => QWEN_MAX_MODEL,
         LanguageModel::CohereCommandA => COHERE_COMMAND_A_MODEL,
         LanguageModel::Grok3 => GROK_3_MODEL,
+        LanguageModel::Grok4 => GROK_4_MODEL,
         LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
         LanguageModel::Gemini25Flash => GEMINI_25_FLASH_MODEL,
         LanguageModel::MiniMaxM1 => MINIMAX_M1_MODEL,
-        LanguageModel::O3 => O3_MODEL,
+        LanguageModel::Gpt5 => GPT_5_MODEL,
         LanguageModel::NovaPro => NOVA_PRO_MODEL,
         LanguageModel::Gemini25Pro => GEMINI_PRO_25_MODEL,
         LanguageModel::DoubaoSeed16 => DOUBAO_SEED_16_MODEL,
-        LanguageModel::KimiLatest => KIMI_LATEST_MODEL,
+        LanguageModel::KimiK2 => KIMI_K2_MODEL,
         LanguageModel::Step16k => STEP_2_16K_MODEL,
-        LanguageModel::Glm4Plus => GLM_4_PLUS_MODEL,
-        LanguageModel::Opus4 => OPUS_4_MODEL,
+        LanguageModel::Glm45 => GLM_45_MODEL,
+        LanguageModel::Opus41 => OPUS_41_MODEL,
         LanguageModel::Sonnet4 => SONNET_4_MODEL,
     };
 
     let system_prompt = match model {
-        LanguageModel::O3 => {
+        LanguageModel::Gpt5 => {
             ChatCompletionRequestMessage::Developer(ChatCompletionRequestDeveloperMessage {
                 content: ChatCompletionRequestDeveloperMessageContent::Text(system_prompt),
                 name: None,
@@ -175,7 +177,7 @@ pub async fn translate_with_model(
     ];
 
     let temperature = match model {
-        LanguageModel::KimiLatest => 0.3,
+        LanguageModel::KimiK2 => 0.3,
         LanguageModel::DeepSeekV3 => 1.8,
         _ => TEMPERATURE,
     };
@@ -193,7 +195,7 @@ pub async fn translate_with_model(
         .messages(messages);
 
     let request = match model {
-        LanguageModel::O3 => request.reasoning_effort(ReasoningEffort::High).build()?,
+        LanguageModel::Gpt5 => request.reasoning_effort(ReasoningEffort::High).build()?,
         m if m == LanguageModel::DeepSeekV3 || m == LanguageModel::DeepSeekR1 => request
             .provider(ChatCompletionRequestProvider {
                 order: vec!["DeepSeek".into()],
@@ -204,7 +206,7 @@ pub async fn translate_with_model(
     };
 
     let result = match model {
-        LanguageModel::O3 => openai_client.chat().create(request).await,
+        LanguageModel::Gpt5 => openai_client.chat().create(request).await,
         LanguageModel::DoubaoSeed16 => {
             openai_compatible_clients
                 .volc_engine_client
@@ -212,7 +214,7 @@ pub async fn translate_with_model(
                 .create(request)
                 .await
         }
-        LanguageModel::KimiLatest => {
+        LanguageModel::KimiK2 => {
             openai_compatible_clients
                 .moonshot_client
                 .chat()
@@ -226,7 +228,7 @@ pub async fn translate_with_model(
                 .create(request)
                 .await
         }
-        LanguageModel::Glm4Plus => {
+        LanguageModel::Glm45 => {
             openai_compatible_clients
                 .zhipu_client
                 .chat()

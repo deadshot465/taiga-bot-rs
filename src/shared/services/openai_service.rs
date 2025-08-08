@@ -23,12 +23,10 @@ use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
 use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
 
-const TEXT_MODEL: &str = "gpt-4o";
-const VISION_MODEL: &str = "gpt-4o";
+const TEXT_MODEL: &str = "gpt-5";
 const TEMPERATURE: f32 = 1.0;
-const MAX_TOKENS: u16 = 4_000;
-const GPT4_MAX_ALLOWED_TOKENS: usize = 128_000;
-const ALLOWED_PREVIOUS_CONTEXT_LENGTH: usize = GPT4_MAX_ALLOWED_TOKENS / 20;
+const GPT5_MAX_ALLOWED_TOKENS: usize = 400_000;
+const ALLOWED_PREVIOUS_CONTEXT_LENGTH: usize = GPT5_MAX_ALLOWED_TOKENS / 20;
 
 const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.\
 \
@@ -64,7 +62,6 @@ pub async fn build_openai_message(
     });
 
     let mut messages = vec![];
-    let has_attachment = attachment.is_some();
     let author_name = message
         .author_nick(&ctx.http)
         .await
@@ -117,13 +114,8 @@ pub async fn build_openai_message(
         build_messages_with_previous_contexts(previous_messages, messages, is_kou, bot_id).await?;
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model(if has_attachment {
-            VISION_MODEL
-        } else {
-            TEXT_MODEL
-        })
+        .model(TEXT_MODEL)
         .temperature(TEMPERATURE)
-        .max_tokens(MAX_TOKENS)
         .messages(messages)
         .build();
 
