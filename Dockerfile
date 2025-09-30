@@ -7,7 +7,7 @@ WORKDIR /src/target/release
 RUN rm -rf ./build && rm -rf ./deps && rm -rf ./examples && rm -rf ./incremental
 WORKDIR /src
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 WORKDIR /root
 RUN apt-get update && apt-get install -y apt-transport-https wget curl gnupg openssl && \
     rm -rf /var/lib/apt/lists/*
