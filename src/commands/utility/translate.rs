@@ -3,6 +3,7 @@ use serenity::all::Attachment;
 use std::fmt::{Display, Formatter};
 
 use crate::shared::services::open_router_service::translate_with_model;
+use crate::shared::structs::novel::Novel;
 use crate::shared::structs::{Context, ContextError};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
@@ -45,13 +46,6 @@ pub enum LanguageModel {
     Opus41,
     #[name = "Claude Sonnet 4"]
     Sonnet4,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq, poise::ChoiceParameter)]
-pub enum Novel {
-    #[name = "Forged in Starlight"]
-    ForgedInStarlight,
-    Chronosplit,
 }
 
 /// Translate English to traditional Chinese. This is designed for Tetsu's Forged in Starlight.

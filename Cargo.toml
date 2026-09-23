@@ -1,6 +1,6 @@
 [package]
 name = "taiga-bot-rs"
-version = "6.7.2"
+version = "7.0.0"
 authors = ["Chehui Chou <deadshot465@users.noreply.github.com>"]
 edition = "2024"
 
@@ -8,7 +8,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = ">=1.0.104"
-async-openai = { git = "https://github.com/deadshot465/async-openai.git" }
+async-openai = { git = "https://github.com/deadshot465/async-openai.git", features = ["chat-completion", "responses"] }
 base64 = ">=0.23.1"
 chrono = { version = ">=0.4", features = ["serde"] }
 dashmap = "6.2.1"
@@ -32,6 +32,7 @@ tracing-subscriber = "0.3.23"
 log = "0.4.34"
 time = { version = "0.3.55", features = ["serde", "serde-well-known"] }
 tiktoken-rs = { version = "0.12.0", features = ["async-openai"] }
+itertools = "0.15.0"
 
 [profile.dev]
 split-debuginfo = "unpacked"

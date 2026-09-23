@@ -1,4 +1,5 @@
 pub mod about;
+pub mod get_info;
 pub mod guide;
 pub mod meal;
 pub mod oracle;

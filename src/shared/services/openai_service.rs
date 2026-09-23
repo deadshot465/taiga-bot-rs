@@ -2,13 +2,11 @@ use std::clone::Clone;
 
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
-use async_openai::types::{
-    ChatCompletionRequestAssistantMessage, ChatCompletionRequestAssistantMessageContent,
-    ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
-    ChatCompletionRequestMessageContentPartText, ChatCompletionRequestSystemMessage,
-    ChatCompletionRequestSystemMessageContent, ChatCompletionRequestUserMessage,
-    ChatCompletionRequestUserMessageContent, ChatCompletionRequestUserMessageContentPart,
-    CreateChatCompletionRequestArgs, ImageDetail, ImageUrl,
+use async_openai::types::chat::{ImageDetail, ReasoningEffort};
+use async_openai::types::responses::{
+    CreateResponseArgs, EasyInputContent, EasyInputMessage, InputImageContent, InputItem,
+    InputTextContent, Reasoning, ReasoningModeEnum, SearchContentType, Tool, WebSearchTool,
+    WebSearchToolSearchContextSize,
 };
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -23,10 +21,10 @@ use crate::shared::structs::authentication::login;
 use crate::shared::structs::config::configuration::Configuration;
 use crate::shared::structs::record::message::{MessageInfo, MessageRecordSimple};
 
-const TEXT_MODEL: &str = "gpt-5";
+const TEXT_MODEL: &str = "gpt-6-sol";
 const TEMPERATURE: f32 = 1.0;
-const GPT5_MAX_ALLOWED_TOKENS: usize = 400_000;
-const ALLOWED_PREVIOUS_CONTEXT_LENGTH: usize = GPT5_MAX_ALLOWED_TOKENS / 20;
+const GPT6_MAX_ALLOWED_TOKENS: usize = 1_000_000;
+const ALLOWED_PREVIOUS_CONTEXT_LENGTH: usize = GPT6_MAX_ALLOWED_TOKENS / 20;
 
 const KOU_SYSTEM_PROMPT: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou. You will summarize the discussion so far and try your best to respond or continue the conversation even if you don't have the full context.\
 \
@@ -61,49 +59,44 @@ pub async fn build_openai_message(
         }
     });
 
-    let mut messages = vec![];
     let author_name = message
         .author_nick(&ctx.http)
         .await
         .unwrap_or(message.author.name.clone());
 
+    let mut request = CreateResponseArgs::default();
+    let mut messages: Vec<InputItem> = Vec::new();
+
     if let Some(attachment) = attachment {
-        let messages_for_image = vec![
-            ChatCompletionRequestUserMessageContentPart::Text(
-                ChatCompletionRequestMessageContentPartText {
-                    text: format!("{}: {}", author_name, message.content.clone()),
-                },
-            ),
-            ChatCompletionRequestUserMessageContentPart::Text(
-                ChatCompletionRequestMessageContentPartText {
-                    text: "What's your opinion on this image?".to_string(),
-                },
-            ),
-            ChatCompletionRequestUserMessageContentPart::ImageUrl(
-                ChatCompletionRequestMessageContentPartImage {
-                    image_url: ImageUrl {
-                        url: attachment.url.clone(),
-                        detail: Some(ImageDetail::High),
-                    },
-                },
-            ),
-        ];
-        messages.push(ChatCompletionRequestMessage::User(
-            ChatCompletionRequestUserMessage {
-                content: ChatCompletionRequestUserMessageContent::Array(messages_for_image),
-                name: None,
-            },
-        ))
-    } else {
-        messages.push(ChatCompletionRequestMessage::User(
-            ChatCompletionRequestUserMessage {
-                content: ChatCompletionRequestUserMessageContent::Text(format!(
+        let mut new_messages = vec![
+            InputItem::EasyMessage(format!("{}: {}", author_name, message.content.clone()).into()),
+            InputItem::EasyMessage(
+                format!(
                     "{}: {}",
                     author_name,
-                    message.content.clone()
-                )),
-                name: None,
-            },
+                    "What's your opinion on this image?".to_string()
+                )
+                .into(),
+            ),
+            InputItem::EasyMessage(EasyInputMessage {
+                role: async_openai::types::responses::Role::User,
+                content: EasyInputContent::ContentList(vec![
+                    InputImageContent {
+                        detail: ImageDetail::Original,
+                        file_id: None,
+                        image_url: Some(attachment.url.clone()),
+                        prompt_cache_breakpoint: None,
+                    }
+                    .into(),
+                ]),
+                ..Default::default()
+            }),
+        ];
+
+        messages.append(&mut new_messages);
+    } else {
+        messages.push(InputItem::EasyMessage(
+            format!("{}: {}", author_name, message.content.clone()).into(),
         ));
     }
 
@@ -113,19 +106,28 @@ pub async fn build_openai_message(
     let messages =
         build_messages_with_previous_contexts(previous_messages, messages, is_kou, bot_id).await?;
 
-    let request = CreateChatCompletionRequestArgs::default()
+    let request = request
         .model(TEXT_MODEL)
         .temperature(TEMPERATURE)
-        .messages(messages)
+        .input(messages)
+        .reasoning(Reasoning {
+            effort: Some(ReasoningEffort::High),
+            mode: Some(ReasoningModeEnum::Standard),
+            ..Default::default()
+        })
+        .tools(vec![Tool::WebSearch(WebSearchTool {
+            search_context_size: Some(WebSearchToolSearchContextSize::Medium),
+            external_web_access: Some(true),
+            search_content_types: Some(vec![SearchContentType::Text, SearchContentType::Image]),
+            ..Default::default()
+        })])
         .build();
 
     match request {
-        Ok(request) => match data.openai_client.chat().create(request).await {
+        Ok(request) => match data.openai_client.responses().create(request).await {
             Ok(response) => {
-                let response_message = response.choices[0]
-                    .message
-                    .content
-                    .clone()
+                let response_message = response
+                    .output_text()
                     .unwrap_or("Sorry, but I might not be able to respond to that!".into());
 
                 record_openai_response(
@@ -145,10 +147,10 @@ pub async fn build_openai_message(
 
 async fn build_messages_with_previous_contexts(
     previous_messages: Vec<MessageRecordSimple>,
-    mut new_messages: Vec<ChatCompletionRequestMessage>,
+    mut new_messages: Vec<InputItem>,
     is_kou: bool,
     bot_id: u64,
-) -> anyhow::Result<Vec<ChatCompletionRequestMessage>> {
+) -> anyhow::Result<Vec<InputItem>> {
     let system_prompt = if is_kou {
         KOU_SYSTEM_PROMPT.to_string()
     } else {
@@ -156,12 +158,6 @@ async fn build_messages_with_previous_contexts(
     };
 
     let system_prompt_length = system_prompt.chars().count();
-
-    let system_message = ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-        content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
-        name: None,
-    });
-
     let bot_id = bot_id.to_string();
 
     let mut previous_messages = previous_messages
@@ -171,14 +167,14 @@ async fn build_messages_with_previous_contexts(
         })
         .map(|rec| {
             if rec.user_id == bot_id.as_str() {
-                ChatCompletionRequestMessage::Assistant(ChatCompletionRequestAssistantMessage {
-                    content: Some(ChatCompletionRequestAssistantMessageContent::Text(
-                        rec.message,
-                    )),
-                    ..ChatCompletionRequestAssistantMessage::default()
+                InputItem::EasyMessage(EasyInputMessage {
+                    role: async_openai::types::responses::Role::Assistant,
+                    content: rec.message.into(),
+                    ..Default::default()
                 })
             } else {
-                ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                InputItem::EasyMessage(EasyInputMessage {
+                    role: async_openai::types::responses::Role::User,
                     content: match rec.message_type.as_str() {
                         "image" => {
                             let index = rec.message.find("[image_url=").unwrap_or_default();
@@ -188,35 +184,34 @@ async fn build_messages_with_previous_contexts(
                                 .and_then(|c| c.get(1))
                                 .map(|m| m.as_str().to_string())
                                 .unwrap_or_default();
-
-                            ChatCompletionRequestUserMessageContent::Array(vec![
-                                ChatCompletionRequestUserMessageContentPart::Text(
-                                    ChatCompletionRequestMessageContentPartText {
-                                        text: format!("{}: {}", rec.user_name, prompt_part),
-                                    },
-                                ),
-                                ChatCompletionRequestUserMessageContentPart::ImageUrl(
-                                    ChatCompletionRequestMessageContentPartImage {
-                                        image_url: ImageUrl {
-                                            url: image_url,
-                                            detail: Some(ImageDetail::High),
-                                        },
-                                    },
-                                ),
+                            EasyInputContent::ContentList(vec![
+                                InputTextContent {
+                                    text: format!("{}: {}", rec.user_name, prompt_part),
+                                    prompt_cache_breakpoint: None,
+                                }
+                                .into(),
+                                InputImageContent {
+                                    detail: ImageDetail::Original,
+                                    file_id: None,
+                                    image_url: Some(image_url),
+                                    ..Default::default()
+                                }
+                                .into(),
                             ])
                         }
-                        _ => ChatCompletionRequestUserMessageContent::Text(format!(
-                            "{}: {}",
-                            rec.user_name, rec.message
-                        )),
+                        _ => format!("{}: {}", rec.user_name, rec.message).into(),
                     },
-                    ..ChatCompletionRequestUserMessage::default()
+                    ..Default::default()
                 })
             }
         })
         .collect::<Vec<_>>();
 
-    let mut built_messages = vec![system_message];
+    let mut built_messages = vec![InputItem::EasyMessage(EasyInputMessage {
+        role: async_openai::types::responses::Role::Developer,
+        content: system_prompt.into(),
+        ..Default::default()
+    })];
     built_messages.append(&mut previous_messages);
     built_messages.append(&mut new_messages);
     Ok(built_messages)

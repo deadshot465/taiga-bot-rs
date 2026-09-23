@@ -1,15 +1,9 @@
-use crate::commands::utility::translate::{LanguageModel, Novel};
+use crate::commands::utility::translate::LanguageModel;
+use crate::shared::structs::novel::Novel;
 use crate::shared::structs::{ContextData, OpenAICompatibleClients};
 use crate::shared::utility::build_author_name_map;
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
-use async_openai::types::{
-    ChatCompletionRequestDeveloperMessage, ChatCompletionRequestDeveloperMessageContent,
-    ChatCompletionRequestMessage, ChatCompletionRequestProvider,
-    ChatCompletionRequestSystemMessage, ChatCompletionRequestSystemMessageContent,
-    ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
-    CreateChatCompletionRequestArgs, ReasoningEffort,
-};
 use serenity::all::{Attachment, GetMessages, Message};
 use serenity::client::Context;
 use std::sync::Arc;

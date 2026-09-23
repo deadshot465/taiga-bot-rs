@@ -1,5 +1,6 @@
-use crate::commands::utility::translate::{LanguageModel, Novel};
+use crate::commands::utility::translate::LanguageModel;
 use crate::shared::services::open_router_service::translate_with_model;
+use crate::shared::structs::novel::Novel;
 use crate::shared::structs::{Context, ContextError};
 use poise::CreateReply;
 use serenity::all::{Attachment, CreateAttachment};
