@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use once_cell::sync::Lazy;
 use poise::CreateReply;
 use regex::Regex;

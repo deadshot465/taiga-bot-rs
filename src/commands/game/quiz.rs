@@ -284,7 +284,7 @@ async fn progress_game(
             let mut rng = rand::rng();
             ctx.data()
                 .quiz_questions
-                .choose_multiple(&mut rng, max_rounds as usize)
+                .sample(&mut rng, max_rounds as usize)
                 .zip(1..=max_rounds)
                 .collect::<Vec<_>>()
         };

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use poise::CreateReply;
 use rand::prelude::*;
 use serenity::builder::{CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};

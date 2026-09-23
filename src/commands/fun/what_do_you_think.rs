@@ -3,7 +3,6 @@ use crate::shared::structs::{ContextData, ContextError};
 use crate::shared::utility::get_author_name;
 use poise::CreateReply;
 use serenity::all::Message;
-use std::borrow::Cow;
 
 #[poise::command(context_menu_command = "What do you think?")]
 pub async fn what_do_you_think(
@@ -28,7 +27,7 @@ pub async fn what_do_you_think(
 
     ctx.defer().await?;
 
-    match opine_specific(ctx.data, prompt).await {
+    match opine_specific(ctx.data(), prompt).await {
         Ok(response) => {
             ctx.send(CreateReply::default().content(response)).await?;
         }

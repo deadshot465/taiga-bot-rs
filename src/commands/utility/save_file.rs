@@ -40,13 +40,13 @@ pub async fn save_file(
             file_url,
         };
 
-        let endpoint = format!("{}/{}", &ctx.data.config.server_endpoint, "save_file");
+        let endpoint = format!("{}/{}", &ctx.data().config.server_endpoint, "save_file");
 
-        login(ctx.data).await?;
-        let auth = ctx.data.authentication.clone();
+        login(ctx.data()).await?;
+        let auth = ctx.data().authentication.clone();
 
         let response = ctx
-            .data
+            .data()
             .http_client
             .post(endpoint)
             .json(&request)

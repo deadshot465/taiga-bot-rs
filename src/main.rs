@@ -135,12 +135,10 @@ async fn main() -> anyhow::Result<()> {
                     .everyone(true),
             ),
             reply_callback: None,
-            event_handler: |ctx, event, framework, data| {
-                Box::pin(handle_event(ctx, event, framework, data))
-            },
+            event_handler: |ctx, event| Box::pin(handle_event(ctx, event)),
             initialize_owners: true,
             prefix_options: PrefixFrameworkOptions {
-                prefix: Some(prefix),
+                prefix: Some(prefix.into()),
                 mention_as_prefix: false,
                 execute_self_messages: false,
                 ignore_bots: true,
@@ -184,7 +182,7 @@ async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextEr
             );
         }
         FrameworkError::Command { error, ctx, .. } => {
-            let command_name = ctx.command().name.as_str();
+            let command_name = &*ctx.command().name;
             tracing::error!(
                 "Failed to execute command {}, error: {}",
                 command_name,
@@ -220,7 +218,7 @@ async fn handle_error(framework_error: FrameworkError<'_, ContextData, ContextEr
                 }
             }
 
-            let command_name = ctx.command().name.as_str();
+            let command_name = ctx.command().name.to_string();
             tracing::error!(
                 "Command check failed, command: {}, error: {:?}",
                 command_name,
@@ -256,9 +254,9 @@ fn check_command(ctx: Context<'_>) -> BoxFuture<'_, Result<bool, ContextError>> 
 
 async fn check_command_async(ctx: Context<'_>) -> Result<bool, ContextError> {
     let channel_id = ctx.channel_id();
-    let command_name = ctx.command().name.as_str();
+    let command_name = ctx.command().name.to_string();
     let channel_control = ctx.data().channel_control.read().await;
-    Ok(SKIP_CHECK_COMMANDS.contains(&command_name)
+    Ok(SKIP_CHECK_COMMANDS.contains(&command_name.as_str())
         || channel_control.enabled_channels.contains(&channel_id.get()))
 }
 

@@ -114,32 +114,32 @@ pub async fn answer_anon(ctx: Context<'_>) -> Result<(), ContextError> {
         .filter(move |mci| mci.data.custom_id == custom_id)
         .await
     {
+        let serenity_ctx = ctx.serenity_context();
+
         if let ComponentInteractionDataKind::StringSelect { values } = mci.clone().data.kind {
-            if let Context::Application(context) = ctx {
-                let index = values[0].find(':').unwrap_or_default();
-                let thread_id = &values[0][(index + 1)..];
-                let thread_id = ChannelId::new(thread_id.parse::<u64>().unwrap_or_default());
+            let index = values[0].find(':').unwrap_or_default();
+            let thread_id = &values[0][(index + 1)..];
+            let thread_id = ChannelId::new(thread_id.parse::<u64>().unwrap_or_default());
 
-                if let Some(modal_data) = execute_modal_on_component_interaction(
-                    context,
-                    mci,
-                    None::<AnswerAnonModal>,
-                    None,
-                )
-                .await?
-                {
-                    let channel = ctx.http().get_channel(thread_id).await?;
-                    if let Some(guild_channel) = channel.guild() {
-                        guild_channel
-                            .send_message(
-                                ctx.http(),
-                                CreateMessage::new()
-                                    .content(format!("Anonymous: {}", modal_data.answer)),
-                            )
-                            .await?;
+            if let Some(modal_data) = execute_modal_on_component_interaction(
+                serenity_ctx,
+                mci,
+                None::<AnswerAnonModal>,
+                None,
+            )
+            .await?
+            {
+                let channel = ctx.http().get_channel(thread_id).await?;
+                if let Some(guild_channel) = channel.guild() {
+                    guild_channel
+                        .send_message(
+                            ctx.http(),
+                            CreateMessage::new()
+                                .content(format!("Anonymous: {}", modal_data.answer)),
+                        )
+                        .await?;
 
-                        reply_handle.delete(ctx).await?;
-                    }
+                    reply_handle.delete(ctx).await?;
                 }
             }
         }

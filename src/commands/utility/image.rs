@@ -4,7 +4,6 @@ use crate::shared::structs::{Context, ContextError};
 use crate::shared::utility::{get_author_avatar, get_author_name};
 use poise::CreateReply;
 use rand::prelude::*;
-use std::borrow::Cow;
 
 /// Get random images based on keywords.
 #[poise::command(

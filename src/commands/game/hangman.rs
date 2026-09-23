@@ -11,7 +11,6 @@ use serenity::all::{
 use serenity::builder::CreateEmbed;
 use serenity::futures::prelude::future::BoxFuture;
 use serenity::model::prelude::User;
-use std::borrow::Cow;
 
 const HANGMAN_COLOR: Color = Color::new(0xffd43b);
 const DEFAULT_MAX_ATTEMPTS: i32 = 10;
