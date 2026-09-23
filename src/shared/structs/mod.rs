@@ -36,6 +36,9 @@ const VOLC_ENGINE_BASE_URL: &str = "https://ark.cn-beijing.volces.com/api/v3";
 const MOONSHOT_BASE_URL: &str = "https://api.moonshot.cn/v1";
 const STEP_BASE_URL: &str = "https://api.stepfun.com/v1";
 const ZHIPU_BASE_URL: &str = "https://open.bigmodel.cn/api/paas/v4";
+const XIAOMI_BASE_URL: &str = "https://api.xiaomimimo.com/v1";
+const DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com/v1";
+const ALIBABA_BASE_URL: &str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1";
 
 #[derive(Debug, Clone)]
 pub struct ContextData {
@@ -70,6 +73,9 @@ pub struct OpenAICompatibleClients {
     pub moonshot_client: async_openai::Client<OpenAIConfig>,
     pub step_client: async_openai::Client<OpenAIConfig>,
     pub zhipu_client: async_openai::Client<OpenAIConfig>,
+    pub alibaba_client: async_openai::Client<OpenAIConfig>,
+    pub deepseek_client: async_openai::Client<OpenAIConfig>,
+    pub xiaomi_client: async_openai::Client<OpenAIConfig>,
 }
 
 pub type ContextError = Box<dyn std::error::Error + Send + Sync>;
@@ -95,6 +101,9 @@ impl OpenAICompatibleClients {
                 ZHIPU_BASE_URL,
                 &config.zhipu_api_key,
             ),
+            alibaba_client: initialize_openai_compatible_client(ALIBABA_BASE_URL, &config.alibaba_api_key),
+            deepseek_client: initialize_openai_compatible_client(DEEPSEEK_BASE_URL, &config.deepseek_api_key),
+            xiaomi_client: initialize_openai_compatible_client(XIAOMI_BASE_URL, &config.xiaomi_api_key),
         }
     }
 }

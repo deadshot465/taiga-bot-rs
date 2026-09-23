@@ -1,50 +1,30 @@
-use crate::commands::utility::translate::LanguageModel;
-use crate::shared::structs::novel::Novel;
-use crate::shared::structs::{ContextData, OpenAICompatibleClients};
+#![allow(dead_code)]
+use crate::shared::structs::ContextData;
 use crate::shared::utility::build_author_name_map;
 use async_openai::Client;
 use async_openai::config::OpenAIConfig;
-use serenity::all::{Attachment, GetMessages, Message};
+use async_openai::types::chat::{
+    ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
+    CreateChatCompletionRequestArgs, ReasoningEffort,
+};
+use serenity::all::{GetMessages, Message};
 use serenity::client::Context;
-use std::sync::Arc;
 
-const DEEP_SEEK_MODEL: &str = "deepseek/deepseek-chat-v3-0324";
-const GPT_41_MODEL: &str = "openai/gpt-4.1";
-const MISTRAL_LARGE_2411_MODEL: &str = "mistralai/mistral-large-2411";
-const QWEN_MAX_MODEL: &str = "qwen/qwen-max";
-const COHERE_COMMAND_A_MODEL: &str = "cohere/command-a";
-const DEEP_SEEK_R1_MODEL: &str = "deepseek/deepseek-r1-0528";
-const GROK_3_MODEL: &str = "x-ai/grok-3";
-const GROK_4_MODEL: &str = "x-ai/grok-4";
-const GEMINI_25_FLASH_MODEL: &str = "google/gemini-2.5-flash";
-const MINIMAX_M1_MODEL: &str = "minimax/minimax-m1";
-const GPT_5_MODEL: &str = "gpt-5";
-const NOVA_PRO_MODEL: &str = "amazon/nova-pro-v1";
-const GEMINI_PRO_25_MODEL: &str = "google/gemini-2.5-pro";
-const DOUBAO_SEED_16_MODEL: &str = "doubao-seed-1-6-250615";
-const KIMI_K2_MODEL: &str = "kimi-k2-0711-preview";
-const STEP_2_16K_MODEL: &str = "step-2-16k";
-const GLM_45_MODEL: &str = "glm-4.5";
-const OPUS_41_MODEL: &str = "anthropic/claude-opus-4.1";
-const SONNET_4_MODEL: &str = "anthropic/claude-sonnet-4";
-const TEMPERATURE: f32 = 1.0;
-const TOP_P: f32 = 1.0;
-
-const FORGED_IN_STARLIGHT_SYSTEM_PROMPT: &str = "你是一位獲獎無數的中文科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
-    你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
-    你充滿創意與自由，擅長使用你獲獎無數的中文科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
-    請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
-    記住：你的主要讀者及對象是居住在台灣的台灣居民，因此在翻譯角色間的對話時，必須翻譯成符合台灣人對話方式的中文。\
-    \
-    在翻譯時，請務必記得以下指示：{INSTRUCTION}";
-
-const CHRONOSPLIT_SYSTEM_PROMPT: &str = "你是一位獲獎無數的中文都市奇幻與科幻小說作家。你有完美的記憶能力並且會嚴格遵守獲得的指示與前後文。\
-    你會完美記得所有的內容跟提示，並且不會偏離劇情的內容與方向。\
-    你充滿創意與自由，擅長使用你獲獎無數的中文都市奇幻與科幻小說筆觸及高品質文學作品的水準，將英文小說的內容翻成繁體中文。\
-    請將重點擺在將語句和角色間的對話翻譯成自然、通順，且符合繁體中文口語及對話習慣的內容，而不是執著於將英文直翻為中文。\
-    記住：你的主要讀者及對象是居住在台灣的台灣居民，因此在翻譯角色間的對話時，必須翻譯成符合台灣人對話方式的中文。\
-    \
-    在翻譯時，請務必記得以下指示：{INSTRUCTION}";
+const DEEP_SEEK_FLASH_MODEL: &str = "deepseek-flash";
+const QWEN_38_MAX_MODEL: &str = "qwen3.8-max";
+const GROK_47_MODEL: &str = "x-ai/grok-4.7";
+const GEMINI_38_FLASH_MODEL: &str = "google/gemini-3.8-flash";
+const MINIMAX_M3_MODEL: &str = "minimax/minimax-m3";
+const GPT_6_MODEL: &str = "gpt-6-sol";
+const GEMINI_PRO_31_MODEL: &str = "google/gemini-3.1-pro-preview";
+const DOUBAO_SEED_21_PRO_MODEL: &str = "doubao-seed-2-1-pro-260628";
+const KIMI_K3_MODEL: &str = "kimi-k3";
+const STEP_37_MODEL: &str = "step-3.7-flash";
+const GLM_53_MODEL: &str = "glm-5.3";
+const MIMO_25_PRO_MODEL: &str = "mimo-v2.5-pro";
+const OPUS_55_MODEL: &str = "anthropic/claude-opus-5.5";
+const TEMPERATURE: f32 = 1.8;
+const TOP_P: f32 = 0.98;
 
 const OPINE_SYSTEM_PROMPT_KOU: &str = "You are Minamoto Kou from the manga Toilet-bound Hanako-kun. You are a friend to Hanako-kun and Yashiro Nene. Minamoto Teru is your elder brother. Mitsuba is also your friend. As a member of the Minamoto family, you are not afraid of ghosts. Your responses will be kind-hearted, friendly, and enthusiastic, and should match the personality of Minamoto Kou.\
 \
@@ -109,145 +89,6 @@ pub fn initialize_openai_compatible_client(base_url: &str, api_key: &str) -> Cli
     Client::with_config(config)
 }
 
-pub async fn translate_with_model(
-    novel: Novel,
-    instructions: String,
-    openai_client: Client<OpenAIConfig>,
-    openai_compatible_clients: Arc<OpenAICompatibleClients>,
-    attachment: Attachment,
-    model: LanguageModel,
-) -> anyhow::Result<String> {
-    let raw_bytes = attachment.download().await?;
-    let text = String::from_utf8(raw_bytes)?;
-    let replacement = format!("\n{instructions}");
-    let system_prompt = match novel {
-        Novel::ForgedInStarlight => {
-            FORGED_IN_STARLIGHT_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement)
-        }
-        Novel::Chronosplit => CHRONOSPLIT_SYSTEM_PROMPT.replace("{INSTRUCTION}", &replacement),
-    };
-
-    let model_str = match model {
-        LanguageModel::DeepSeekV3 => DEEP_SEEK_MODEL,
-        LanguageModel::Gpt41 => GPT_41_MODEL,
-        LanguageModel::MistralLarge => MISTRAL_LARGE_2411_MODEL,
-        LanguageModel::QwenMax => QWEN_MAX_MODEL,
-        LanguageModel::CohereCommandA => COHERE_COMMAND_A_MODEL,
-        LanguageModel::Grok3 => GROK_3_MODEL,
-        LanguageModel::Grok4 => GROK_4_MODEL,
-        LanguageModel::DeepSeekR1 => DEEP_SEEK_R1_MODEL,
-        LanguageModel::Gemini25Flash => GEMINI_25_FLASH_MODEL,
-        LanguageModel::MiniMaxM1 => MINIMAX_M1_MODEL,
-        LanguageModel::Gpt5 => GPT_5_MODEL,
-        LanguageModel::NovaPro => NOVA_PRO_MODEL,
-        LanguageModel::Gemini25Pro => GEMINI_PRO_25_MODEL,
-        LanguageModel::DoubaoSeed16 => DOUBAO_SEED_16_MODEL,
-        LanguageModel::KimiK2 => KIMI_K2_MODEL,
-        LanguageModel::Step16k => STEP_2_16K_MODEL,
-        LanguageModel::Glm45 => GLM_45_MODEL,
-        LanguageModel::Opus41 => OPUS_41_MODEL,
-        LanguageModel::Sonnet4 => SONNET_4_MODEL,
-    };
-
-    let system_prompt = match model {
-        LanguageModel::Gpt5 => {
-            ChatCompletionRequestMessage::Developer(ChatCompletionRequestDeveloperMessage {
-                content: ChatCompletionRequestDeveloperMessageContent::Text(system_prompt),
-                name: None,
-            })
-        }
-        _ => ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
-            name: None,
-        }),
-    };
-
-    let messages = vec![
-        system_prompt,
-        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-            content: ChatCompletionRequestUserMessageContent::Text(text),
-            name: None,
-        }),
-    ];
-
-    let temperature = match model {
-        LanguageModel::KimiK2 => 0.3,
-        LanguageModel::DeepSeekV3 => 1.8,
-        _ => TEMPERATURE,
-    };
-
-    let top_p = match model {
-        LanguageModel::DeepSeekV3 => 0.98,
-        _ => TOP_P,
-    };
-
-    let mut request = CreateChatCompletionRequestArgs::default();
-    request
-        .model(model_str)
-        .temperature(temperature)
-        .top_p(top_p)
-        .messages(messages);
-
-    let request = match model {
-        LanguageModel::Gpt5 => request.reasoning_effort(ReasoningEffort::High).build()?,
-        m if m == LanguageModel::DeepSeekV3 || m == LanguageModel::DeepSeekR1 => request
-            .provider(ChatCompletionRequestProvider {
-                order: vec!["DeepSeek".into()],
-                allow_fallbacks: false,
-            })
-            .build()?,
-        _ => request.build()?,
-    };
-
-    let result = match model {
-        LanguageModel::Gpt5 => openai_client.chat().create(request).await,
-        LanguageModel::DoubaoSeed16 => {
-            openai_compatible_clients
-                .volc_engine_client
-                .chat()
-                .create(request)
-                .await
-        }
-        LanguageModel::KimiK2 => {
-            openai_compatible_clients
-                .moonshot_client
-                .chat()
-                .create(request)
-                .await
-        }
-        LanguageModel::Step16k => {
-            openai_compatible_clients
-                .step_client
-                .chat()
-                .create(request)
-                .await
-        }
-        LanguageModel::Glm45 => {
-            openai_compatible_clients
-                .zhipu_client
-                .chat()
-                .create(request)
-                .await
-        }
-        _ => {
-            openai_compatible_clients
-                .open_router_client
-                .chat()
-                .create(request)
-                .await
-        }
-    };
-
-    match result {
-        Ok(response) => response.choices[0]
-            .message
-            .content
-            .clone()
-            .ok_or_else(|| anyhow::anyhow!("Sorry, but I can't seem to translate that!")),
-        Err(e) => Err(anyhow::anyhow!("Failed to send Open Router request: {}", e)),
-    }
-}
-
 pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Result<String> {
     let system_prompt = if data.kou {
         OPINE_SYSTEM_PROMPT_KOU
@@ -261,26 +102,20 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
             .to_string()
     };
 
-    let messages = vec![
-        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
-            name: None,
-        }),
-        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-            content: ChatCompletionRequestUserMessageContent::Text(prompt),
-            name: None,
-        }),
-    ];
-
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_2411_MODEL)
-        .messages(messages)
+        .model(DEEP_SEEK_FLASH_MODEL)
+        .messages(vec![
+            ChatCompletionRequestSystemMessage::from(system_prompt).into(),
+            ChatCompletionRequestUserMessage::from(prompt).into(),
+        ])
         .temperature(TEMPERATURE)
+        .top_p(TOP_P)
+        .reasoning_effort(ReasoningEffort::High)
         .build()?;
 
     match data
         .openai_compatible_clients
-        .open_router_client
+        .deepseek_client
         .chat()
         .create(request)
         .await
@@ -295,26 +130,20 @@ pub async fn opine_specific(data: &ContextData, prompt: String) -> anyhow::Resul
 }
 
 pub async fn categorize_question(data: &ContextData, message: String) -> anyhow::Result<String> {
-    let messages = vec![
-        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: CATEGORIZE_QUESTION_SYSTEM_PROMPT.into(),
-            name: None,
-        }),
-        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-            content: ChatCompletionRequestUserMessageContent::Text(message),
-            name: None,
-        }),
-    ];
-
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_2411_MODEL)
+        .model(DEEP_SEEK_FLASH_MODEL)
         .temperature(TEMPERATURE)
-        .messages(messages)
+        .top_p(TOP_P)
+        .reasoning_effort(ReasoningEffort::High)
+        .messages(vec![
+            ChatCompletionRequestSystemMessage::from(CATEGORIZE_QUESTION_SYSTEM_PROMPT).into(),
+            ChatCompletionRequestUserMessage::from(message).into(),
+        ])
         .build()?;
 
     match data
         .openai_compatible_clients
-        .open_router_client
+        .deepseek_client
         .chat()
         .create(request)
         .await
@@ -386,26 +215,20 @@ pub async fn build_reply_to_message_chain(
         REPLY_MESSAGE_CHAIN_SYSTEM_PROMPT_TAIGA.replace("{BOT_NAME}", bot_nick.as_str())
     };
 
-    let messages = vec![
-        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
-            name: None,
-        }),
-        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-            content: ChatCompletionRequestUserMessageContent::Text(message_chain.join("\n")),
-            name: None,
-        }),
-    ];
-
     let request = CreateChatCompletionRequestArgs::default()
         .temperature(TEMPERATURE)
-        .model(MISTRAL_LARGE_2411_MODEL)
-        .messages(messages)
+        .top_p(TOP_P)
+        .model(DEEP_SEEK_FLASH_MODEL)
+        .reasoning_effort(ReasoningEffort::High)
+        .messages(vec![
+            ChatCompletionRequestSystemMessage::from(system_prompt).into(),
+            ChatCompletionRequestUserMessage::from(message_chain.join("\n")).into(),
+        ])
         .build()?;
 
     match data
         .openai_compatible_clients
-        .open_router_client
+        .deepseek_client
         .chat()
         .create(request)
         .await
@@ -449,26 +272,20 @@ async fn do_opine_conversation(
             .to_string()
     };
 
-    let messages = vec![
-        ChatCompletionRequestMessage::System(ChatCompletionRequestSystemMessage {
-            content: ChatCompletionRequestSystemMessageContent::Text(system_prompt),
-            name: None,
-        }),
-        ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
-            content: ChatCompletionRequestUserMessageContent::Text(previous_messages),
-            name: None,
-        }),
-    ];
-
     let request = CreateChatCompletionRequestArgs::default()
-        .model(MISTRAL_LARGE_2411_MODEL)
+        .model(DEEP_SEEK_FLASH_MODEL)
         .temperature(TEMPERATURE)
-        .messages(messages)
+        .top_p(TOP_P)
+        .reasoning_effort(ReasoningEffort::High)
+        .messages(vec![
+            ChatCompletionRequestSystemMessage::from(system_prompt).into(),
+            ChatCompletionRequestUserMessage::from(previous_messages).into(),
+        ])
         .build()?;
 
     match data
         .openai_compatible_clients
-        .open_router_client
+        .deepseek_client
         .chat()
         .create(request)
         .await

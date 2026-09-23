@@ -33,6 +33,9 @@ pub struct Configuration {
     pub moonshot_api_key: String,
     pub step_api_key: String,
     pub zhipu_api_key: String,
+    pub xiaomi_api_key: String,
+    pub deepseek_api_key: String,
+    pub alibaba_api_key: String,
 }
 
 impl Configuration {
@@ -65,6 +68,9 @@ impl Configuration {
             moonshot_api_key: "".to_string(),
             step_api_key: "".to_string(),
             zhipu_api_key: "".to_string(),
+            xiaomi_api_key: "".to_string(),
+            deepseek_api_key: "".to_string(),
+            alibaba_api_key: "".to_string()
         }
     }
 
