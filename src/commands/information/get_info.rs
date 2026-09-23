@@ -5,16 +5,17 @@ use poise::CreateReply;
 use reqwest::Client;
 use serenity::builder::{CreateAttachment, CreateMessage};
 
-use crate::shared::structs::{
-    Context, ContextError,
-    authentication::login,
-    novel::{
-        CodexSummaryContainerResponse, CodexSummaryContainerState, CodexSummaryRequest,
-        CodexSummaryRequestedLanguage, CodexSummaryResponseLogs, Novel,
+use crate::shared::{
+    constants::DISCORD_MESSAGE_HARD_LENGTH_LIMIT,
+    structs::{
+        Context, ContextError,
+        authentication::login,
+        novel::{
+            CodexSummaryContainerResponse, CodexSummaryContainerStatusResponse,
+            CodexSummaryRequest, CodexSummaryRequestedLanguage, CodexSummaryResponseLogs, Novel,
+        },
     },
 };
-
-const DISCORD_MESSAGE_HARD_LENGTH_LIMIT: usize = 1500;
 
 const DEFAULT_INSTRUCTION: &str = r#"Write in $language and make sure to create the card if the image is available.
 Your response will be shown directly in my application, so only return the summary part after creating the card (or not creating the card)."#;
@@ -27,12 +28,10 @@ pub async fn get_info(
     #[description = "The name of the codex you want to get info about."] keyword: String,
     #[description = "The requested word count of the codex summary. Minimum 100. Default to 150."]
     #[min = 100]
-    #[rename = "word count"]
     word_count: Option<u16>,
     #[description = "The language of the info to present in."]
     language: CodexSummaryRequestedLanguage,
     #[description = "Additional instructions to attach after the language specification."]
-    #[rename = "additional instructions"]
     additional_instructions: Option<String>,
 ) -> Result<(), ContextError> {
     let novel = novel.map(|n| match n {
@@ -62,6 +61,8 @@ pub async fn get_info(
         push_to_line: false,
         schedule_polling: false,
     };
+
+    ctx.defer().await?;
 
     login(ctx.data()).await?;
     let auth = ctx.data().authentication.clone();
@@ -102,6 +103,7 @@ pub async fn get_info(
     .await??;
 
     let has_image = !payload.images.is_empty();
+    let image_count = payload.images.len();
     let full_output_length: usize = payload.outs.iter().map(|s| s.len()).sum();
     let mut full_output = payload.outs.join("\n");
     let mut texts_to_send = Vec::new();
@@ -118,9 +120,16 @@ pub async fn get_info(
             })
             .collect::<Vec<_>>();
 
-        let mut builder = CreateReply::new();
+        tracing::info!("Real paths: {:?}", &real_paths);
 
-        for path in real_paths.drain(0..4) {
+        let mut builder = CreateReply::new();
+        let range = if image_count > 4 {
+            0..4
+        } else {
+            0..image_count
+        };
+
+        for path in real_paths.drain(range) {
             builder = builder.attachment(CreateAttachment::url(ctx.http(), &path).await?);
         }
 
@@ -139,6 +148,8 @@ pub async fn get_info(
                     .id()
                     .send_files(ctx.http(), attachments, CreateMessage::new())
                     .await?;
+
+                tokio::time::sleep(Duration::from_secs(1)).await;
             }
         }
 
@@ -173,6 +184,8 @@ pub async fn get_info(
         ctx.channel_id()
             .send_message(ctx.http(), CreateMessage::new().content(s))
             .await?;
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 
     Ok(())
@@ -209,8 +222,8 @@ async fn poll(
                     .await;
 
                 if let Ok(res) = response
-                    && let Ok(payload) = res.json::<CodexSummaryContainerState>().await
-                    && let lowercase_status = payload.status.to_lowercase()
+                    && let Ok(payload) = res.json::<CodexSummaryContainerStatusResponse>().await
+                    && let lowercase_status = payload.state.status.to_lowercase()
                     && (lowercase_status == "exited" || lowercase_status == "dead") {
                         break;
                 }
@@ -231,6 +244,8 @@ async fn poll(
         .await?
         .json::<CodexSummaryResponseLogs>()
         .await?;
+
+    tracing::info!("Got payload: {:?}", &payload);
 
     Ok(payload)
 }

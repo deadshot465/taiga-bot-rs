@@ -35,7 +35,13 @@ pub struct CodexSummaryContainerResponse {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
+pub struct CodexSummaryContainerStatusResponse {
+    pub state: CodexSummaryContainerState
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct CodexSummaryContainerState {
+    #[serde(rename = "Status")]
     pub status: String
 }
 

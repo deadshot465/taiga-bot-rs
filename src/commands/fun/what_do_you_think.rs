@@ -1,8 +1,11 @@
+use crate::shared::constants::DISCORD_MESSAGE_HARD_LENGTH_LIMIT;
 use crate::shared::services::open_router_service::opine_specific;
 use crate::shared::structs::{ContextData, ContextError};
 use crate::shared::utility::get_author_name;
+use itertools::Itertools;
 use poise::CreateReply;
 use serenity::all::Message;
+use serenity::builder::CreateMessage;
 
 #[poise::command(context_menu_command = "What do you think?")]
 pub async fn what_do_you_think(
@@ -29,7 +32,30 @@ pub async fn what_do_you_think(
 
     match opine_specific(ctx.data(), prompt).await {
         Ok(response) => {
-            ctx.send(CreateReply::default().content(response)).await?;
+            let length = response.len();
+            let mut messages = Vec::new();
+
+            if length > DISCORD_MESSAGE_HARD_LENGTH_LIMIT {
+                for c in response.chars().chunks(1000).into_iter() {
+                    let text = c.collect::<String>();
+                    messages.push(text);
+                }
+            } else {
+                messages.push(response);
+            }
+
+            let first = &messages[0];
+            let remaining = &messages[1..];
+
+            let reply_handle = ctx.send(CreateReply::default().content(first)).await?;
+            let channel = reply_handle.message().await?.channel(ctx.http()).await?;
+
+            for m in remaining.into_iter() {
+                channel
+                    .id()
+                    .send_message(ctx.http(), CreateMessage::new().content(m))
+                    .await?;
+            }
         }
         Err(e) => {
             let error_message =
