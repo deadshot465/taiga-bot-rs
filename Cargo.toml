@@ -1,6 +1,6 @@
 [package]
 name = "taiga-bot-rs"
-version = "7.0.1"
+version = "7.0.2"
 authors = ["Chehui Chou <deadshot465@users.noreply.github.com>"]
 edition = "2024"
 

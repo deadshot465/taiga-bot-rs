@@ -177,7 +177,8 @@ pub async fn get_info(
             texts_to_send.push(s);
         }
     } else {
-        texts_to_send.push(full_output);
+        let _ = ctx.send(CreateReply::new().content(full_output)).await?;
+        return Ok(());
     }
 
     for s in texts_to_send.into_iter() {
