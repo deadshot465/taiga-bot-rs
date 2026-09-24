@@ -81,10 +81,16 @@ pub async fn get_info(
         .send()
         .await?;
 
-    let container_id = response
-        .json::<CodexSummaryContainerResponse>()
-        .await?
-        .container_id;
+    let bytes = response.bytes().await?;
+
+    if let Ok(decoded) = serde_json::from_slice::<CodexSummaryResponseLogs>(&*bytes) {
+        tracing::info!("Decoded Payload: {:?}", &decoded);
+        build_replies(ctx, decoded).await?;
+        return Ok(());
+    }
+
+    let container_id =
+        serde_json::from_slice::<CodexSummaryContainerResponse>(&*bytes)?.container_id;
 
     let server_endpoint = ctx.data().config.server_endpoint.clone();
     let container_id_clone = container_id.clone();
@@ -102,6 +108,71 @@ pub async fn get_info(
     })
     .await??;
 
+    build_replies(ctx, payload).await?;
+
+    Ok(())
+}
+
+async fn poll(
+    server_endpoint: String,
+    container_id: String,
+    http_client: Client,
+    auth_token: String,
+) -> anyhow::Result<CodexSummaryResponseLogs> {
+    let endpoint = format!("{}/novel/summary/{}", server_endpoint, container_id);
+    let sleep = tokio::time::sleep(Duration::from_mins(10));
+    let mut timeout = std::pin::pin!(sleep);
+
+    let mut interval = tokio::time::interval(Duration::from_secs(10));
+    interval.tick().await;
+    let mut timed_out = false;
+
+    loop {
+        // let endpoint_clone = endpoint.clone();
+
+        tokio::select! {
+            _ = &mut timeout => {
+                timed_out = true;
+                break;
+            }
+
+            _ = interval.tick() => {
+                let response = http_client
+                    .get(&endpoint)
+                    .bearer_auth(&auth_token)
+                    .send()
+                    .await;
+
+                if let Ok(res) = response
+                    && let Ok(payload) = res.json::<CodexSummaryContainerStatusResponse>().await
+                    && let lowercase_status = payload.state.status.to_lowercase()
+                    && (lowercase_status == "exited" || lowercase_status == "dead") {
+                        break;
+                }
+            }
+        }
+    }
+
+    if timed_out {
+        return Err(anyhow::anyhow!("Timed out."));
+    }
+
+    let endpoint = format!("{}/result", endpoint);
+
+    let payload = http_client
+        .get(&endpoint)
+        .bearer_auth(&auth_token)
+        .send()
+        .await?
+        .json::<CodexSummaryResponseLogs>()
+        .await?;
+
+    tracing::info!("Got payload: {:?}", &payload);
+
+    Ok(payload)
+}
+
+async fn build_replies(ctx: Context<'_>, payload: CodexSummaryResponseLogs) -> anyhow::Result<()> {
     let has_image = !payload.images.is_empty();
     let image_count = payload.images.len();
     let full_output_length: usize = payload.outs.iter().map(|s| s.len()).sum();
@@ -190,63 +261,4 @@ pub async fn get_info(
     }
 
     Ok(())
-}
-
-async fn poll(
-    server_endpoint: String,
-    container_id: String,
-    http_client: Client,
-    auth_token: String,
-) -> anyhow::Result<CodexSummaryResponseLogs> {
-    let endpoint = format!("{}/novel/summary/{}", server_endpoint, container_id);
-    let sleep = tokio::time::sleep(Duration::from_mins(10));
-    let mut timeout = std::pin::pin!(sleep);
-
-    let mut interval = tokio::time::interval(Duration::from_secs(10));
-    interval.tick().await;
-    let mut timed_out = false;
-
-    loop {
-        // let endpoint_clone = endpoint.clone();
-
-        tokio::select! {
-            _ = &mut timeout => {
-                timed_out = true;
-                break;
-            }
-
-            _ = interval.tick() => {
-                let response = http_client
-                    .get(&endpoint)
-                    .bearer_auth(&auth_token)
-                    .send()
-                    .await;
-
-                if let Ok(res) = response
-                    && let Ok(payload) = res.json::<CodexSummaryContainerStatusResponse>().await
-                    && let lowercase_status = payload.state.status.to_lowercase()
-                    && (lowercase_status == "exited" || lowercase_status == "dead") {
-                        break;
-                }
-            }
-        }
-    }
-
-    if timed_out {
-        return Err(anyhow::anyhow!("Timed out."));
-    }
-
-    let endpoint = format!("{}/result", endpoint);
-
-    let payload = http_client
-        .get(&endpoint)
-        .bearer_auth(&auth_token)
-        .send()
-        .await?
-        .json::<CodexSummaryResponseLogs>()
-        .await?;
-
-    tracing::info!("Got payload: {:?}", &payload);
-
-    Ok(payload)
 }
